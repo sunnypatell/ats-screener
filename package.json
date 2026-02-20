@@ -20,10 +20,13 @@
 		"validate": "pnpm check && pnpm lint && pnpm test"
 	},
 	"dependencies": {
+		"@number-flow/svelte": "^0.3.11",
+		"@selemondev/svelte-marquee": "^0.1.1",
 		"bits-ui": "^2.16.0",
 		"compromise": "^14.14.3",
 		"mammoth": "^1.8.0",
 		"motion": "^12.0.0",
+		"motion-sv": "^0.1.10",
 		"pdfjs-dist": "^4.10.38"
 	},
 	"devDependencies": {

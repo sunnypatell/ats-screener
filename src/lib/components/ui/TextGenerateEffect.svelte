@@ -39,15 +39,15 @@
 
 	.word {
 		opacity: 0;
-		filter: blur(4px);
+		transform: translateY(4px);
 		transition:
-			opacity 0.3s ease,
-			filter 0.3s ease;
+			opacity 0.25s ease,
+			transform 0.25s ease;
 		display: inline;
 	}
 
 	.word.visible {
 		opacity: 1;
-		filter: blur(0);
+		transform: translateY(0);
 	}
 </style>

@@ -1,5 +1,4 @@
 <script lang="ts">
-	// renders a container with an animated gradient border that traces around the edge
 	let {
 		borderRadius = '16px',
 		duration = 4000,
@@ -15,9 +14,6 @@
 	class="moving-border-wrapper {className}"
 	style="--border-radius: {borderRadius}; --duration: {duration}ms;"
 >
-	<!-- the animated gradient that rotates around the border -->
-	<div class="border-animation"></div>
-	<!-- the inner content with background that masks the border -->
 	<div class="border-content">
 		<slot />
 	</div>
@@ -27,36 +23,46 @@
 	.moving-border-wrapper {
 		position: relative;
 		border-radius: var(--border-radius);
-		padding: 1px;
+		background: var(--glass-bg);
+		border: 1px solid var(--glass-border);
 		overflow: hidden;
+		transition: border-color 0.3s ease;
 	}
 
-	.border-animation {
+	.moving-border-wrapper::before {
+		content: '';
 		position: absolute;
-		inset: -50%;
+		inset: 0;
+		border-radius: inherit;
+		padding: 1px;
 		background: conic-gradient(
 			from 0deg,
-			transparent 0%,
-			rgba(6, 182, 212, 0.6) 10%,
-			rgba(59, 130, 246, 0.6) 20%,
-			transparent 30%
+			transparent 60%,
+			rgba(6, 182, 212, 0.4) 80%,
+			rgba(59, 130, 246, 0.3) 90%,
+			transparent 100%
 		);
+		mask:
+			linear-gradient(#fff 0 0) content-box,
+			linear-gradient(#fff 0 0);
+		mask-composite: exclude;
+		-webkit-mask-composite: xor;
 		animation: border-rotate var(--duration) linear infinite;
+		will-change: transform;
+		pointer-events: none;
 	}
 
 	@keyframes border-rotate {
 		from {
-			transform: rotate(0deg);
+			rotate: 0deg;
 		}
 		to {
-			transform: rotate(360deg);
+			rotate: 360deg;
 		}
 	}
 
 	.border-content {
 		position: relative;
-		border-radius: calc(var(--border-radius) - 1px);
-		background: var(--color-bg-primary, #0a0a14);
 		z-index: 1;
 	}
 </style>

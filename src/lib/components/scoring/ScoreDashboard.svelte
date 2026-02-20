@@ -5,7 +5,7 @@
 	import KeywordAnalysis from './KeywordAnalysis.svelte';
 	import ComparisonChart from './ComparisonChart.svelte';
 	import ResumeStats from './ResumeStats.svelte';
-	import NumberTicker from '$components/ui/NumberTicker.svelte';
+	import NumberFlow from '@number-flow/svelte';
 
 	// derived stats for the summary card header
 	const avgScore = $derived(scoresStore.averageScore);
@@ -39,7 +39,7 @@
 				<div class="summary-left">
 					<div class="summary-score">
 						<span class="score-number" style="color: {getAvgColor(avgScore)}">
-							<NumberTicker value={avgScore} duration={1200} />
+							<NumberFlow value={avgScore} />
 						</span>
 						<span class="score-verdict" style="color: {getAvgColor(avgScore)}">
 							{getScoreLabel(avgScore)}

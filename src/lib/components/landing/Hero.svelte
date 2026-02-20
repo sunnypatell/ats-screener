@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import FlipWords from '$components/ui/FlipWords.svelte';
 	import SparklesText from '$components/ui/SparklesText.svelte';
-	import NumberTicker from '$components/ui/NumberTicker.svelte';
+	import NumberFlow from '@number-flow/svelte';
 	import TextGenerateEffect from '$components/ui/TextGenerateEffect.svelte';
 	import MovingBorder from '$components/ui/MovingBorder.svelte';
 
@@ -42,9 +42,9 @@
 	<!-- grid pattern overlay for depth -->
 	<div class="grid-overlay"></div>
 
-	<!-- floating particles -->
+	<!-- floating particles (reduced for performance) -->
 	<div class="particles" aria-hidden="true">
-		{#each Array(6) as _, i}
+		{#each Array(3) as _, i}
 			<div class="particle" style="--i: {i}"></div>
 		{/each}
 	</div>
@@ -115,7 +115,7 @@
 				<div class="preview-card-inner">
 					<span class="preview-system">Workday</span>
 					<span class="preview-score score-high">
-						<NumberTicker value={92} delay={800} duration={1500} />
+						<NumberFlow value={92} />
 					</span>
 				</div>
 			</MovingBorder>
@@ -123,7 +123,7 @@
 				<div class="preview-card-inner">
 					<span class="preview-system">Taleo</span>
 					<span class="preview-score score-mid">
-						<NumberTicker value={74} delay={1200} duration={1500} />
+						<NumberFlow value={74} />
 					</span>
 				</div>
 			</MovingBorder>
@@ -131,7 +131,7 @@
 				<div class="preview-card-inner">
 					<span class="preview-system">Greenhouse</span>
 					<span class="preview-score score-high">
-						<NumberTicker value={88} delay={1000} duration={1500} />
+						<NumberFlow value={88} />
 					</span>
 				</div>
 			</MovingBorder>
@@ -141,14 +141,14 @@
 		<div class="hero-stats">
 			<div class="stat">
 				<span class="stat-number">
-					<NumberTicker value={6} delay={1400} duration={800} />
+					<NumberFlow value={6} />
 				</span>
 				<span class="stat-label">ATS Platforms</span>
 			</div>
 			<div class="stat-divider"></div>
 			<div class="stat">
 				<span class="stat-number">
-					<NumberTicker value={100} delay={1600} duration={1000} suffix="%" />
+					<NumberFlow value={100} suffix="%" />
 				</span>
 				<span class="stat-label">Free & Open Source</span>
 			</div>
@@ -160,7 +160,7 @@
 			<div class="stat-divider"></div>
 			<div class="stat">
 				<span class="stat-number">
-					<NumberTicker value={0} delay={1800} duration={600} />
+					<NumberFlow value={0} />
 				</span>
 				<span class="stat-label">Data Sent to Servers</span>
 			</div>
@@ -191,6 +191,8 @@
 		border-radius: 50%;
 		filter: blur(100px);
 		animation: float 20s ease-in-out infinite;
+		will-change: transform;
+		transform: translateZ(0);
 	}
 
 	.orb-1 {

@@ -1,37 +1,14 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-
 	let { class: className = '' }: { class?: string } = $props();
 
-	// generates random sparkle positions that animate continuously
-	let sparkles = $state<Array<{ id: number; x: number; y: number; size: number; delay: number }>>(
-		[]
-	);
-
-	onMount(() => {
-		// create initial sparkles
-		for (let i = 0; i < 10; i++) {
-			sparkles.push({
-				id: i,
-				x: Math.random() * 100,
-				y: Math.random() * 100,
-				size: Math.random() * 3 + 1,
-				delay: Math.random() * 2
-			});
-		}
-
-		// continuously randomize sparkle positions
-		const interval = setInterval(() => {
-			sparkles = sparkles.map((s) => ({
-				...s,
-				x: Math.random() * 100,
-				y: Math.random() * 100,
-				size: Math.random() * 3 + 1
-			}));
-		}, 3000);
-
-		return () => clearInterval(interval);
-	});
+	// static sparkle positions - no intervals, no re-renders, pure CSS animation
+	const sparkles = Array.from({ length: 5 }, (_, i) => ({
+		id: i,
+		x: 10 + Math.random() * 80,
+		y: 10 + Math.random() * 80,
+		size: 2 + Math.random() * 2,
+		delay: i * 0.4
+	}));
 </script>
 
 <span class="sparkles-text {className}">
@@ -72,21 +49,19 @@
 	.sparkle {
 		position: absolute;
 		color: var(--accent-cyan);
-		animation: sparkle-pulse 2s ease-in-out infinite;
-		transition:
-			left 1.5s ease,
-			top 1.5s ease;
+		animation: sparkle-pulse 3s ease-in-out infinite;
+		will-change: opacity, transform;
 	}
 
 	@keyframes sparkle-pulse {
 		0%,
 		100% {
 			opacity: 0;
-			transform: scale(0) rotate(0deg);
+			transform: scale(0);
 		}
 		50% {
-			opacity: 1;
-			transform: scale(1) rotate(180deg);
+			opacity: 0.8;
+			transform: scale(1);
 		}
 	}
 </style>
