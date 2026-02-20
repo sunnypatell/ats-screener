@@ -29,12 +29,11 @@ test-results/
 playwright-report/
 blob-report/
 
-# cloudflare (legacy)
-.wrangler/
-.dev.vars
-
 # vercel
 .vercel/
+
+# firebase
+.firebase/
 
 # misc
 *.log

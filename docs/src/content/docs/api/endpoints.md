@@ -12,7 +12,7 @@ Score a resume against all 6 ATS platforms, or extract requirements from a job d
 ### Request
 
 ```bash
-curl -X POST https://ats-screener.pages.dev/api/analyze \
+curl -X POST http://localhost:5173/api/analyze \
   -H "Content-Type: application/json" \
   -d '{
     "mode": "full-score",

@@ -130,8 +130,15 @@ class AuthStore {
 				return 'Sign-in popup was closed. Please try again.';
 			case 'auth/popup-blocked':
 				return 'Sign-in popup was blocked. Please allow popups for this site.';
+			case 'auth/unauthorized-domain':
+				return 'This domain is not authorized for sign-in. Add it to Firebase Console → Authentication → Settings → Authorized domains.';
+			case 'auth/configuration-not-found':
+				return 'Firebase auth is not configured. Check your environment variables.';
+			case 'auth/internal-error':
+				return 'Firebase internal error. Check that Google sign-in is enabled in Firebase Console.';
 			default:
-				return 'An error occurred. Please try again.';
+				console.error('[auth] unhandled error code:', code, err);
+				return `Authentication error (${code || 'unknown'}). Please try again.`;
 		}
 	}
 }

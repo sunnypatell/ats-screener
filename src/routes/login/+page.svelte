@@ -80,7 +80,7 @@
 			</h1>
 			<p class="card-subtitle">
 				{#if showReset}
-					Enter your email and we'll send you a reset link.
+					Enter your email to receive a password reset link.
 				{:else if mode === 'signin'}
 					Sign in to scan your resume across 6 ATS platforms.
 				{:else}

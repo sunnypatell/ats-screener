@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - SvelteKit 5 with Svelte 5 runes ($state, $derived, $effect, $props)
 - TypeScript strict mode, 0 type errors across 410+ files
-- Cloudflare Pages deployment with adapter-cloudflare
+- Vercel deployment with adapter-vercel
 - pnpm package manager
 - ESLint + Prettier + svelte-check
 - Vitest for unit testing, Playwright for E2E

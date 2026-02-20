@@ -1,4 +1,10 @@
 <p align="center">
+  <a href="https://ats-screener.vercel.app">
+    <img src=".github/hero.png" alt="ATS Screener" width="800" />
+  </a>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License" />
   <img src="https://img.shields.io/badge/SvelteKit-5-FF3E00?style=for-the-badge&logo=svelte&logoColor=white" alt="SvelteKit 5" />
   <img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
@@ -17,18 +23,21 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/sunnypatell/ats-screener">Source</a> &bull;
+  <a href="https://ats-screener.vercel.app">Live App</a> &bull;
+  <a href="https://ats-screener.vercel.app/docs">Documentation</a> &bull;
   <a href="https://github.com/sunnypatell/ats-screener/issues">Issues</a> &bull;
   <a href="https://github.com/sunnypatell/ats-screener/blob/main/CONTRIBUTING.md">Contribute</a>
 </p>
 
 ---
 
-## About
+## Why I Built This
 
-I built ATS Screener because every resume checker on the market gives you one generic score based on made-up algorithms, then charges $30/month for it. None of them reflect how real applicant tracking systems actually work.
+I got tired of uploading my resume to "free ATS checkers" that would analyze it, show me a score preview, then lock the actual results behind a $30/month paywall. Every single one of them. They all give you one generic score based on made-up algorithms that have nothing to do with how real applicant tracking systems work.
 
-This tool simulates **6 real enterprise platforms** with researched scoring profiles, giving you 6 different scores that reflect each system's documented parsing behavior, keyword matching strategy, and scoring philosophy. It's free, open source, and always will be.
+The thing is, real ATS platforms don't all evaluate resumes the same way. Taleo does strict literal keyword matching. Greenhouse doesn't auto-score at all. iCIMS uses ML-based semantic matching. A single "ATS score" is meaningless if it doesn't tell you which system you're up against.
+
+So I built ATS Screener to give students and job seekers what those paid tools won't: **6 honest scores from 6 real platforms**, completely free, completely open source. No paywall, no upsell, no "premium tier" hiding your results. Your resume file never even leaves your browser.
 
 > Built by [Sunny Patel](https://sunnypatel.net), a student who got tired of paying for meaningless ATS scores.
 
@@ -47,35 +56,35 @@ Job Description (optional)  -->  Targeted Keyword Matching Against Each Platform
 1. **Upload your resume** (PDF or DOCX). Parsed entirely client-side in a Web Worker. Your file never leaves your browser.
 2. **Optionally paste a job description** for targeted scoring with keyword matching.
 3. **Get scored by 6 systems**, each with different weights for formatting, keywords, sections, experience, and education.
-4. **See what to fix** with platform-specific suggestions that explain exactly why each change matters.
+4. **See what to fix** with platform-specific suggestions ranked by impact, telling you exactly what to change and why.
 
 ## Platform Profiles
 
 Each profile is based on research into the platform's documented parsing and matching behavior:
 
-| Platform           | Vendor     | Keyword Strategy       | Key Behavior                                                    |
-| ------------------ | ---------- | ---------------------- | --------------------------------------------------------------- |
-| **Workday**        | Workday    | Exact + HiredScore AI  | Strict parser, skips headers/footers, penalizes creative formats |
-| **Taleo**          | Oracle     | Literal exact match    | Strictest keyword matching, auto-reject via Req Rank             |
-| **iCIMS**          | iCIMS      | Semantic (ML-based)    | Role Fit AI, grammar-based NLP parser, most forgiving            |
-| **Greenhouse**     | Greenhouse | Semantic (LLM-based)   | No auto-scoring by design, human review with scorecards          |
-| **Lever**          | Employ     | Stemming-based         | No ranking, search-dependent, abbreviation-blind                 |
-| **SuccessFactors** | SAP        | Taxonomy normalization | Textkernel parser, Joule AI skills matching                      |
+| Platform | Vendor | Keyword Strategy | Key Behavior |
+| --- | --- | --- | --- |
+| **Workday** | Workday | Exact + HiredScore AI | Strict parser, skips headers/footers, penalizes creative formats |
+| **Taleo** | Oracle | Literal exact match | Strictest keyword matching, auto-reject via Req Rank |
+| **iCIMS** | iCIMS | Semantic (ML-based) | Role Fit AI, grammar-based NLP parser, most forgiving |
+| **Greenhouse** | Greenhouse | Semantic (LLM-based) | No auto-scoring by design, human review with scorecards |
+| **Lever** | Employ | Stemming-based | No ranking, search-dependent, abbreviation-blind |
+| **SuccessFactors** | SAP | Taxonomy normalization | Textkernel parser, Joule AI skills matching |
 
 ## Tech Stack
 
-| Layer            | Choice                                        | Why                                                              |
-| ---------------- | --------------------------------------------- | ---------------------------------------------------------------- |
-| **Framework**    | SvelteKit 5 (Svelte 5 runes)                  | Compiled to vanilla JS, ~15KB runtime. No VDOM overhead.         |
-| **Styling**      | Scoped CSS + CSS custom properties             | Dark glassmorphic design. No Tailwind. Component-scoped.         |
-| **PDF Parsing**  | pdfjs-dist (Web Worker)                        | Mozilla-maintained, fully client-side.                           |
-| **DOCX Parsing** | mammoth                                        | Client-side Word to text extraction.                             |
-| **NLP**          | Custom TF-IDF + tokenizer + skills taxonomy    | Lightweight, browser-native, supports 8+ industries.             |
-| **LLM**          | Gemini 2.5 Flash Lite                          | Free tier. Groq + Cerebras available as fallbacks for self-host. |
-| **Auth**         | Firebase Authentication                        | Google + email/password sign-in. Free Spark plan.                |
-| **Storage**      | Cloud Firestore                                | Scan history per user. Free Spark plan.                          |
-| **Hosting**      | Vercel                                         | Free hobby tier. Edge functions for API.                         |
-| **Testing**      | Vitest + Playwright + @testing-library/svelte  | Unit, integration, and E2E coverage.                             |
+| Layer | Choice | Why |
+| --- | --- | --- |
+| **Framework** | SvelteKit 5 (Svelte 5 runes) | Compiled to vanilla JS, ~15KB runtime. No VDOM overhead. |
+| **Styling** | Scoped CSS + CSS custom properties | Dark glassmorphic design. No Tailwind. Component-scoped. |
+| **PDF Parsing** | pdfjs-dist (Web Worker) | Mozilla-maintained, fully client-side. |
+| **DOCX Parsing** | mammoth | Client-side Word to text extraction. |
+| **NLP** | Custom TF-IDF + tokenizer + skills taxonomy | Lightweight, browser-native, supports 8+ industries. |
+| **LLM** | Gemini 2.5 Flash Lite | Free tier. Groq + Cerebras available as fallbacks for self-host. |
+| **Auth** | Firebase Authentication | Google + email/password sign-in. Free Spark plan. |
+| **Storage** | Cloud Firestore | Scan history per user. Free Spark plan. |
+| **Hosting** | Vercel | Free hobby tier. Edge functions for API. |
+| **Testing** | Vitest + Playwright + @testing-library/svelte | Unit, integration, and E2E coverage. |
 
 **Total infrastructure cost: $0.** Everything runs on free tiers.
 

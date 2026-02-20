@@ -11,16 +11,18 @@ ATS Screener is a free, open-source tool that simulates how **6 real enterprise 
 
 ## Why I Built This
 
-Most ATS checkers online are marketing funnels. They show you a score, scare you with "issues found," then upsell you on a $30/month subscription. The scores they generate are meaningless because they aren't based on how real ATS platforms work.
+I was a student applying to jobs and internships, doing what everyone tells you to do: run your resume through an ATS checker before submitting. So I'd upload my resume to these "free" ATS scanners, wait for the analysis, and then get hit with the same thing every time: "Your score is ready! Unlock your full results for $29.99/month."
 
-Real ATS platforms don't all work the same way:
+Every single one of them. They show you just enough to scare you, blur out the actual feedback, and paywall the rest. And the scores they generate? Completely made up. One generic number based on arbitrary rules that have nothing to do with how real ATS platforms actually work.
+
+The thing is, real ATS platforms don't all evaluate resumes the same way:
 
 - **Taleo** uses literal keyword matching in its base configuration. "Project Manager" and "Project Management" are treated as different terms.
 - **Greenhouse** doesn't auto-score at all. It's designed around human review with structured scorecards.
 - **iCIMS** uses ML-based semantic matching with its Role Fit AI.
 - **Workday** has strict parsing that skips headers, footers, and non-standard sections.
 
-A single "ATS score" is meaningless. You need to know how _each_ platform would evaluate your resume. I built this tool because I was tired of paying for resume scanners that give you a meaningless number and a paywall.
+A single "ATS score" is meaningless. You need to know how _each_ platform would evaluate your resume. So I built this tool to give students and job seekers what those paid tools won't: **6 honest scores from 6 real platforms**, completely free, no paywall, no "premium tier" hiding your results.
 
 ## How It's Different
 
@@ -59,7 +61,7 @@ Built with performance and privacy in mind:
 - **Vercel** for hosting (free tier)
 
 :::note[Completely Free]
-The live instance is hosted and maintained by [Sunny Patel](https://sunnypatel.net) using free-tier API keys. There is no catch, no upsell, and no usage tier. If you want full control, you can also [self-host](/docs/self-hosting/setup/) with your own keys.
+The live instance at [ats-screener.vercel.app](https://ats-screener.vercel.app) is hosted and maintained by [Sunny Patel](https://sunnypatel.net) using free-tier API keys. There is no catch, no upsell, and no usage tier. If you want full control, you can also [self-host](/docs/self-hosting/setup/) with your own keys.
 :::
 
 :::note

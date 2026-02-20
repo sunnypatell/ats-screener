@@ -226,8 +226,8 @@
 				<div class="tech-card">
 					<h4>Infrastructure</h4>
 					<ul>
-						<li>Cloudflare Pages (hosting)</li>
-						<li>Cloudflare Functions (API)</li>
+						<li>Vercel (hosting)</li>
+						<li>Firebase Auth + Firestore</li>
 						<li>GitHub Actions (CI/CD)</li>
 						<li>Vitest + Playwright (testing)</li>
 					</ul>
