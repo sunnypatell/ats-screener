@@ -168,16 +168,19 @@ For each of the 6 systems, evaluate these dimensions:
 - SuccessFactors: Textkernel's scoring combines skills, titles, education, experience, industry. taxonomy normalization means related terms count
 
 CRITICAL RULES:
-- Scores MUST vary meaningfully between platforms. Taleo should almost always score differently from Greenhouse because they work fundamentally differently
-- A well-formatted corporate resume should score highest on Workday/Taleo and potentially lower on Greenhouse (if it lacks clear communication value beyond keywords)
+- Scores MUST vary meaningfully between platforms. a 15-25 point spread between the highest and lowest scoring system is expected. Taleo and Greenhouse should NEVER be within 5 points of each other
+- Taleo should score notably LOWER than average for most resumes because its literal keyword matching misses synonyms, abbreviations, and contextual skills that other platforms catch
+- A well-formatted corporate resume should score highest on Workday/SuccessFactors and potentially lower on Greenhouse (if it lacks clear communication value beyond keywords)
 - A creative/modern resume should score lower on Taleo/Workday (parsing breaks) and higher on Greenhouse/Lever
 - Taleo should have the widest score variation across dimensions because it computes granular independent scores
 - Greenhouse scores should reflect human readability and keyword searchability, not algorithmic matching
-- DO NOT give all systems similar scores. if you find yourself giving 70-80 to all six, you're doing it wrong
-- ${jdSlice ? 'For targeted scoring: extract actual keywords from the JD. matched/missing keywords must be REAL terms from the JD, not made up' : "For general scoring: keywords should reflect industry-standard terminology for the candidate's apparent field"}
+- DO NOT give all systems similar scores. if you find yourself giving 70-80 to all six, you're doing it wrong. aim for realistic variety
+- ${jdSlice ? 'For targeted scoring: extract actual keywords from the JD. matched/missing keywords must be REAL terms from the JD, not made up. scores MUST change significantly for different JDs. a sysadmin resume scored against a DBA role should differ substantially from the same resume scored against a junior IT analyst role' : "For general scoring: keywords should reflect industry-standard terminology for the candidate's apparent field"}
+- ${jdSlice ? 'keyword match scores should be the MOST sensitive dimension to JD changes. if the JD requires skills the candidate lacks, keyword match must drop dramatically regardless of platform' : ''}
 - each platform gets MAXIMUM 2 suggestions. total across all 6 should not exceed 8-10 unique tips. deduplicate similar advice across platforms
 - suggestions must be specific and actionable. "add Kubernetes to your skills section" not "add more keywords"
 - suggestions must reference the actual platform behavior. e.g., for Taleo: "include both 'PM' and 'Project Manager' because Taleo uses literal keyword matching"
+- IMPORTANT: the resume text may contain LaTeX rendering artifacts like #, ï, §, Æ, €, fi, fl ligatures, or unicode combining characters. these are font rendering artifacts from PDF extraction, NOT actual special characters in the resume. do NOT flag these as formatting issues or "special characters detected." treat them as normal text
 
 **passesFilter thresholds** (reflects each platform's filtering philosophy):
 - Taleo: true if overallScore >= 75 (strictest auto-scorer, visible Req Rank)

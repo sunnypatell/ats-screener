@@ -38,14 +38,32 @@ export async function parsePDF(file: File): Promise<PDFParseResult> {
 		const textContent = await page.getTextContent();
 		const operators = await page.getOperatorList();
 
-		// detect images via operator list
-		const imageOps = [
-			pdfjsLib.OPS.paintImageXObject,
-			pdfjsLib.OPS.paintImageMaskXObject,
-			pdfjsLib.OPS.paintXObject
-		];
-		if (operators.fnArray.some((op: number) => imageOps.includes(op))) {
-			hasImages = true;
+		// detect actual raster images via operator list
+		// only count paintImageXObject (real images), NOT paintXObject (which includes fonts/glyphs)
+		// LaTeX PDFs embed glyphs as XObjects, causing false positives with paintXObject
+		const imageOps = [pdfjsLib.OPS.paintImageXObject, pdfjsLib.OPS.paintImageMaskXObject];
+		for (let opIdx = 0; opIdx < operators.fnArray.length; opIdx++) {
+			if (imageOps.includes(operators.fnArray[opIdx])) {
+				// check if the image is large enough to be a real image (not a tiny glyph/icon)
+				// small images (<50px in either dimension) are likely font glyphs or bullets
+				const args = operators.argsArray[opIdx];
+				if (args && args[0]) {
+					try {
+						const imgObj = page.objs.get(args[0] as string) as {
+							width?: number;
+							height?: number;
+						} | null;
+						if (imgObj && (imgObj.width ?? 0) > 50 && (imgObj.height ?? 0) > 50) {
+							hasImages = true;
+							break;
+						}
+					} catch {
+						// if we can't inspect the image object, count it conservatively
+						hasImages = true;
+						break;
+					}
+				}
+			}
 		}
 
 		for (const item of textContent.items) {
