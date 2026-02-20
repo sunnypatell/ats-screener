@@ -13,6 +13,25 @@
 	// toggle between grid cards and detailed breakdown view
 	let activeView = $state<'cards' | 'detailed'>('cards');
 
+	// exports results as a JSON file download
+	function exportResults() {
+		const data = {
+			exportedAt: new Date().toISOString(),
+			mode: scoresStore.mode,
+			averageScore: avgScore,
+			passingCount: passCount,
+			totalSystems: totalCount,
+			results: scoresStore.results
+		};
+		const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `ats-scores-${new Date().toISOString().slice(0, 10)}.json`;
+		a.click();
+		URL.revokeObjectURL(url);
+	}
+
 	// color based on average score
 	function getAvgColor(score: number): string {
 		if (score >= 80) return '#22c55e';
@@ -121,7 +140,8 @@
 			{/if}
 		</div>
 
-		<!-- view toggle tabs -->
+		<!-- view toggle + export -->
+		<div class="toolbar">
 		<div class="view-toggle">
 			<button
 				class="toggle-btn"
@@ -165,6 +185,23 @@
 				</svg>
 				Detailed View
 			</button>
+		</div>
+
+		<button class="export-btn" onclick={exportResults} title="Export results as JSON">
+			<svg
+				width="16"
+				height="16"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+			>
+				<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+				<polyline points="7,10 12,15 17,10" />
+				<line x1="12" y1="15" x2="12" y2="3" />
+			</svg>
+			Export
+		</button>
 		</div>
 
 		<!-- card view: 6 ATS score cards in a grid -->
@@ -372,6 +409,39 @@
 	.fallback-notice svg {
 		flex-shrink: 0;
 		color: #eab308;
+	}
+
+	/* toolbar: toggle + export */
+	.toolbar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.export-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.5rem 1rem;
+		background: var(--glass-bg);
+		border: 1px solid var(--glass-border);
+		border-radius: var(--radius-md);
+		font-size: 0.82rem;
+		font-weight: 500;
+		color: var(--text-secondary);
+		cursor: pointer;
+		backdrop-filter: blur(var(--glass-blur));
+		transition:
+			border-color 0.2s ease,
+			color 0.2s ease,
+			background 0.2s ease;
+	}
+
+	.export-btn:hover {
+		border-color: rgba(6, 182, 212, 0.3);
+		color: var(--accent-cyan);
+		background: rgba(6, 182, 212, 0.05);
 	}
 
 	/* view toggle tabs */
