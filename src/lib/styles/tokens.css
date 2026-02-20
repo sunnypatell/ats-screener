@@ -22,7 +22,12 @@
 	--accent-amber: #f59e0b;
 	--accent-red: #ef4444;
 
-	--gradient-primary: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple));
+	--gradient-primary: linear-gradient(
+		135deg,
+		var(--accent-cyan),
+		var(--accent-blue),
+		var(--accent-purple)
+	);
 	--gradient-warm: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
 	--gradient-success: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
 	--gradient-danger: linear-gradient(135deg, var(--accent-red), var(--accent-pink));

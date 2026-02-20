@@ -7,12 +7,14 @@ we are committed to providing a friendly, safe, and welcoming environment for al
 ## standards
 
 **positive behavior:**
+
 - using welcoming and inclusive language
 - being respectful of differing viewpoints and experiences
 - gracefully accepting constructive criticism
 - focusing on what is best for the community
 
 **unacceptable behavior:**
+
 - harassment, trolling, or insulting/derogatory comments
 - publishing others' private information without consent
 - any conduct which could reasonably be considered inappropriate in a professional setting

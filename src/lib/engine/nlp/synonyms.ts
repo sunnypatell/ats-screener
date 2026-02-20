@@ -240,9 +240,7 @@ export function areSynonyms(term1: string, term2: string): boolean {
  */
 export function getSynonyms(term: string): string[] {
 	const canonical = getCanonical(term);
-	const group = SYNONYM_GROUPS.find(
-		(g) => g.some((v) => v.toLowerCase() === canonical)
-	);
+	const group = SYNONYM_GROUPS.find((g) => g.some((v) => v.toLowerCase() === canonical));
 	return group ? [...group] : [term];
 }
 

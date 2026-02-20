@@ -25,16 +25,16 @@ pnpm dev
 
 ### available scripts
 
-| command | what it does |
-|---|---|
-| `pnpm dev` | start development server |
-| `pnpm build` | build for production |
-| `pnpm preview` | preview production build |
-| `pnpm check` | run svelte-check type checking |
-| `pnpm lint` | run eslint |
-| `pnpm format` | format code with prettier |
-| `pnpm test` | run unit tests |
-| `pnpm test:e2e` | run end-to-end tests |
+| command         | what it does                          |
+| --------------- | ------------------------------------- |
+| `pnpm dev`      | start development server              |
+| `pnpm build`    | build for production                  |
+| `pnpm preview`  | preview production build              |
+| `pnpm check`    | run svelte-check type checking        |
+| `pnpm lint`     | run eslint                            |
+| `pnpm format`   | format code with prettier             |
+| `pnpm test`     | run unit tests                        |
+| `pnpm test:e2e` | run end-to-end tests                  |
 | `pnpm validate` | run all checks (types + lint + tests) |
 
 ## branching strategy
@@ -67,6 +67,7 @@ type(scope): description
 **types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`
 
 **rules:**
+
 - lowercase everything (except code references)
 - imperative mood ("added feature" not "add feature")
 - be descriptive but concise
@@ -90,6 +91,6 @@ write tests for any new engine logic. component tests are encouraged but not str
 ## pull requests
 
 - keep PRs focused on a single concern
-- write a clear description explaining the *why*, not just the *what*
+- write a clear description explaining the _why_, not just the _what_
 - reference related issues
 - make sure CI passes before requesting review

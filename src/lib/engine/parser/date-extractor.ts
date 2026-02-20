@@ -1,13 +1,33 @@
 import type { DateRange } from './types';
 
 const MONTH_NAMES = [
-	'january', 'february', 'march', 'april', 'may', 'june',
-	'july', 'august', 'september', 'october', 'november', 'december'
+	'january',
+	'february',
+	'march',
+	'april',
+	'may',
+	'june',
+	'july',
+	'august',
+	'september',
+	'october',
+	'november',
+	'december'
 ];
 
 const MONTH_ABBREVS = [
-	'jan', 'feb', 'mar', 'apr', 'may', 'jun',
-	'jul', 'aug', 'sep', 'oct', 'nov', 'dec'
+	'jan',
+	'feb',
+	'mar',
+	'apr',
+	'may',
+	'jun',
+	'jul',
+	'aug',
+	'sep',
+	'oct',
+	'nov',
+	'dec'
 ];
 
 const CURRENT_INDICATORS = /\b(present|current|now|ongoing|today)\b/i;
@@ -49,9 +69,7 @@ export function extractDateRanges(text: string): DateRange[] {
 			const end = start + match[0].length;
 
 			// skip if this overlaps with an already-matched span
-			const overlaps = matchedSpans.some(
-				([s, e]) => start < e && end > s
-			);
+			const overlaps = matchedSpans.some(([s, e]) => start < e && end > s);
 			if (overlaps) continue;
 
 			const range = parseDateRange(raw);

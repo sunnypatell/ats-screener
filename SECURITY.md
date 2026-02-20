@@ -27,9 +27,9 @@ this project processes resumes client-side in the browser. the only server-side 
 ## supported versions
 
 | version | supported |
-|---|---|
-| latest | yes |
-| older | no |
+| ------- | --------- |
+| latest  | yes       |
+| older   | no        |
 
 ## disclosure policy
 

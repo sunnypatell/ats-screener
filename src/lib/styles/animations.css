@@ -1,8 +1,12 @@
 /* === reusable keyframes === */
 
 @keyframes fade-in {
-	from { opacity: 0; }
-	to { opacity: 1; }
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
 }
 
 @keyframes fade-in-up {
@@ -50,44 +54,80 @@
 }
 
 @keyframes shimmer {
-	0% { background-position: -200% center; }
-	100% { background-position: 200% center; }
+	0% {
+		background-position: -200% center;
+	}
+	100% {
+		background-position: 200% center;
+	}
 }
 
 @keyframes gradient-shift {
-	0% { background-position: 0% 50%; }
-	50% { background-position: 100% 50%; }
-	100% { background-position: 0% 50%; }
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0% 50%;
+	}
 }
 
 @keyframes pulse-glow {
-	0%, 100% { opacity: 0.4; }
-	50% { opacity: 0.8; }
+	0%,
+	100% {
+		opacity: 0.4;
+	}
+	50% {
+		opacity: 0.8;
+	}
 }
 
 @keyframes rotate {
-	from { transform: rotate(0deg); }
-	to { transform: rotate(360deg); }
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
 }
 
 @keyframes border-trace {
-	0% { --border-angle: 0deg; }
-	100% { --border-angle: 360deg; }
+	0% {
+		--border-angle: 0deg;
+	}
+	100% {
+		--border-angle: 360deg;
+	}
 }
 
 /* mesh gradient animation for backgrounds */
 @keyframes mesh-drift {
-	0%, 100% {
-		background-position: 0% 50%, 100% 50%, 50% 100%;
+	0%,
+	100% {
+		background-position:
+			0% 50%,
+			100% 50%,
+			50% 100%;
 	}
 	25% {
-		background-position: 50% 0%, 0% 100%, 100% 50%;
+		background-position:
+			50% 0%,
+			0% 100%,
+			100% 50%;
 	}
 	50% {
-		background-position: 100% 50%, 50% 0%, 0% 50%;
+		background-position:
+			100% 50%,
+			50% 0%,
+			0% 50%;
 	}
 	75% {
-		background-position: 50% 100%, 100% 50%, 50% 0%;
+		background-position:
+			50% 100%,
+			100% 50%,
+			50% 0%;
 	}
 }
 
@@ -110,14 +150,30 @@
 	animation: fade-in-up var(--duration-slow) var(--ease-out-expo) both;
 }
 
-.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-children > *:nth-child(2) { animation-delay: 80ms; }
-.stagger-children > *:nth-child(3) { animation-delay: 160ms; }
-.stagger-children > *:nth-child(4) { animation-delay: 240ms; }
-.stagger-children > *:nth-child(5) { animation-delay: 320ms; }
-.stagger-children > *:nth-child(6) { animation-delay: 400ms; }
-.stagger-children > *:nth-child(7) { animation-delay: 480ms; }
-.stagger-children > *:nth-child(8) { animation-delay: 560ms; }
+.stagger-children > *:nth-child(1) {
+	animation-delay: 0ms;
+}
+.stagger-children > *:nth-child(2) {
+	animation-delay: 80ms;
+}
+.stagger-children > *:nth-child(3) {
+	animation-delay: 160ms;
+}
+.stagger-children > *:nth-child(4) {
+	animation-delay: 240ms;
+}
+.stagger-children > *:nth-child(5) {
+	animation-delay: 320ms;
+}
+.stagger-children > *:nth-child(6) {
+	animation-delay: 400ms;
+}
+.stagger-children > *:nth-child(7) {
+	animation-delay: 480ms;
+}
+.stagger-children > *:nth-child(8) {
+	animation-delay: 560ms;
+}
 
 /* reduced motion */
 @media (prefers-reduced-motion: reduce) {
