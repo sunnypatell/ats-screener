@@ -301,7 +301,7 @@
 
 	.hero-content {
 		position: relative;
-		max-width: 900px;
+		max-width: 1100px;
 		text-align: center;
 		opacity: 0;
 		transform: translateY(40px);
@@ -387,7 +387,7 @@
 	.hero-description {
 		font-size: clamp(1.05rem, 2vw, 1.3rem);
 		color: var(--text-secondary);
-		max-width: 640px;
+		max-width: 760px;
 		margin: 0 auto 2.5rem;
 		line-height: 1.7;
 	}

@@ -364,7 +364,7 @@
 
 	.container {
 		position: relative;
-		max-width: 900px;
+		max-width: 1100px;
 		margin: 0 auto;
 	}
 
@@ -411,7 +411,7 @@
 		font-size: clamp(1rem, 2vw, 1.2rem);
 		color: var(--text-secondary);
 		line-height: 1.7;
-		max-width: 700px;
+		max-width: 800px;
 	}
 
 	/* sections */
@@ -614,7 +614,7 @@
 	.open-source-card p {
 		font-size: 1rem;
 		color: var(--text-secondary);
-		max-width: 500px;
+		max-width: 600px;
 		margin: 0 auto 1.5rem;
 		line-height: 1.6;
 	}

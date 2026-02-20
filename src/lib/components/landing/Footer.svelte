@@ -27,7 +27,7 @@
 						</svg>
 					</a>
 					<a
-						href="https://linkedin.com/in/sunnypatell"
+						href="https://www.linkedin.com/in/sunny-patel-30b460204/"
 						target="_blank"
 						rel="noopener"
 						class="social-link"
@@ -115,7 +115,7 @@
 	}
 
 	.footer-inner {
-		max-width: 1200px;
+		max-width: 1400px;
 		margin: 0 auto;
 	}
 

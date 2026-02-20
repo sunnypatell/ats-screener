@@ -314,7 +314,7 @@
 
 	.container {
 		position: relative;
-		max-width: 1200px;
+		max-width: 1400px;
 		margin: 0 auto;
 	}
 
@@ -360,11 +360,11 @@
 		font-size: clamp(1rem, 2vw, 1.15rem);
 		color: var(--text-secondary);
 		line-height: 1.6;
-		max-width: 640px;
+		max-width: 760px;
 	}
 
 	.upload-section {
-		max-width: 640px;
+		max-width: 760px;
 	}
 
 	.warnings {

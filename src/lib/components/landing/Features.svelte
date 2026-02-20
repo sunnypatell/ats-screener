@@ -198,7 +198,7 @@
 <style>
 	.features {
 		padding: 8rem 2rem;
-		max-width: 1200px;
+		max-width: 1400px;
 		margin: 0 auto;
 		position: relative;
 	}
@@ -247,7 +247,7 @@
 	.section-description {
 		font-size: clamp(1rem, 2vw, 1.2rem);
 		color: var(--text-secondary);
-		max-width: 640px;
+		max-width: 760px;
 		margin: 0 auto;
 		line-height: 1.7;
 	}

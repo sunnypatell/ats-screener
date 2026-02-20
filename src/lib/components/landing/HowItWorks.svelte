@@ -139,7 +139,7 @@
 <style>
 	.how-it-works {
 		padding: 8rem 2rem;
-		max-width: 900px;
+		max-width: 1100px;
 		margin: 0 auto;
 	}
 
