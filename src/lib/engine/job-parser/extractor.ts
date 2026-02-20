@@ -174,7 +174,8 @@ function detectRoleType(text: string): string {
 		return 'engineering';
 	if (/\b(?:sales|account executive|business development)\b/.test(text)) return 'sales';
 	if (/\b(?:market|brand|content|seo|social media)\b/.test(text)) return 'marketing';
-	if (/\b(?:financ|account|audit|tax|treasury)\b/.test(text)) return 'finance';
+	if (/\b(?:financial|finance|accounting|audit|tax|treasury|cpa|cfa)\b/.test(text))
+		return 'finance';
 	if (/\b(?:nurse|physician|clinical|patient|healthcare)\b/.test(text)) return 'healthcare';
 	if (/\b(?:legal|attorney|counsel|compliance)\b/.test(text)) return 'legal';
 	if (/\b(?:operat|supply chain|logistics|procurement)\b/.test(text)) return 'operations';
