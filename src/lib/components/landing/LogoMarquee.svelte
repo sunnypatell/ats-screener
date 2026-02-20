@@ -51,7 +51,7 @@
 
 <style>
 	.marquee-section {
-		padding: 4rem 0 2rem;
+		padding: 5rem 0 5rem;
 		text-align: center;
 		position: relative;
 		overflow: hidden;
@@ -177,7 +177,7 @@
 
 	@media (max-width: 768px) {
 		.marquee-section {
-			padding: 2.5rem 0 1rem;
+			padding: 3rem 0 3rem;
 		}
 
 		.logo-wordmark {
