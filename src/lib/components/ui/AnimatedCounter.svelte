@@ -19,7 +19,7 @@
 
 	let displayValue = $state(0);
 	let hasStarted = $state(false);
-	let containerEl: HTMLDivElement;
+	let containerEl: HTMLSpanElement;
 
 	onMount(() => {
 		// use IntersectionObserver to only animate when visible

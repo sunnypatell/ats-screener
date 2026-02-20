@@ -7,6 +7,7 @@
 	import { scoresStore } from '$stores/scores.svelte';
 	import { parseResume } from '$engine/parser';
 	import { scoreResume } from '$engine/scorer/engine';
+	import { scoreLLM } from '$engine/llm';
 	import type { ScoringInput } from '$engine/scorer/types';
 
 	// tracks whether the scan button has been clicked at least once
@@ -50,7 +51,7 @@
 		};
 	}
 
-	// runs the scoring engine against all 6 ATS profiles
+	// runs scoring: LLM-powered (primary) → rule-based (fallback)
 	async function handleScan() {
 		if (!resumeStore.isReady) return;
 
@@ -58,9 +59,23 @@
 		scoresStore.startScoring();
 
 		try {
+			const resume = resumeStore.resume!;
+			const jd = scoresStore.hasJobDescription ? scoresStore.jobDescription : undefined;
+
+			// try LLM-powered scoring first (Gemini → Groq → Cerebras)
+			const llmResult = await scoreLLM(resume.rawText, jd);
+
+			if (llmResult && llmResult.results.length > 0) {
+				scoresStore.finishScoring(llmResult.results);
+				scoresStore.finishAnalyzing(null, false);
+				return;
+			}
+
+			// all LLM providers failed, fall back to deterministic rule-based scoring
 			const input = buildScoringInput();
 			const results = scoreResume(input);
 			scoresStore.finishScoring(results);
+			scoresStore.finishAnalyzing(null, true);
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : 'scoring failed';
 			scoresStore.setError(msg);

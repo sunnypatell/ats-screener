@@ -1,37 +1,108 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import {
-	buildJDAnalysisPrompt,
-	buildSemanticMatchPrompt,
-	buildSuggestionsPrompt
-} from '$engine/llm/prompts';
-import type { LLMRequestPayload } from '$engine/llm/types';
+import { buildFullScoringPrompt, buildJDAnalysisPrompt } from '$engine/llm/prompts';
 
-const GEMINI_API_URL =
-	'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+// provider configuration: Gemini → Groq → Cerebras fallback chain
+interface LLMProvider {
+	name: string;
+	buildRequest: (prompt: string, apiKey: string) => { url: string; init: RequestInit };
+	extractText: (response: unknown) => string;
+}
 
-// simple in-memory rate limiter (per-IP, resets on function cold start)
+const PROVIDERS: LLMProvider[] = [
+	{
+		name: 'gemini',
+		buildRequest: (prompt, apiKey) => ({
+			url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+			init: {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					contents: [{ parts: [{ text: prompt }] }],
+					generationConfig: {
+						temperature: 0.3,
+						topP: 0.85,
+						maxOutputTokens: 4096,
+						responseMimeType: 'application/json'
+					}
+				})
+			}
+		}),
+		extractText: (data: unknown) => {
+			const d = data as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
+			return d.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+		}
+	},
+	{
+		name: 'groq',
+		buildRequest: (prompt, apiKey) => ({
+			url: 'https://api.groq.com/openai/v1/chat/completions',
+			init: {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${apiKey}`
+				},
+				body: JSON.stringify({
+					model: 'llama-3.3-70b-versatile',
+					messages: [{ role: 'user', content: prompt }],
+					temperature: 0.3,
+					max_tokens: 4096,
+					response_format: { type: 'json_object' }
+				})
+			}
+		}),
+		extractText: (data: unknown) => {
+			const d = data as { choices?: { message?: { content?: string } }[] };
+			return d.choices?.[0]?.message?.content ?? '';
+		}
+	},
+	{
+		name: 'cerebras',
+		buildRequest: (prompt, apiKey) => ({
+			url: 'https://api.cerebras.ai/v1/chat/completions',
+			init: {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${apiKey}`
+				},
+				body: JSON.stringify({
+					model: 'llama-3.3-70b',
+					messages: [{ role: 'user', content: prompt }],
+					temperature: 0.3,
+					max_tokens: 4096,
+					response_format: { type: 'json_object' }
+				})
+			}
+		}),
+		extractText: (data: unknown) => {
+			const d = data as { choices?: { message?: { content?: string } }[] };
+			return d.choices?.[0]?.message?.content ?? '';
+		}
+	}
+];
+
+// simple in-memory rate limiter per IP
 const rateLimits = new Map<string, { count: number; resetAt: number }>();
-const MAX_REQUESTS_PER_MINUTE = 10;
-const MAX_REQUESTS_PER_DAY = 100;
 const dailyLimits = new Map<string, { count: number; resetAt: number }>();
+const MAX_RPM = 10;
+const MAX_RPD = 200;
 
 function checkRateLimit(ip: string): boolean {
 	const now = Date.now();
 
-	// per-minute check
 	const minute = rateLimits.get(ip);
 	if (minute && now < minute.resetAt) {
-		if (minute.count >= MAX_REQUESTS_PER_MINUTE) return false;
+		if (minute.count >= MAX_RPM) return false;
 		minute.count++;
 	} else {
 		rateLimits.set(ip, { count: 1, resetAt: now + 60_000 });
 	}
 
-	// per-day check
 	const day = dailyLimits.get(ip);
 	if (day && now < day.resetAt) {
-		if (day.count >= MAX_REQUESTS_PER_DAY) return false;
+		if (day.count >= MAX_RPD) return false;
 		day.count++;
 	} else {
 		dailyLimits.set(ip, { count: 1, resetAt: now + 86_400_000 });
@@ -40,11 +111,66 @@ function checkRateLimit(ip: string): boolean {
 	return true;
 }
 
-export const POST: RequestHandler = async ({ request, platform }) => {
-	const apiKey = platform?.env?.GEMINI_API_KEY ?? process.env.GEMINI_API_KEY;
+// tries each provider in sequence until one succeeds
+async function callLLM(
+	prompt: string,
+	env: Record<string, string>
+): Promise<{ text: string; provider: string } | null> {
+	const keyMap: Record<string, string> = {
+		gemini: env.GEMINI_API_KEY ?? '',
+		groq: env.GROQ_API_KEY ?? '',
+		cerebras: env.CEREBRAS_API_KEY ?? ''
+	};
 
-	if (!apiKey) {
-		return json({ error: 'LLM service not configured' }, { status: 503 });
+	for (const provider of PROVIDERS) {
+		const apiKey = keyMap[provider.name];
+		if (!apiKey) continue;
+
+		try {
+			const { url, init } = provider.buildRequest(prompt, apiKey);
+			const response = await fetch(url, init);
+
+			if (!response.ok) {
+				console.warn(`${provider.name} returned ${response.status}, trying next provider`);
+				continue;
+			}
+
+			const data = await response.json();
+			const text = provider.extractText(data);
+
+			if (!text) {
+				console.warn(`${provider.name} returned empty text, trying next provider`);
+				continue;
+			}
+
+			return { text, provider: provider.name };
+		} catch (err) {
+			console.warn(`${provider.name} failed:`, err);
+			continue;
+		}
+	}
+
+	return null;
+}
+
+interface RequestBody {
+	mode: 'full-score' | 'analyze-jd';
+	resumeText?: string;
+	jobDescription?: string;
+}
+
+export const POST: RequestHandler = async ({ request, platform }) => {
+	// collect all API keys from platform env or process env
+	const platformEnv = (platform?.env ?? {}) as Record<string, string>;
+	const env: Record<string, string> = {
+		GEMINI_API_KEY: platformEnv.GEMINI_API_KEY ?? process.env.GEMINI_API_KEY ?? '',
+		GROQ_API_KEY: platformEnv.GROQ_API_KEY ?? process.env.GROQ_API_KEY ?? '',
+		CEREBRAS_API_KEY: platformEnv.CEREBRAS_API_KEY ?? process.env.CEREBRAS_API_KEY ?? ''
+	};
+
+	const hasAnyKey = Object.values(env).some((v) => v.length > 0);
+	if (!hasAnyKey) {
+		return json({ error: 'no LLM providers configured', fallback: true }, { status: 503 });
 	}
 
 	// rate limiting
@@ -55,75 +181,46 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		return json({ error: 'rate limit exceeded' }, { status: 429 });
 	}
 
-	let payload: LLMRequestPayload;
+	let body: RequestBody;
 	try {
-		payload = await request.json();
+		body = await request.json();
 	} catch {
 		throw error(400, 'invalid JSON body');
 	}
 
-	if (!payload.jobDescription || !payload.resumeText) {
-		throw error(400, 'resumeText and jobDescription are required');
-	}
-
 	// build the prompt based on mode
 	let prompt: string;
-	switch (payload.mode) {
+
+	switch (body.mode) {
+		case 'full-score':
+			if (!body.resumeText) throw error(400, 'resumeText is required');
+			prompt = buildFullScoringPrompt(body.resumeText, body.jobDescription);
+			break;
 		case 'analyze-jd':
-			prompt = buildJDAnalysisPrompt(payload.jobDescription);
-			break;
-		case 'semantic-match':
-			prompt = buildSemanticMatchPrompt(
-				payload.resumeSkills,
-				payload.jobDescription,
-				payload.resumeText
-			);
-			break;
-		case 'suggestions':
-			prompt = buildSuggestionsPrompt(payload.resumeText, payload.jobDescription, 50);
+			if (!body.jobDescription) throw error(400, 'jobDescription is required');
+			prompt = buildJDAnalysisPrompt(body.jobDescription);
 			break;
 		default:
 			throw error(400, 'invalid mode');
 	}
 
+	const result = await callLLM(prompt, env);
+
+	if (!result) {
+		return json({ error: 'all LLM providers failed', fallback: true }, { status: 503 });
+	}
+
 	try {
-		const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				contents: [{ parts: [{ text: prompt }] }],
-				generationConfig: {
-					temperature: 0.2,
-					topP: 0.8,
-					maxOutputTokens: 2048
-				}
-			})
-		});
-
-		if (!response.ok) {
-			const errText = await response.text();
-			console.error('Gemini API error:', response.status, errText);
-
-			if (response.status === 429) {
-				return json({ error: 'API quota exceeded' }, { status: 429 });
-			}
-			return json({ error: 'LLM service error' }, { status: 502 });
-		}
-
-		const result = await response.json();
-		const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-
-		if (!text) {
-			return json({ error: 'empty response from LLM' }, { status: 502 });
-		}
-
-		// parse JSON from response (strip any markdown fences if present)
-		const cleaned = text.replace(/```json\n?|\n?```/g, '').trim();
+		const cleaned = result.text.replace(/```json\n?|\n?```/g, '').trim();
 		const parsed = JSON.parse(cleaned);
 
-		return json(parsed);
+		return json({
+			...parsed,
+			_provider: result.provider,
+			_fallback: false
+		});
 	} catch (err) {
-		console.error('LLM request failed:', err);
-		return json({ error: 'failed to process LLM response' }, { status: 500 });
+		console.error(`failed to parse ${result.provider} response:`, err);
+		return json({ error: 'failed to parse LLM response', fallback: true }, { status: 502 });
 	}
 };
