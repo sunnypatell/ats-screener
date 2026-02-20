@@ -5,6 +5,7 @@
 	import NumberFlow from '@number-flow/svelte';
 	import TextGenerateEffect from '$components/ui/TextGenerateEffect.svelte';
 	import MovingBorder from '$components/ui/MovingBorder.svelte';
+	import EncryptedText from '$components/ui/EncryptedText.svelte';
 
 	// delays fade-in until hydrated to prevent flash
 	let mounted = $state(false);
@@ -25,6 +26,14 @@
 
 	// ATS system names for the FlipWords component (short names only to prevent layout shift)
 	const systems = ['Workday', 'Taleo', 'iCIMS', 'Greenhouse', 'Lever', 'SAP SF'];
+
+	// randomize mock scores on each page load so they don't look predetermined
+	function randScore(min: number, max: number): number {
+		return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
+	const mockWorkday = randScore(82, 96);
+	const mockTaleo = randScore(62, 78);
+	const mockGreenhouse = randScore(78, 92);
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -56,6 +65,11 @@
 			<span>Free Forever &bull; No Sign-Up &bull; No Limits</span>
 		</div>
 
+		<!-- encrypted text reveal tagline -->
+		<div class="encrypted-tagline">
+			<EncryptedText text="Crack the screening." />
+		</div>
+
 		<!-- main heading with sparkles effect on the gradient text -->
 		<h1 class="hero-title">
 			Your Resume vs.
@@ -67,10 +81,10 @@
 
 		<!-- description with FlipWords cycling through ATS names -->
 		<p class="hero-description">
-			<TextGenerateEffect text="Simulates how" delay={400} />
+			<TextGenerateEffect text="See how" delay={400} />
 			<strong class="flip-system"><FlipWords words={systems} interval={2200} /></strong>
 			<TextGenerateEffect
-				text="and 5 other enterprise platforms parse, filter, and score your resume. Powered by documented ATS behavior, not generic algorithms."
+				text="and other enterprise HCMS platforms parse, filter, and score your resume. Powered by documented ATS behavior, not generic algorithms."
 				delay={600}
 			/>
 		</p>
@@ -115,7 +129,7 @@
 				<div class="preview-card-inner">
 					<span class="preview-system">Workday</span>
 					<span class="preview-score score-high">
-						<NumberFlow value={92} />
+						<NumberFlow value={mockWorkday} />
 					</span>
 				</div>
 			</MovingBorder>
@@ -123,7 +137,7 @@
 				<div class="preview-card-inner">
 					<span class="preview-system">Taleo</span>
 					<span class="preview-score score-mid">
-						<NumberFlow value={74} />
+						<NumberFlow value={mockTaleo} />
 					</span>
 				</div>
 			</MovingBorder>
@@ -131,7 +145,7 @@
 				<div class="preview-card-inner">
 					<span class="preview-system">Greenhouse</span>
 					<span class="preview-score score-high">
-						<NumberFlow value={88} />
+						<NumberFlow value={mockGreenhouse} />
 					</span>
 				</div>
 			</MovingBorder>
@@ -345,6 +359,16 @@
 		}
 	}
 
+	.encrypted-tagline {
+		font-size: clamp(0.85rem, 1.5vw, 1rem);
+		color: var(--accent-cyan);
+		text-transform: uppercase;
+		letter-spacing: 0.15em;
+		font-weight: 600;
+		margin-bottom: 1rem;
+		opacity: 0.9;
+	}
+
 	.hero-title {
 		font-size: clamp(2.75rem, 8vw, 5.5rem);
 		font-weight: 800;
@@ -390,7 +414,6 @@
 		color: var(--accent-cyan);
 		font-weight: 700;
 		display: inline-block;
-		min-width: 7ch;
 		text-align: left;
 	}
 
