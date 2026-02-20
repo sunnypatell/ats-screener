@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-	<title>ATS Screener - Free Resume Scanner for Real HCMS Platforms</title>
+	<title>ATS Screener</title>
 </svelte:head>
 
 <Navbar />

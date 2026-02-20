@@ -39,7 +39,8 @@ export default ts.config(
 			'.wrangler/',
 			'coverage/',
 			'playwright-report/',
-			'test-results/'
+			'test-results/',
+			'docs/'
 		]
 	}
 );

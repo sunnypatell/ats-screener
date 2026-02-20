@@ -70,13 +70,13 @@ Every layer was chosen for this specific use case. No defaults, no boilerplate s
 | **PDF Parsing**  | pdfjs-dist (Web Worker)                                | Mozilla-maintained, battle-tested, fully client-side.                                                                           |
 | **DOCX Parsing** | mammoth                                                | Client-side DOCX to text extraction.                                                                                            |
 | **NLP**          | Custom TF-IDF + tokenizer + skills taxonomy            | Lightweight, runs in browser, supports 8+ industries.                                                                           |
-| **LLM**          | Google Gemini 2.0 Flash (free tier)                    | 1,500 req/day for semantic JD analysis and smart suggestions.                                                                   |
-| **LLM Proxy**    | SvelteKit +server.ts endpoints                         | API key stays server-side. Graceful fallback when quota exhausted.                                                              |
+| **LLM**          | Gemini 2.5 Flash Lite + Groq + Cerebras fallback chain | 3-provider fallback for high availability. All free tier.                                                                       |
+| **LLM Proxy**    | SvelteKit +server.ts endpoints                         | API key stays server-side. Rate limiting, input validation, security headers.                                                   |
 | **Hosting**      | Cloudflare Pages                                       | Free: 100k function invocations/day, unlimited static bandwidth.                                                                |
 | **Testing**      | Vitest + Playwright + @testing-library/svelte          | 106 unit/integration tests. E2E for critical flows.                                                                             |
 | **CI**           | GitHub Actions                                         | Lint + typecheck + test + build on every push.                                                                                  |
 
-**Total cost: $0** at any scale.
+**Total cost: $0** at any scale. The live instance at [ats-screener.pages.dev](https://ats-screener.pages.dev) is hosted by the developer using their own API keys.
 
 ## Project Structure
 
@@ -91,7 +91,7 @@ src/
 │   │   ├── landing/              # Hero, Features, HowItWorks, Footer
 │   │   ├── scoring/              # ScoreDashboard, ScoreCard
 │   │   ├── upload/               # ResumeUploader, JobDescriptionInput
-│   │   └── ui/                   # Logo, Navbar, FlipWords, NumberTicker,
+│   │   └── ui/                   # Logo, Navbar, FlipWords, NumberTicker, EncryptedText,
 │   │                             # TextGenerateEffect, SparklesText, MovingBorder
 │   ├── engine/
 │   │   ├── parser/               # PDF/DOCX parsing, section detection, contact extraction
@@ -168,6 +168,7 @@ The skills taxonomy and NLP engine support any industry:
 Dark glassmorphic aesthetic with Aceternity/Magic UI-inspired effects built natively in Svelte:
 
 - **FlipWords**: smooth word cycling with blur transitions
+- **EncryptedText**: character scramble reveal animation
 - **NumberTicker**: spring-physics animated counters
 - **TextGenerateEffect**: word-by-word reveal with blur-to-sharp
 - **SparklesText**: floating sparkle particles
