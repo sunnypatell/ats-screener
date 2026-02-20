@@ -30,6 +30,7 @@
 	onmouseenter={() => (isHovered = true)}
 	onmouseleave={() => (isHovered = false)}
 	onmousemove={handleMouseMove}
+	role="presentation"
 	style="
 		--glow-x: {mouseX}px;
 		--glow-y: {mouseY}px;

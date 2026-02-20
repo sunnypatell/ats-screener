@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-
 	interface DockItem {
 		label: string;
 		icon: string;
@@ -23,7 +21,22 @@
 
 	let dockEl: HTMLDivElement;
 	let mouseX = $state<number | null>(null);
-	let sizes = $state<number[]>(items.map(() => baseSize));
+
+	let sizes = $derived.by(() => {
+		if (mouseX === null) return items.map(() => baseSize);
+		return items.map((_, i) => {
+			if (!dockEl) return baseSize;
+			const itemEl = dockEl.children[i] as HTMLElement;
+			if (!itemEl) return baseSize;
+			const itemRect = itemEl.getBoundingClientRect();
+			const dockRect = dockEl.getBoundingClientRect();
+			const itemCenter = itemRect.left - dockRect.left + itemRect.width / 2;
+			const dist = Math.abs(mouseX! - itemCenter);
+			if (dist > distance) return baseSize;
+			const scale = 1 + magnification * (1 - dist / distance);
+			return Math.min(baseSize * scale, maxSize);
+		});
+	});
 
 	function handleMouseMove(e: MouseEvent) {
 		if (!dockEl) return;
@@ -34,29 +47,6 @@
 	function handleMouseLeave() {
 		mouseX = null;
 	}
-
-	$effect(() => {
-		if (mouseX === null) {
-			sizes = items.map(() => baseSize);
-			return;
-		}
-
-		sizes = items.map((_, i) => {
-			if (!dockEl) return baseSize;
-			const itemEl = dockEl.children[i] as HTMLElement;
-			if (!itemEl) return baseSize;
-
-			const itemRect = itemEl.getBoundingClientRect();
-			const dockRect = dockEl.getBoundingClientRect();
-			const itemCenter = itemRect.left - dockRect.left + itemRect.width / 2;
-			const dist = Math.abs(mouseX! - itemCenter);
-
-			if (dist > distance) return baseSize;
-
-			const scale = 1 + magnification * (1 - dist / distance);
-			return Math.min(baseSize * scale, maxSize);
-		});
-	});
 </script>
 
 <div

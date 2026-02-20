@@ -13,7 +13,7 @@
 		gradientColors?: string[];
 	} = $props();
 
-	const gradient = gradientColors.join(', ');
+	const gradient = $derived(gradientColors.join(', '));
 </script>
 
 <div

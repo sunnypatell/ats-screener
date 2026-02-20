@@ -12,8 +12,8 @@
 	} = $props();
 
 	let isPaused = $state(false);
-	const animationDuration = `${speed}s`;
-	const animationDirection = direction === 'left' ? 'normal' : 'reverse';
+	const animationDuration = $derived(`${speed}s`);
+	const animationDirection = $derived(direction === 'left' ? 'normal' : 'reverse');
 </script>
 
 <div

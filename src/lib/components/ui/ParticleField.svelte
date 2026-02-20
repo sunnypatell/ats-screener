@@ -11,16 +11,18 @@
 		speed?: number;
 	} = $props();
 
-	const particles = Array.from({ length: count }, () => ({
-		x: Math.random() * 100,
-		y: Math.random() * 100,
-		size: 0.5 + Math.random() * maxSize,
-		duration: (20 + Math.random() * 40) / speed,
-		delay: Math.random() * -30,
-		driftX: -20 + Math.random() * 40,
-		driftY: -20 + Math.random() * 40,
-		opacity: 0.2 + Math.random() * 0.6
-	}));
+	const particles = $derived(
+		Array.from({ length: count }, () => ({
+			x: Math.random() * 100,
+			y: Math.random() * 100,
+			size: 0.5 + Math.random() * maxSize,
+			duration: (20 + Math.random() * 40) / speed,
+			delay: Math.random() * -30,
+			driftX: -20 + Math.random() * 40,
+			driftY: -20 + Math.random() * 40,
+			opacity: 0.2 + Math.random() * 0.6
+		}))
+	);
 </script>
 
 <div class="particle-field" aria-hidden="true">

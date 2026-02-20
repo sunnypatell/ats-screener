@@ -28,6 +28,7 @@
 	onmouseenter={() => (isVisible = true)}
 	onmouseleave={() => (isVisible = false)}
 	onmousemove={handleMouseMove}
+	role="presentation"
 >
 	<div
 		class="spotlight-effect"

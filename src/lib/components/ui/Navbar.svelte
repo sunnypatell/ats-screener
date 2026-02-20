@@ -16,6 +16,7 @@
 		<div class="nav-links" class:open={mobileOpen}>
 			<a href="/" class="nav-link" class:active={currentPath === '/'}>Home</a>
 			<a href="/scanner" class="nav-link" class:active={currentPath === '/scanner'}>Scanner</a>
+			<a href="/about" class="nav-link" class:active={currentPath === '/about'}>About</a>
 			<a
 				href="https://github.com/sunnypatell/ats-screener"
 				target="_blank"

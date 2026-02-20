@@ -1,5 +1,11 @@
 <script lang="ts">
-	let { class: className = '' }: { class?: string } = $props();
+	let {
+		children,
+		class: className = ''
+	}: {
+		children: import('svelte').Snippet;
+		class?: string;
+	} = $props();
 
 	// static sparkle positions - no intervals, no re-renders, pure CSS animation
 	const sparkles = Array.from({ length: 5 }, (_, i) => ({
@@ -12,7 +18,7 @@
 </script>
 
 <span class="sparkles-text {className}">
-	<span class="sparkles-content"><slot /></span>
+	<span class="sparkles-content">{@render children()}</span>
 	<span class="sparkles-container" aria-hidden="true">
 		{#each sparkles as sparkle (sparkle.id)}
 			<svg

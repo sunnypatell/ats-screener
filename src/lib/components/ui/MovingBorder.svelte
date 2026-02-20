@@ -1,9 +1,11 @@
 <script lang="ts">
 	let {
+		children,
 		borderRadius = '16px',
 		duration = 4000,
 		class: className = ''
 	}: {
+		children: import('svelte').Snippet;
 		borderRadius?: string;
 		duration?: number;
 		class?: string;
@@ -15,7 +17,7 @@
 	style="--border-radius: {borderRadius}; --duration: {duration}ms;"
 >
 	<div class="border-content">
-		<slot />
+		{@render children()}
 	</div>
 </div>
 

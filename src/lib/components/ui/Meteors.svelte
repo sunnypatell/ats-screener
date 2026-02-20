@@ -7,13 +7,13 @@
 		color?: string;
 	} = $props();
 
-	const meteors = Array.from({ length: count }, () => ({
+	const meteors = $derived(Array.from({ length: count }, () => ({
 		left: Math.random() * 100,
 		delay: Math.random() * 10,
 		duration: 1.5 + Math.random() * 3,
 		size: 1 + Math.random() * 1.5,
 		top: -10 - Math.random() * 30
-	}));
+	})));
 </script>
 
 <div class="meteors-container" aria-hidden="true">
