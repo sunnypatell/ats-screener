@@ -2,7 +2,11 @@
 	import { onMount } from 'svelte';
 
 	// the full text to reveal word-by-word
-	let { text, class: className = '', delay = 0 }: { text: string; class?: string; delay?: number } = $props();
+	let {
+		text,
+		class: className = '',
+		delay = 0
+	}: { text: string; class?: string; delay?: number } = $props();
 
 	// splits into words, each fades in sequentially
 	const words = $derived(text.split(' '));
@@ -24,10 +28,7 @@
 
 <span class="text-generate {className}">
 	{#each words as word, i}
-		<span
-			class="word"
-			class:visible={started && i < visibleCount}
-		>{word}{' '}</span>
+		<span class="word" class:visible={started && i < visibleCount}>{word}{' '}</span>
 	{/each}
 </span>
 

@@ -4,7 +4,9 @@
 	let { class: className = '' }: { class?: string } = $props();
 
 	// generates random sparkle positions that animate continuously
-	let sparkles = $state<Array<{ id: number; x: number; y: number; size: number; delay: number }>>([]);
+	let sparkles = $state<Array<{ id: number; x: number; y: number; size: number; delay: number }>>(
+		[]
+	);
 
 	onMount(() => {
 		// create initial sparkles
@@ -38,7 +40,8 @@
 		{#each sparkles as sparkle (sparkle.id)}
 			<svg
 				class="sparkle"
-				style="left: {sparkle.x}%; top: {sparkle.y}%; width: {sparkle.size * 4}px; height: {sparkle.size * 4}px; animation-delay: {sparkle.delay}s;"
+				style="left: {sparkle.x}%; top: {sparkle.y}%; width: {sparkle.size *
+					4}px; height: {sparkle.size * 4}px; animation-delay: {sparkle.delay}s;"
 				viewBox="0 0 24 24"
 				fill="currentColor"
 			>
@@ -76,7 +79,8 @@
 	}
 
 	@keyframes sparkle-pulse {
-		0%, 100% {
+		0%,
+		100% {
 			opacity: 0;
 			transform: scale(0) rotate(0deg);
 		}

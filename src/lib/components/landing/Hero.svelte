@@ -67,10 +67,7 @@
 
 		<!-- description with FlipWords cycling through ATS names -->
 		<p class="hero-description">
-			<TextGenerateEffect
-				text="See exactly how"
-				delay={400}
-			/>
+			<TextGenerateEffect text="See exactly how" delay={400} />
 			<strong class="flip-system"><FlipWords words={systems} interval={2200} /></strong>
 			<TextGenerateEffect
 				text="and 5 other enterprise platforms parse, filter, and score your resume. Powered by researched ATS profiles, not generic algorithms."
@@ -259,7 +256,8 @@
 	}
 
 	@keyframes particle-float {
-		0%, 100% {
+		0%,
+		100% {
 			transform: translateY(0) translateX(0);
 			opacity: 0;
 		}
@@ -279,7 +277,8 @@
 	.grid-overlay {
 		position: absolute;
 		inset: 0;
-		background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+		background-image:
+			linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
 			linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
 		background-size: 60px 60px;
 		mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black, transparent);

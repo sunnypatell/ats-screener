@@ -163,7 +163,7 @@ describe('job description parser', () => {
 		expect(parsed.extractedSkills.length).toBeGreaterThan(0);
 		expect(parsed.requiredSkills.length).toBeGreaterThan(0);
 		expect(parsed.experienceLevel).toBe('senior');
-		expect(parsed.educationRequirement).toContain("Bachelor");
+		expect(parsed.educationRequirement).toContain('Bachelor');
 		expect(parsed.roleType).toBe('engineering');
 
 		console.log('--- parsed JD ---');
@@ -213,7 +213,7 @@ describe('job description parser', () => {
 		const parsed = parseJobDescription(jd);
 		expect(parsed.experienceLevel).toBe('senior');
 		expect(parsed.roleType).toBe('finance');
-		expect(parsed.educationRequirement).toContain("Master");
+		expect(parsed.educationRequirement).toContain('Master');
 
 		console.log('--- finance JD ---');
 		console.log(`  skills: ${parsed.extractedSkills.join(', ')}`);

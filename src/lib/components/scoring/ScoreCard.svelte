@@ -63,7 +63,14 @@
 		<div class="score-ring">
 			<svg viewBox="0 0 100 100" width="76" height="76">
 				<!-- background track -->
-				<circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="6" />
+				<circle
+					cx="50"
+					cy="50"
+					r="42"
+					fill="none"
+					stroke="rgba(255,255,255,0.05)"
+					stroke-width="6"
+				/>
 				<!-- colored progress arc -->
 				<circle
 					cx="50"
@@ -89,21 +96,36 @@
 	<div class="card-status">
 		{#if result.passesFilter}
 			<span class="status-badge pass">
-				<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+				<svg
+					width="12"
+					height="12"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="3"
+				>
 					<polyline points="20,6 9,17 4,12" />
 				</svg>
 				Likely to Pass
 			</span>
 		{:else}
 			<span class="status-badge fail">
-				<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+				<svg
+					width="12"
+					height="12"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="3"
+				>
 					<line x1="18" y1="6" x2="6" y2="18" />
 					<line x1="6" y1="6" x2="18" y2="18" />
 				</svg>
 				May Be Filtered
 			</span>
 		{/if}
-		<span class="score-label" style="color: {scoreColor}">{getScoreLabel(result.overallScore)}</span>
+		<span class="score-label" style="color: {scoreColor}">{getScoreLabel(result.overallScore)}</span
+		>
 	</div>
 
 	<!-- category breakdown bars -->

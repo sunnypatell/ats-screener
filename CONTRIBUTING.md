@@ -1,61 +1,67 @@
-# contributing
+# Contributing
 
-thanks for wanting to contribute to ats screener. here's everything you need to get started.
+Thanks for wanting to contribute to ATS Screener. Here's everything you need to get started.
 
-## development setup
+## Development Setup
 
-### prerequisites
+### Prerequisites
 
-- [node.js](https://nodejs.org) v20+
+- [Node.js](https://nodejs.org) v20+
 - [pnpm](https://pnpm.io) v10+
 
-### getting started
+### Getting Started
 
 ```bash
-# clone the repo
+# Clone the repo
 git clone https://github.com/sunnypatell/ats-screener.git
 cd ats-screener
 
-# install dependencies
+# Install dependencies
 pnpm install
 
-# start dev server
+# Start dev server
 pnpm dev
 ```
 
-### available scripts
+### Available Scripts
 
-| command         | what it does                          |
+| Command         | Description                           |
 | --------------- | ------------------------------------- |
-| `pnpm dev`      | start development server              |
-| `pnpm build`    | build for production                  |
-| `pnpm preview`  | preview production build              |
-| `pnpm check`    | run svelte-check type checking        |
-| `pnpm lint`     | run eslint                            |
-| `pnpm format`   | format code with prettier             |
-| `pnpm test`     | run unit tests                        |
-| `pnpm test:e2e` | run end-to-end tests                  |
-| `pnpm validate` | run all checks (types + lint + tests) |
+| `pnpm dev`      | Start development server              |
+| `pnpm build`    | Build for production                  |
+| `pnpm preview`  | Preview production build              |
+| `pnpm check`    | Run svelte-check type checking        |
+| `pnpm lint`     | Run ESLint                            |
+| `pnpm format`   | Format code with Prettier             |
+| `pnpm test`     | Run unit tests (106 tests)            |
+| `pnpm test:e2e` | Run end-to-end tests with Playwright  |
+| `pnpm validate` | Run all checks (types + lint + tests) |
 
-## branching strategy
+## Architecture Overview
 
-we use a standard git flow:
+```
+src/lib/engine/          # Core logic (no UI dependencies)
+├── parser/              # PDF/DOCX text extraction, section detection
+├── scorer/              # Scoring engine + 6 ATS profiles
+│   └── profiles/        # Workday, Taleo, iCIMS, Greenhouse, Lever, SAP
+├── nlp/                 # Tokenizer, TF-IDF, synonyms, skills taxonomy
+├── llm/                 # LLM client, prompts, fallback
+└── job-parser/          # Job description requirement extraction
+```
+
+The engine is fully decoupled from the UI. All scoring logic is pure TypeScript functions with no framework dependencies. This makes it easy to test and reason about.
+
+## Branching Strategy
+
+For early development, we push directly to `main`. As the project matures:
 
 - `main` - production, always stable
-- `dev` - integration branch, where features merge into
+- `dev` - integration branch for feature merges
 - `feature/*` - individual feature branches off `dev`
 
-### workflow
+## Commit Conventions
 
-1. create a feature branch off `dev`: `git checkout -b feature/your-feature dev`
-2. make your changes, commit using conventional commits
-3. push and open a PR against `dev`
-4. once CI passes and review is approved, squash merge into `dev`
-5. periodically, `dev` gets merged into `main` as a release
-
-## commit conventions
-
-we use [conventional commits](https://www.conventionalcommits.org):
+We use [Conventional Commits](https://www.conventionalcommits.org):
 
 ```
 type(scope): description
@@ -64,33 +70,35 @@ type(scope): description
 - keep it scannable
 ```
 
-**types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`
+**Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`
 
-**rules:**
+**Rules:**
 
 - lowercase everything (except code references)
 - imperative mood ("added feature" not "add feature")
 - be descriptive but concise
+- reference commit SHAs when relevant
 
-## code style
+## Code Style
 
 - TypeScript strict mode
-- svelte 5 runes (`$state`, `$derived`, `$effect`)
-- scoped CSS with CSS custom properties (no utility frameworks)
-- tabs for indentation
-- single quotes
+- Svelte 5 runes (`$state`, `$derived`, `$effect`, `$props`)
+- Scoped CSS with CSS custom properties (no utility frameworks)
+- Tabs for indentation, single quotes
+- Brief inline `//` comments where logic isn't obvious (no JSDoc blocks)
 
-## testing
+## Testing
 
-- **unit tests**: `tests/unit/` - test engine modules (parser, scorer, NLP)
-- **component tests**: `tests/component/` - test svelte components
-- **e2e tests**: `tests/e2e/` - test full user flows with playwright
+- **Unit tests**: `tests/unit/` - engine modules (parser, scorer, NLP, job-parser)
+- **Integration tests**: `tests/unit/integration/` - full pipeline tests
+- **Component tests**: `tests/component/` - Svelte component tests
+- **E2E tests**: `tests/e2e/` - full user flows with Playwright
 
-write tests for any new engine logic. component tests are encouraged but not strictly required for every UI change.
+Write tests for any new engine logic. Run `pnpm test` before pushing.
 
-## pull requests
+## Pull Requests
 
-- keep PRs focused on a single concern
-- write a clear description explaining the _why_, not just the _what_
-- reference related issues
-- make sure CI passes before requesting review
+- Keep PRs focused on a single concern
+- Write a clear description explaining the _why_, not just the _what_
+- Reference related issues and commits
+- Make sure the build passes before requesting review

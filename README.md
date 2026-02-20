@@ -50,31 +50,31 @@ Resume (PDF/DOCX)  ──→  Parser Engine  ──→  Structured Data  ──�
 
 Each profile is researched based on how the actual platform handles resumes:
 
-| System | Vendor | Strictness | Keywords | Key Behavior |
-|---|---|---|---|---|
-| **Workday** | Workday | High | Exact | Strict parser, hates creative formats, penalizes multi-column layouts |
-| **Taleo** | Oracle | High | Exact | Boolean keyword matching, very filter-driven, requires structured sections |
-| **iCIMS** | iCIMS | Medium | Fuzzy | More format-tolerant, AI-assisted matching, modern parsing |
-| **Greenhouse** | Greenhouse | Low | Semantic | Structured scorecards, lenient formatting, context-aware |
-| **Lever** | Lever | Low | Semantic | Startup-friendly, relationship-focused, flexible parsing |
-| **SuccessFactors** | SAP | High | Exact | Enterprise-grade, structured-data focused, strict section requirements |
+| System             | Vendor     | Strictness | Keywords | Key Behavior                                                               |
+| ------------------ | ---------- | ---------- | -------- | -------------------------------------------------------------------------- |
+| **Workday**        | Workday    | High       | Exact    | Strict parser, hates creative formats, penalizes multi-column layouts      |
+| **Taleo**          | Oracle     | High       | Exact    | Boolean keyword matching, very filter-driven, requires structured sections |
+| **iCIMS**          | iCIMS      | Medium     | Fuzzy    | More format-tolerant, AI-assisted matching, modern parsing                 |
+| **Greenhouse**     | Greenhouse | Low        | Semantic | Structured scorecards, lenient formatting, context-aware                   |
+| **Lever**          | Lever      | Low        | Semantic | Startup-friendly, relationship-focused, flexible parsing                   |
+| **SuccessFactors** | SAP        | High       | Exact    | Enterprise-grade, structured-data focused, strict section requirements     |
 
 ## Tech Stack
 
 Every layer was chosen for this specific use case. No defaults, no boilerplate stacks.
 
-| Layer | Choice | Why |
-|---|---|---|
-| **Framework** | SvelteKit 5 (Svelte 5 runes) | Compiled to vanilla JS, zero VDOM. ~15KB runtime vs React's 45KB+. Critical for computation-heavy PDF parsing + NLP in-browser. |
-| **Styling** | Svelte scoped CSS + CSS custom properties + Open Props | Dark glassmorphic design system. No Tailwind. Scoped per component. |
-| **PDF Parsing** | pdfjs-dist (Web Worker) | Mozilla-maintained, battle-tested, fully client-side. |
-| **DOCX Parsing** | mammoth | Client-side DOCX to text extraction. |
-| **NLP** | Custom TF-IDF + tokenizer + skills taxonomy | Lightweight, runs in browser, supports 8+ industries. |
-| **LLM** | Google Gemini 2.0 Flash (free tier) | 1,500 req/day for semantic JD analysis and smart suggestions. |
-| **LLM Proxy** | SvelteKit +server.ts endpoints | API key stays server-side. Graceful fallback when quota exhausted. |
-| **Hosting** | Cloudflare Pages | Free: 100k function invocations/day, unlimited static bandwidth. |
-| **Testing** | Vitest + Playwright + @testing-library/svelte | 106 unit/integration tests. E2E for critical flows. |
-| **CI** | GitHub Actions | Lint + typecheck + test + build on every push. |
+| Layer            | Choice                                                 | Why                                                                                                                             |
+| ---------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Framework**    | SvelteKit 5 (Svelte 5 runes)                           | Compiled to vanilla JS, zero VDOM. ~15KB runtime vs React's 45KB+. Critical for computation-heavy PDF parsing + NLP in-browser. |
+| **Styling**      | Svelte scoped CSS + CSS custom properties + Open Props | Dark glassmorphic design system. No Tailwind. Scoped per component.                                                             |
+| **PDF Parsing**  | pdfjs-dist (Web Worker)                                | Mozilla-maintained, battle-tested, fully client-side.                                                                           |
+| **DOCX Parsing** | mammoth                                                | Client-side DOCX to text extraction.                                                                                            |
+| **NLP**          | Custom TF-IDF + tokenizer + skills taxonomy            | Lightweight, runs in browser, supports 8+ industries.                                                                           |
+| **LLM**          | Google Gemini 2.0 Flash (free tier)                    | 1,500 req/day for semantic JD analysis and smart suggestions.                                                                   |
+| **LLM Proxy**    | SvelteKit +server.ts endpoints                         | API key stays server-side. Graceful fallback when quota exhausted.                                                              |
+| **Hosting**      | Cloudflare Pages                                       | Free: 100k function invocations/day, unlimited static bandwidth.                                                                |
+| **Testing**      | Vitest + Playwright + @testing-library/svelte          | 106 unit/integration tests. E2E for critical flows.                                                                             |
+| **CI**           | GitHub Actions                                         | Lint + typecheck + test + build on every push.                                                                                  |
 
 **Total cost: $0** at any scale.
 
@@ -145,12 +145,14 @@ Overall Score = weighted sum of:
 ```
 
 **Two modes:**
+
 - **General Mode** (resume only): ATS-readiness score across all 6 systems
 - **Targeted Mode** (resume + JD): keyword matching against extracted job requirements
 
 ## Industries Supported
 
 The skills taxonomy and NLP engine support any industry:
+
 - Technology / Software Engineering
 - Finance / Accounting
 - Healthcare / Nursing
@@ -164,6 +166,7 @@ The skills taxonomy and NLP engine support any industry:
 ## Design
 
 Dark glassmorphic aesthetic with Aceternity/Magic UI-inspired effects built natively in Svelte:
+
 - **FlipWords**: smooth word cycling with blur transitions
 - **NumberTicker**: spring-physics animated counters
 - **TextGenerateEffect**: word-by-word reveal with blur-to-sharp

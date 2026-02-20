@@ -2,6 +2,7 @@
 	import ResumeUploader from '$components/upload/ResumeUploader.svelte';
 	import JobDescriptionInput from '$components/upload/JobDescriptionInput.svelte';
 	import ScoreDashboard from '$components/scoring/ScoreDashboard.svelte';
+	import ResumeStats from '$components/scoring/ResumeStats.svelte';
 	import { resumeStore } from '$stores/resume.svelte';
 	import { scoresStore } from '$stores/scores.svelte';
 	import { parseResume } from '$engine/parser';
@@ -99,7 +100,14 @@
 	<div class="container">
 		<div class="scanner-header">
 			<div class="page-badge">
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<svg
+					width="14"
+					height="14"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
 					<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
 					<polyline points="14,2 14,8 20,8" />
 					<path d="M12 18v-6" />
@@ -112,8 +120,8 @@
 				<span class="gradient-text">Real ATS Systems</span>
 			</h1>
 			<p class="page-subtitle">
-				Upload your resume and optionally paste a job description for targeted scoring.
-				Everything is parsed client-side. Your data never leaves your browser.
+				Upload your resume and optionally paste a job description for targeted scoring. Everything
+				is parsed client-side. Your data never leaves your browser.
 			</p>
 		</div>
 
@@ -127,8 +135,17 @@
 					<div class="warnings">
 						{#each resumeStore.warnings as warning}
 							<div class="warning-item">
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+								<svg
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+								>
+									<path
+										d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+									/>
 									<line x1="12" y1="9" x2="12" y2="13" />
 									<line x1="12" y1="17" x2="12.01" y2="17" />
 								</svg>
@@ -141,7 +158,14 @@
 				<div class="actions">
 					{#if scoresStore.hasResults}
 						<button class="btn-secondary" onclick={handleReset}>
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
 								<polyline points="1,4 1,10 7,10" />
 								<path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
 							</svg>
@@ -154,13 +178,27 @@
 							<span class="spinner-inline"></span>
 							Scoring...
 						{:else if scoresStore.hasResults}
-							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<svg
+								width="18"
+								height="18"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
 								<polyline points="23,4 23,10 17,10" />
 								<path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
 							</svg>
 							Re-Scan
 						{:else}
-							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<svg
+								width="18"
+								height="18"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
 								<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
 								<polyline points="14,2 14,8 20,8" />
 								<path d="M12 18v-6" />
@@ -173,7 +211,14 @@
 
 				{#if scoresStore.error}
 					<div class="error">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<svg
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
 							<circle cx="12" cy="12" r="10" />
 							<line x1="15" y1="9" x2="9" y2="15" />
 							<line x1="9" y1="9" x2="15" y2="15" />
@@ -182,6 +227,26 @@
 					</div>
 				{/if}
 			</section>
+
+			<!-- resume overview: shows immediately after parsing, before scanning -->
+			{#if resumeStore.isReady && !scoresStore.hasResults}
+				<section class="preview-section">
+					<div class="preview-header">
+						<svg
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<polyline points="20,6 9,17 4,12" />
+						</svg>
+						<span>Resume Parsed Successfully</span>
+					</div>
+					<ResumeStats />
+				</section>
+			{/if}
 
 			<!-- results section: fades in smoothly after scanning -->
 			{#if hasScanned}
@@ -391,6 +456,21 @@
 		background: rgba(239, 68, 68, 0.06);
 		border: 1px solid rgba(239, 68, 68, 0.15);
 		border-radius: var(--radius-md);
+	}
+
+	.preview-section {
+		margin-top: 3rem;
+		animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	.preview-header {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-bottom: 1rem;
+		font-size: 0.9rem;
+		font-weight: 600;
+		color: #22c55e;
 	}
 
 	.results-section {

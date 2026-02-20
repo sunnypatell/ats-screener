@@ -61,8 +61,17 @@
 	<div class="features-header">
 		<div class="section-badge">
 			<span class="badge-icon">
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+				<svg
+					width="14"
+					height="14"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
+					<polygon
+						points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+					/>
 				</svg>
 			</span>
 			<span>Why ATS Screener</span>
@@ -72,8 +81,8 @@
 			<span class="gradient-text">ATS Score</span>
 		</h2>
 		<p class="section-description">
-			Most ATS screeners use arbitrary algorithms with no connection to real systems.
-			This one simulates what actually happens to your resume inside enterprise HCMS platforms.
+			Most ATS screeners use arbitrary algorithms with no connection to real systems. This one
+			simulates what actually happens to your resume inside enterprise HCMS platforms.
 		</p>
 	</div>
 
@@ -83,7 +92,8 @@
 			<div
 				class="feature-card"
 				onmousemove={(e) => handleCardMouseMove(e, i)}
-				style="--spotlight-x: {mousePositions[i]?.x ?? 0}px; --spotlight-y: {mousePositions[i]?.y ?? 0}px; --card-gradient: {feature.gradient}; --delay: {i * 0.08}s;"
+				style="--spotlight-x: {mousePositions[i]?.x ?? 0}px; --spotlight-y: {mousePositions[i]?.y ??
+					0}px; --card-gradient: {feature.gradient}; --delay: {i * 0.08}s;"
 			>
 				<!-- animated border glow on hover -->
 				<div class="card-border-glow"></div>
@@ -93,40 +103,84 @@
 					<!-- SVG icon with gradient background -->
 					<div class="feature-icon-wrapper">
 						{#if feature.icon === 'target'}
-							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+							<svg
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.5"
+							>
 								<circle cx="12" cy="12" r="10" />
 								<circle cx="12" cy="12" r="6" />
 								<circle cx="12" cy="12" r="2" />
 							</svg>
 						{:else if feature.icon === 'search'}
-							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+							<svg
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.5"
+							>
 								<circle cx="11" cy="11" r="8" />
 								<path d="m21 21-4.35-4.35" />
 								<path d="M11 8v6" />
 								<path d="M8 11h6" />
 							</svg>
 						{:else if feature.icon === 'chart'}
-							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+							<svg
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.5"
+							>
 								<path d="M18 20V10" />
 								<path d="M12 20V4" />
 								<path d="M6 20v-6" />
 							</svg>
 						{:else if feature.icon === 'sparkles'}
-							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-								<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+							<svg
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.5"
+							>
+								<path
+									d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"
+								/>
 								<path d="M5 3v4" />
 								<path d="M19 17v4" />
 								<path d="M3 5h4" />
 								<path d="M17 19h4" />
 							</svg>
 						{:else if feature.icon === 'globe'}
-							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+							<svg
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.5"
+							>
 								<circle cx="12" cy="12" r="10" />
 								<path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
 								<path d="M2 12h20" />
 							</svg>
 						{:else if feature.icon === 'shield'}
-							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+							<svg
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.5"
+							>
 								<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
 								<path d="m9 12 2 2 4-4" />
 							</svg>
@@ -233,7 +287,9 @@
 		opacity: 0;
 		transition: opacity 0.3s ease;
 		z-index: 0;
-		mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+		mask:
+			linear-gradient(#fff 0 0) content-box,
+			linear-gradient(#fff 0 0);
 		mask-composite: exclude;
 		padding: 1px;
 	}

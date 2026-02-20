@@ -30,9 +30,7 @@
 				</svg>
 				GitHub
 			</a>
-			<a href="/scanner" class="nav-cta">
-				Scan Now
-			</a>
+			<a href="/scanner" class="nav-cta"> Scan Now </a>
 		</div>
 
 		<!-- mobile hamburger -->
