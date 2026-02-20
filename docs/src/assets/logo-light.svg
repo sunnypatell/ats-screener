@@ -1,0 +1,14 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="2" y="3" width="20" height="18" rx="3" stroke="url(#gradl)" stroke-width="1.5" fill="none"/>
+  <line x1="7" y1="8" x2="17" y2="8" stroke="#0891b2" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+  <line x1="7" y1="12" x2="14" y2="12" stroke="#0891b2" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+  <line x1="7" y1="16" x2="11" y2="16" stroke="#0891b2" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+  <circle cx="18" cy="18" r="4" fill="#ffffff" stroke="#0891b2" stroke-width="1.5"/>
+  <path d="M16.5 18l1 1 2-2" stroke="#0891b2" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <defs>
+    <linearGradient id="gradl" x1="2" y1="3" x2="22" y2="21" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0891b2"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+</svg>

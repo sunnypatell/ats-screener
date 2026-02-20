@@ -1,0 +1,70 @@
+---
+title: ATS Screener
+description: Free, open-source resume scanner that simulates how 6 real enterprise ATS platforms parse and score resumes.
+template: splash
+hero:
+  tagline: Stop guessing. See exactly how Workday, Taleo, iCIMS, Greenhouse, Lever, and SuccessFactors would score your resume.
+  image:
+    dark: ../../assets/logo-dark.svg
+    light: ../../assets/logo-light.svg
+  actions:
+    - text: Get Started
+      link: /docs/getting-started/introduction/
+      icon: right-arrow
+      variant: primary
+    - text: Launch Scanner
+      link: https://ats-screener.pages.dev/scanner
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## Why ATS Screener?
+
+Most "ATS checkers" online use arbitrary scoring algorithms that have nothing to do with how real systems work. ATS Screener is different: every score is backed by research into how each platform actually parses, filters, and ranks candidates.
+
+<CardGrid stagger>
+	<Card title="6 Real Platforms" icon="setting">
+		Simulates Workday, Taleo, iCIMS, Greenhouse, Lever, and SuccessFactors with research-backed
+		scoring profiles.
+	</Card>
+	<Card title="100% Free" icon="heart">
+		No paywalls, no sign-ups, no premium tiers. The live instance is hosted and maintained by the
+		developer using their own API keys, so you never pay a cent. Powered by Gemini AI with Groq and
+		Cerebras fallbacks.
+	</Card>
+	<Card title="Privacy First" icon="approve-check">
+		Your resume is parsed client-side in a Web Worker. Files never leave your browser. Only
+		extracted text is sent for AI analysis.
+	</Card>
+	<Card title="Open Source" icon="github">
+		MIT licensed. Self-host it, fork it, contribute to it. [View on
+		GitHub](https://github.com/sunnypatell/ats-screener).
+	</Card>
+</CardGrid>
+
+## Quick Links
+
+<CardGrid>
+	<LinkCard
+		title="Quick Start"
+		description="Upload a resume and get scored in under 30 seconds."
+		href="/docs/getting-started/quick-start/"
+	/>
+	<LinkCard
+		title="ATS Platforms"
+		description="Deep dives into how each of the 6 platforms actually work."
+		href="/docs/platforms/overview/"
+	/>
+	<LinkCard
+		title="API Reference"
+		description="Integrate ATS scoring into your own tools."
+		href="/docs/api/endpoints/"
+	/>
+	<LinkCard
+		title="Self-Hosting"
+		description="Run your own instance with your own API keys."
+		href="/docs/self-hosting/setup/"
+	/>
+</CardGrid>

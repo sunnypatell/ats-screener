@@ -1,0 +1,138 @@
+/* ATS Screener - Starlight custom theme */
+
+/* dark mode colors matching the main app's glassmorphic design */
+:root {
+	--sl-font: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+	--sl-font-mono: 'Geist Mono', 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+}
+
+/* dark mode overrides (default for our app) */
+:root[data-theme='dark'] {
+	--sl-color-accent-low: #0b2d3d;
+	--sl-color-accent: #06b6d4;
+	--sl-color-accent-high: #a5f3fc;
+	--sl-color-white: #f0f4f8;
+	--sl-color-gray-1: #c9d1d9;
+	--sl-color-gray-2: #8b949e;
+	--sl-color-gray-3: #484f58;
+	--sl-color-gray-4: #21262d;
+	--sl-color-gray-5: #161b22;
+	--sl-color-gray-6: #0d1117;
+	--sl-color-black: #080c14;
+	--sl-color-bg-nav: rgba(8, 12, 20, 0.9);
+	--sl-color-bg-sidebar: rgba(13, 17, 23, 0.95);
+	--sl-color-hairline-shade: rgba(255, 255, 255, 0.06);
+	--sl-color-hairline-light: rgba(255, 255, 255, 0.08);
+}
+
+/* light mode colors */
+:root[data-theme='light'] {
+	--sl-color-accent-low: #e0f7fa;
+	--sl-color-accent: #0891b2;
+	--sl-color-accent-high: #164e63;
+}
+
+/* import Geist font */
+@font-face {
+	font-family: 'Geist';
+	src: url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/fonts/geist-sans/Geist-Regular.woff2')
+		format('woff2');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Geist';
+	src: url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/fonts/geist-sans/Geist-Medium.woff2')
+		format('woff2');
+	font-weight: 500;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Geist';
+	src: url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/fonts/geist-sans/Geist-SemiBold.woff2')
+		format('woff2');
+	font-weight: 600;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Geist';
+	src: url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/fonts/geist-sans/Geist-Bold.woff2')
+		format('woff2');
+	font-weight: 700;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Geist Mono';
+	src: url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/fonts/geist-mono/GeistMono-Regular.woff2')
+		format('woff2');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+/* enhanced header */
+header.header {
+	backdrop-filter: blur(20px);
+}
+
+/* sidebar styling */
+.sidebar-pane {
+	backdrop-filter: blur(16px);
+}
+
+/* code block enhancements */
+.expressive-code pre {
+	border: 1px solid var(--sl-color-hairline-shade);
+	border-radius: 8px;
+}
+
+/* better table styling */
+table {
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+table th {
+	text-transform: uppercase;
+	font-size: 0.75rem;
+	letter-spacing: 0.05em;
+	font-weight: 600;
+}
+
+/* hero overrides for landing page */
+.hero {
+	padding-block: 3rem;
+}
+
+/* subtle accent glow on headings */
+[data-theme='dark'] .content-panel h2 {
+	text-shadow: 0 0 40px rgba(6, 182, 212, 0.08);
+}
+
+/* link hover effects */
+.sl-link-card {
+	transition:
+		border-color 0.2s ease,
+		transform 0.2s ease,
+		box-shadow 0.2s ease;
+}
+
+.sl-link-card:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 24px rgba(6, 182, 212, 0.1);
+}
+
+/* aside/callout enhancements */
+.starlight-aside {
+	border-radius: 8px;
+}
+
+/* custom badge colors */
+.sl-badge.note {
+	--sl-color-bg-badge: rgba(6, 182, 212, 0.15);
+	--sl-color-text-badge: #06b6d4;
+}
