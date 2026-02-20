@@ -82,15 +82,38 @@
 </script>
 
 <svelte:head>
-	<title>Resume Scanner - ATS Screener</title>
+	<title>Resume Scanner | ATS Screener</title>
+	<meta
+		name="description"
+		content="Upload your resume and get scored by 6 real ATS platforms. See exactly how Workday, Taleo, iCIMS, Greenhouse, Lever, and SuccessFactors parse your resume."
+	/>
 </svelte:head>
 
 <main class="scanner">
+	<!-- subtle background mesh -->
+	<div class="scanner-bg">
+		<div class="bg-orb orb-1"></div>
+		<div class="bg-orb orb-2"></div>
+	</div>
+
 	<div class="container">
 		<div class="scanner-header">
-			<h1 class="page-title">resume scanner</h1>
+			<div class="page-badge">
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+					<polyline points="14,2 14,8 20,8" />
+					<path d="M12 18v-6" />
+					<path d="M9 15l3 3 3-3" />
+				</svg>
+				<span>Resume Scanner</span>
+			</div>
+			<h1 class="page-title">
+				Scan Your Resume Against
+				<span class="gradient-text">Real ATS Systems</span>
+			</h1>
 			<p class="page-subtitle">
-				upload your resume and optionally paste a job description for targeted scoring
+				Upload your resume and optionally paste a job description for targeted scoring.
+				Everything is parsed client-side. Your data never leaves your browser.
 			</p>
 		</div>
 
@@ -103,34 +126,64 @@
 				{#if resumeStore.warnings.length > 0}
 					<div class="warnings">
 						{#each resumeStore.warnings as warning}
-							<p class="warning-item">⚠ {warning}</p>
+							<div class="warning-item">
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+									<line x1="12" y1="9" x2="12" y2="13" />
+									<line x1="12" y1="17" x2="12.01" y2="17" />
+								</svg>
+								<span>{warning}</span>
+							</div>
 						{/each}
 					</div>
 				{/if}
 
 				<div class="actions">
 					{#if scoresStore.hasResults}
-						<button class="btn-secondary" onclick={handleReset}> start over </button>
+						<button class="btn-secondary" onclick={handleReset}>
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<polyline points="1,4 1,10 7,10" />
+								<path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+							</svg>
+							Start Over
+						</button>
 					{/if}
 
 					<button class="btn-scan" disabled={!canScan} onclick={handleScan}>
 						{#if scoresStore.isScoring}
 							<span class="spinner-inline"></span>
-							scoring...
+							Scoring...
 						{:else if scoresStore.hasResults}
-							re-scan
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<polyline points="23,4 23,10 17,10" />
+								<path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+							</svg>
+							Re-Scan
 						{:else}
-							scan resume
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+								<polyline points="14,2 14,8 20,8" />
+								<path d="M12 18v-6" />
+								<path d="M9 15l3 3 3-3" />
+							</svg>
+							Scan Resume
 						{/if}
 					</button>
 				</div>
 
 				{#if scoresStore.error}
-					<p class="error">{scoresStore.error}</p>
+					<div class="error">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<circle cx="12" cy="12" r="10" />
+							<line x1="15" y1="9" x2="9" y2="15" />
+							<line x1="9" y1="9" x2="15" y2="15" />
+						</svg>
+						<span>{scoresStore.error}</span>
+					</div>
 				{/if}
 			</section>
 
-			<!-- results section - only shows after scanning -->
+			<!-- results section: fades in smoothly after scanning -->
 			{#if hasScanned}
 				<section class="results-section">
 					<ScoreDashboard />
@@ -142,31 +195,91 @@
 
 <style>
 	.scanner {
+		position: relative;
 		min-height: 100dvh;
-		padding: 6rem 2rem 4rem;
+		padding: 7rem 2rem 4rem;
+		overflow: hidden;
+	}
+
+	/* subtle background gradient orbs */
+	.scanner-bg {
+		position: absolute;
+		inset: 0;
+		overflow: hidden;
+		pointer-events: none;
+	}
+
+	.bg-orb {
+		position: absolute;
+		border-radius: 50%;
+		filter: blur(120px);
+	}
+
+	.orb-1 {
+		width: 500px;
+		height: 500px;
+		background: rgba(6, 182, 212, 0.06);
+		top: 5%;
+		right: -10%;
+	}
+
+	.orb-2 {
+		width: 400px;
+		height: 400px;
+		background: rgba(139, 92, 246, 0.04);
+		bottom: 10%;
+		left: -10%;
 	}
 
 	.container {
+		position: relative;
 		max-width: 1200px;
 		margin: 0 auto;
 	}
 
 	.scanner-header {
-		margin-bottom: 2.5rem;
+		margin-bottom: 3rem;
+	}
+
+	.page-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.4rem 1rem;
+		background: var(--glass-bg);
+		border: 1px solid var(--glass-border);
+		border-radius: var(--radius-full);
+		font-size: 0.8rem;
+		color: var(--text-secondary);
+		margin-bottom: 1.5rem;
+		backdrop-filter: blur(12px);
+	}
+
+	.page-badge svg {
+		color: var(--accent-cyan);
 	}
 
 	.page-title {
-		font-size: clamp(2rem, 5vw, 3rem);
+		font-size: clamp(2rem, 5vw, 3.25rem);
 		font-weight: 800;
-		letter-spacing: -0.02em;
-		margin-bottom: 0.5rem;
+		letter-spacing: -0.03em;
+		margin-bottom: 0.75rem;
 		color: var(--text-primary);
+		line-height: 1.15;
+	}
+
+	.gradient-text {
+		background: var(--gradient-primary);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
 	}
 
 	.page-subtitle {
-		font-size: 1.1rem;
+		font-size: clamp(1rem, 2vw, 1.15rem);
 		color: var(--text-secondary);
-		line-height: 1.5;
+		line-height: 1.6;
+		max-width: 640px;
 	}
 
 	.upload-section {
@@ -181,10 +294,13 @@
 	}
 
 	.warning-item {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
 		font-size: 0.85rem;
 		color: #eab308;
-		padding: 0.5rem 1rem;
-		background: rgba(234, 179, 8, 0.05);
+		padding: 0.6rem 1rem;
+		background: rgba(234, 179, 8, 0.06);
 		border: 1px solid rgba(234, 179, 8, 0.15);
 		border-radius: var(--radius-md);
 	}
@@ -198,8 +314,8 @@
 	.btn-scan {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.5rem;
-		padding: 0.875rem 2rem;
+		gap: 0.6rem;
+		padding: 0.9rem 2.25rem;
 		font-size: 1rem;
 		font-weight: 600;
 		color: var(--color-bg-primary);
@@ -208,8 +324,8 @@
 		border-radius: var(--radius-lg);
 		cursor: pointer;
 		transition:
-			transform 0.2s ease,
-			box-shadow 0.2s ease,
+			transform 0.25s ease,
+			box-shadow 0.25s ease,
 			opacity 0.2s ease;
 	}
 
@@ -226,7 +342,10 @@
 	}
 
 	.btn-secondary {
-		padding: 0.875rem 1.5rem;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.9rem 1.5rem;
 		font-size: 1rem;
 		font-weight: 600;
 		color: var(--text-secondary);
@@ -234,6 +353,7 @@
 		border: 1px solid var(--glass-border);
 		border-radius: var(--radius-lg);
 		cursor: pointer;
+		backdrop-filter: blur(var(--glass-blur));
 		transition:
 			border-color 0.2s ease,
 			color 0.2s ease;
@@ -261,21 +381,28 @@
 	}
 
 	.error {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
 		margin-top: 1rem;
 		color: #ef4444;
 		font-size: 0.9rem;
+		padding: 0.6rem 1rem;
+		background: rgba(239, 68, 68, 0.06);
+		border: 1px solid rgba(239, 68, 68, 0.15);
+		border-radius: var(--radius-md);
 	}
 
 	.results-section {
-		margin-top: 3rem;
+		margin-top: 4rem;
 		/* fade in smoothly when results appear */
-		animation: fadeIn 0.4s ease;
+		animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 	}
 
 	@keyframes fadeIn {
 		from {
 			opacity: 0;
-			transform: translateY(10px);
+			transform: translateY(16px);
 		}
 		to {
 			opacity: 1;
@@ -285,7 +412,7 @@
 
 	@media (max-width: 640px) {
 		.scanner {
-			padding: 4rem 1.5rem 3rem;
+			padding: 5rem 1.5rem 3rem;
 		}
 
 		.actions {

@@ -21,10 +21,27 @@
 		return '#ef4444';
 	}
 
+	// maps score to a label for accessibility
+	function getScoreLabel(score: number): string {
+		if (score >= 80) return 'Excellent';
+		if (score >= 60) return 'Good';
+		if (score >= 40) return 'Needs Work';
+		return 'Poor';
+	}
+
 	const scoreColor = $derived(getScoreColor(result.overallScore));
 	// svg circle math: circumference and dash offset for the ring progress
 	const circumference = 2 * Math.PI * 42;
 	const offset = $derived(circumference - (result.overallScore / 100) * circumference);
+
+	// breakdown categories with proper display labels
+	const breakdownItems = $derived([
+		{ key: 'formatting', label: 'Formatting', score: result.breakdown.formatting.score },
+		{ key: 'keywords', label: 'Keywords', score: result.breakdown.keywordMatch.score },
+		{ key: 'sections', label: 'Sections', score: result.breakdown.sections.score },
+		{ key: 'experience', label: 'Experience', score: result.breakdown.experience.score },
+		{ key: 'education', label: 'Education', score: result.breakdown.education.score }
+	]);
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -33,18 +50,21 @@
 	class:passing={result.passesFilter}
 	class:failing={!result.passesFilter}
 	onmousemove={handleMouseMove}
-	style="--spotlight-x: {mouseX}px; --spotlight-y: {mouseY}px;"
+	style="--spotlight-x: {mouseX}px; --spotlight-y: {mouseY}px; --score-color: {scoreColor};"
 >
 	<div class="card-spotlight"></div>
 
+	<!-- header: system name + score ring -->
 	<div class="card-header">
-		<div>
+		<div class="system-info">
 			<h3 class="system-name">{result.system}</h3>
 			<p class="system-vendor">{result.vendor}</p>
 		</div>
 		<div class="score-ring">
-			<svg viewBox="0 0 100 100" width="72" height="72">
-				<circle cx="50" cy="50" r="42" fill="none" stroke="var(--glass-border)" stroke-width="6" />
+			<svg viewBox="0 0 100 100" width="76" height="76">
+				<!-- background track -->
+				<circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="6" />
+				<!-- colored progress arc -->
 				<circle
 					cx="50"
 					cy="50"
@@ -65,82 +85,62 @@
 		</div>
 	</div>
 
+	<!-- pass/fail status badge -->
 	<div class="card-status">
 		{#if result.passesFilter}
-			<span class="status-badge pass">likely to pass</span>
+			<span class="status-badge pass">
+				<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+					<polyline points="20,6 9,17 4,12" />
+				</svg>
+				Likely to Pass
+			</span>
 		{:else}
-			<span class="status-badge fail">may be filtered</span>
+			<span class="status-badge fail">
+				<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+					<line x1="18" y1="6" x2="6" y2="18" />
+					<line x1="6" y1="6" x2="18" y2="18" />
+				</svg>
+				May Be Filtered
+			</span>
 		{/if}
+		<span class="score-label" style="color: {scoreColor}">{getScoreLabel(result.overallScore)}</span>
 	</div>
 
+	<!-- category breakdown bars -->
 	<div class="card-breakdown">
-		<div class="breakdown-item">
-			<span class="breakdown-label">formatting</span>
-			<div class="breakdown-bar">
-				<div
-					class="breakdown-fill"
-					style="width: {result.breakdown.formatting.score}%; background: {getScoreColor(
-						result.breakdown.formatting.score
-					)}"
-				></div>
+		{#each breakdownItems as item}
+			<div class="breakdown-item">
+				<span class="breakdown-label">{item.label}</span>
+				<div class="breakdown-bar">
+					<div
+						class="breakdown-fill"
+						style="width: {item.score}%; background: {getScoreColor(item.score)}"
+					></div>
+				</div>
+				<span class="breakdown-value" style="color: {getScoreColor(item.score)}">{item.score}</span>
 			</div>
-			<span class="breakdown-value">{result.breakdown.formatting.score}</span>
-		</div>
-		<div class="breakdown-item">
-			<span class="breakdown-label">keywords</span>
-			<div class="breakdown-bar">
-				<div
-					class="breakdown-fill"
-					style="width: {result.breakdown.keywordMatch.score}%; background: {getScoreColor(
-						result.breakdown.keywordMatch.score
-					)}"
-				></div>
-			</div>
-			<span class="breakdown-value">{result.breakdown.keywordMatch.score}</span>
-		</div>
-		<div class="breakdown-item">
-			<span class="breakdown-label">sections</span>
-			<div class="breakdown-bar">
-				<div
-					class="breakdown-fill"
-					style="width: {result.breakdown.sections.score}%; background: {getScoreColor(
-						result.breakdown.sections.score
-					)}"
-				></div>
-			</div>
-			<span class="breakdown-value">{result.breakdown.sections.score}</span>
-		</div>
-		<div class="breakdown-item">
-			<span class="breakdown-label">experience</span>
-			<div class="breakdown-bar">
-				<div
-					class="breakdown-fill"
-					style="width: {result.breakdown.experience.score}%; background: {getScoreColor(
-						result.breakdown.experience.score
-					)}"
-				></div>
-			</div>
-			<span class="breakdown-value">{result.breakdown.experience.score}</span>
-		</div>
-		<div class="breakdown-item">
-			<span class="breakdown-label">education</span>
-			<div class="breakdown-bar">
-				<div
-					class="breakdown-fill"
-					style="width: {result.breakdown.education.score}%; background: {getScoreColor(
-						result.breakdown.education.score
-					)}"
-				></div>
-			</div>
-			<span class="breakdown-value">{result.breakdown.education.score}</span>
-		</div>
+		{/each}
 	</div>
+
+	<!-- keyword stats if available -->
+	{#if result.breakdown.keywordMatch.matched.length > 0 || result.breakdown.keywordMatch.missing.length > 0}
+		<div class="keyword-summary">
+			<div class="keyword-stat matched">
+				<span class="keyword-count">{result.breakdown.keywordMatch.matched.length}</span>
+				<span class="keyword-label">Matched</span>
+			</div>
+			<div class="keyword-stat missing">
+				<span class="keyword-count">{result.breakdown.keywordMatch.missing.length}</span>
+				<span class="keyword-label">Missing</span>
+			</div>
+		</div>
+	{/if}
 </div>
 
 <style>
 	.score-card {
 		position: relative;
-		padding: 1.5rem;
+		padding: 1.75rem;
 		background: var(--glass-bg);
 		border: 1px solid var(--glass-border);
 		border-radius: var(--radius-xl);
@@ -148,11 +148,13 @@
 		overflow: hidden;
 		transition:
 			border-color 0.3s ease,
-			transform 0.2s ease;
+			transform 0.25s ease,
+			box-shadow 0.3s ease;
 	}
 
 	.score-card:hover {
-		transform: translateY(-2px);
+		transform: translateY(-3px);
+		box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25);
 	}
 
 	.score-card.passing:hover {
@@ -167,8 +169,8 @@
 		position: absolute;
 		inset: 0;
 		background: radial-gradient(
-			250px circle at var(--spotlight-x) var(--spotlight-y),
-			rgba(6, 182, 212, 0.05),
+			280px circle at var(--spotlight-x) var(--spotlight-y),
+			rgba(6, 182, 212, 0.06),
 			transparent 60%
 		);
 		pointer-events: none;
@@ -184,21 +186,29 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: flex-start;
-		margin-bottom: 1rem;
+		margin-bottom: 1.25rem;
 		position: relative;
 		z-index: 1;
 	}
 
+	.system-info {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
 	.system-name {
-		font-size: 1.15rem;
-		font-weight: 600;
+		font-size: 1.2rem;
+		font-weight: 700;
 		color: var(--text-primary);
+		letter-spacing: -0.01em;
 	}
 
 	.system-vendor {
-		font-size: 0.8rem;
+		font-size: 0.78rem;
 		color: var(--text-tertiary);
-		margin-top: 0.25rem;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
 	}
 
 	.score-ring {
@@ -210,28 +220,34 @@
 
 	.score-value {
 		position: absolute;
-		font-size: 1.25rem;
-		font-weight: 700;
+		font-size: 1.35rem;
+		font-weight: 800;
+		font-variant-numeric: tabular-nums;
 	}
 
 	.score-progress {
-		transition: stroke-dashoffset 1s ease;
+		transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 	}
 
 	.card-status {
-		margin-bottom: 1rem;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 1.25rem;
 		position: relative;
 		z-index: 1;
 	}
 
 	.status-badge {
-		display: inline-block;
-		padding: 0.25rem 0.75rem;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.3rem 0.75rem;
 		border-radius: 999px;
-		font-size: 0.75rem;
+		font-size: 0.72rem;
 		font-weight: 600;
 		text-transform: uppercase;
-		letter-spacing: 0.03em;
+		letter-spacing: 0.04em;
 	}
 
 	.status-badge.pass {
@@ -246,10 +262,17 @@
 		border: 1px solid rgba(239, 68, 68, 0.2);
 	}
 
+	.score-label {
+		font-size: 0.72rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+	}
+
 	.card-breakdown {
 		display: flex;
 		flex-direction: column;
-		gap: 0.5rem;
+		gap: 0.6rem;
 		position: relative;
 		z-index: 1;
 	}
@@ -261,31 +284,78 @@
 	}
 
 	.breakdown-label {
-		font-size: 0.75rem;
+		font-size: 0.78rem;
 		color: var(--text-tertiary);
-		width: 80px;
+		width: 85px;
 		flex-shrink: 0;
+		font-weight: 500;
 	}
 
 	.breakdown-bar {
 		flex: 1;
-		height: 4px;
+		height: 5px;
 		background: rgba(255, 255, 255, 0.05);
-		border-radius: 2px;
+		border-radius: 3px;
 		overflow: hidden;
 	}
 
 	.breakdown-fill {
 		height: 100%;
-		border-radius: 2px;
-		transition: width 1s ease;
+		border-radius: 3px;
+		transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 	}
 
 	.breakdown-value {
-		font-size: 0.75rem;
-		color: var(--text-secondary);
-		width: 24px;
+		font-size: 0.78rem;
+		font-weight: 600;
+		width: 28px;
 		text-align: right;
 		flex-shrink: 0;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.keyword-summary {
+		display: flex;
+		gap: 1rem;
+		margin-top: 1.25rem;
+		padding-top: 1rem;
+		border-top: 1px solid var(--glass-border);
+		position: relative;
+		z-index: 1;
+	}
+
+	.keyword-stat {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+
+	.keyword-count {
+		font-size: 1rem;
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.keyword-label {
+		font-size: 0.72rem;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		font-weight: 500;
+	}
+
+	.keyword-stat.matched .keyword-count {
+		color: #22c55e;
+	}
+
+	.keyword-stat.matched .keyword-label {
+		color: rgba(34, 197, 94, 0.7);
+	}
+
+	.keyword-stat.missing .keyword-count {
+		color: #ef4444;
+	}
+
+	.keyword-stat.missing .keyword-label {
+		color: rgba(239, 68, 68, 0.7);
 	}
 </style>
