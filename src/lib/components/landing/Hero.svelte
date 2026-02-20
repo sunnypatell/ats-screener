@@ -137,19 +137,15 @@
 			</MovingBorder>
 		</div>
 
-		<!-- stats strip with animated number tickers -->
+		<!-- stats strip -->
 		<div class="hero-stats">
 			<div class="stat">
-				<span class="stat-number">
-					<NumberFlow value={6} />
-				</span>
+				<span class="stat-number">6</span>
 				<span class="stat-label">ATS Platforms</span>
 			</div>
 			<div class="stat-divider"></div>
 			<div class="stat">
-				<span class="stat-number">
-					<NumberFlow value={100} suffix="%" />
-				</span>
+				<span class="stat-number">100%</span>
 				<span class="stat-label">Free & Open Source</span>
 			</div>
 			<div class="stat-divider"></div>
@@ -159,10 +155,8 @@
 			</div>
 			<div class="stat-divider"></div>
 			<div class="stat">
-				<span class="stat-number">
-					<NumberFlow value={0} />
-				</span>
-				<span class="stat-label">Data Sent to Servers</span>
+				<span class="stat-number">0</span>
+				<span class="stat-label">Data Stored</span>
 			</div>
 		</div>
 	</div>

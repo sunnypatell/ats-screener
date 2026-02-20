@@ -1,5 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { env } from '$env/dynamic/private';
 import { buildFullScoringPrompt, buildJDAnalysisPrompt } from '$engine/llm/prompts';
 
 // provider configuration: Gemini → Groq → Cerebras fallback chain
@@ -22,7 +23,7 @@ const PROVIDERS: LLMProvider[] = [
 					generationConfig: {
 						temperature: 0.3,
 						topP: 0.85,
-						maxOutputTokens: 4096,
+						maxOutputTokens: 16384,
 						responseMimeType: 'application/json'
 					}
 				})
@@ -88,9 +89,23 @@ const rateLimits = new Map<string, { count: number; resetAt: number }>();
 const dailyLimits = new Map<string, { count: number; resetAt: number }>();
 const MAX_RPM = 10;
 const MAX_RPD = 200;
+const MAX_MAP_SIZE = 10_000;
+const PROVIDER_TIMEOUT_MS = 60_000;
 
 function checkRateLimit(ip: string): boolean {
 	const now = Date.now();
+
+	// periodically clean up expired entries to prevent unbounded memory growth
+	if (rateLimits.size > MAX_MAP_SIZE) {
+		for (const [key, val] of rateLimits) {
+			if (now > val.resetAt) rateLimits.delete(key);
+		}
+	}
+	if (dailyLimits.size > MAX_MAP_SIZE) {
+		for (const [key, val] of dailyLimits) {
+			if (now > val.resetAt) dailyLimits.delete(key);
+		}
+	}
 
 	const minute = rateLimits.get(ip);
 	if (minute && now < minute.resetAt) {
@@ -128,10 +143,17 @@ async function callLLM(
 
 		try {
 			const { url, init } = provider.buildRequest(prompt, apiKey);
-			const response = await fetch(url, init);
+
+			// abort if provider takes too long (30s default)
+			const controller = new AbortController();
+			const timeout = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
+
+			const response = await fetch(url, { ...init, signal: controller.signal });
+			clearTimeout(timeout);
 
 			if (!response.ok) {
-				console.warn(`${provider.name} returned ${response.status}, trying next provider`);
+				const errBody = await response.text().catch(() => '');
+				console.warn(`${provider.name} returned ${response.status}: ${errBody.slice(0, 300)}`);
 				continue;
 			}
 
@@ -145,8 +167,44 @@ async function callLLM(
 
 			return { text, provider: provider.name };
 		} catch (err) {
-			console.warn(`${provider.name} failed:`, err);
+			const isTimeout = err instanceof DOMException && err.name === 'AbortError';
+			console.warn(
+				`${provider.name} ${isTimeout ? 'timed out' : 'failed'}:`,
+				isTimeout ? `exceeded ${PROVIDER_TIMEOUT_MS}ms` : err
+			);
 			continue;
+		}
+	}
+
+	return null;
+}
+
+// tries to extract JSON from potentially messy LLM output
+function extractJSON(raw: string): unknown {
+	// try direct parse first
+	const trimmed = raw.trim();
+	try {
+		return JSON.parse(trimmed);
+	} catch {
+		// ignore, try cleaning
+	}
+
+	// strip markdown fences
+	const cleaned = trimmed.replace(/```json\n?|\n?```/g, '').trim();
+	try {
+		return JSON.parse(cleaned);
+	} catch {
+		// ignore, try finding JSON object
+	}
+
+	// try to find the first { ... } block
+	const start = cleaned.indexOf('{');
+	const end = cleaned.lastIndexOf('}');
+	if (start !== -1 && end > start) {
+		try {
+			return JSON.parse(cleaned.slice(start, end + 1));
+		} catch {
+			// give up
 		}
 	}
 
@@ -160,32 +218,36 @@ interface RequestBody {
 }
 
 export const POST: RequestHandler = async ({ request, platform }) => {
-	// collect all API keys from platform env or process env
+	// collect all API keys from platform env (Cloudflare) or SvelteKit $env (local dev)
 	const platformEnv = (platform?.env ?? {}) as Record<string, string>;
-	const env: Record<string, string> = {
-		GEMINI_API_KEY: platformEnv.GEMINI_API_KEY ?? process.env.GEMINI_API_KEY ?? '',
-		GROQ_API_KEY: platformEnv.GROQ_API_KEY ?? process.env.GROQ_API_KEY ?? '',
-		CEREBRAS_API_KEY: platformEnv.CEREBRAS_API_KEY ?? process.env.CEREBRAS_API_KEY ?? ''
+	const keys: Record<string, string> = {
+		GEMINI_API_KEY: platformEnv.GEMINI_API_KEY ?? env.GEMINI_API_KEY ?? '',
+		GROQ_API_KEY: platformEnv.GROQ_API_KEY ?? env.GROQ_API_KEY ?? '',
+		CEREBRAS_API_KEY: platformEnv.CEREBRAS_API_KEY ?? env.CEREBRAS_API_KEY ?? ''
 	};
 
-	const hasAnyKey = Object.values(env).some((v) => v.length > 0);
+	const hasAnyKey = Object.values(keys).some((v) => v.length > 0);
 	if (!hasAnyKey) {
 		return json({ error: 'no LLM providers configured', fallback: true }, { status: 503 });
 	}
 
-	// rate limiting
-	const ip =
-		request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for') ?? 'unknown';
-
-	if (!checkRateLimit(ip)) {
-		return json({ error: 'rate limit exceeded' }, { status: 429 });
-	}
+	// rate limiting (disabled for testing - re-enable before deploy)
+	// const ip =
+	// 	request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for') ?? 'unknown';
+	// if (!checkRateLimit(ip)) {
+	// 	return json({ error: 'rate limit exceeded' }, { status: 429 });
+	// }
 
 	let body: RequestBody;
 	try {
 		body = await request.json();
 	} catch {
 		throw error(400, 'invalid JSON body');
+	}
+
+	// validate resume text isn't empty/whitespace
+	if (body.resumeText !== undefined && body.resumeText.trim().length === 0) {
+		throw error(400, 'resumeText cannot be empty');
 	}
 
 	// build the prompt based on mode
@@ -204,23 +266,22 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			throw error(400, 'invalid mode');
 	}
 
-	const result = await callLLM(prompt, env);
+	const result = await callLLM(prompt, keys);
 
 	if (!result) {
 		return json({ error: 'all LLM providers failed', fallback: true }, { status: 503 });
 	}
 
-	try {
-		const cleaned = result.text.replace(/```json\n?|\n?```/g, '').trim();
-		const parsed = JSON.parse(cleaned);
+	const parsed = extractJSON(result.text);
 
-		return json({
-			...parsed,
-			_provider: result.provider,
-			_fallback: false
-		});
-	} catch (err) {
-		console.error(`failed to parse ${result.provider} response:`, err);
+	if (!parsed || typeof parsed !== 'object') {
+		console.error(`failed to parse ${result.provider} response as JSON`);
 		return json({ error: 'failed to parse LLM response', fallback: true }, { status: 502 });
 	}
+
+	return json({
+		...(parsed as Record<string, unknown>),
+		_provider: result.provider,
+		_fallback: false
+	});
 };

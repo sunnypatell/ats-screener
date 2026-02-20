@@ -2,6 +2,8 @@ import type { ScoreResult } from '$engine/scorer/types';
 import type { LLMAnalysis, LLMRequestPayload, LLMResponse } from './types';
 import { generateFallbackAnalysis } from './fallback';
 
+const CLIENT_TIMEOUT_MS = 60_000;
+
 // performs full LLM-powered ATS scoring via the server endpoint
 // falls back to rule-based if all providers fail
 export async function scoreLLM(
@@ -9,6 +11,9 @@ export async function scoreLLM(
 	jobDescription?: string
 ): Promise<{ results: ScoreResult[]; provider: string; fallback: boolean } | null> {
 	try {
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), CLIENT_TIMEOUT_MS);
+
 		const response = await fetch('/api/analyze', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -16,8 +21,11 @@ export async function scoreLLM(
 				mode: 'full-score',
 				resumeText,
 				jobDescription
-			})
+			}),
+			signal: controller.signal
 		});
+
+		clearTimeout(timeout);
 
 		if (!response.ok) {
 			const data = await response.json().catch(() => ({}));
@@ -41,7 +49,10 @@ export async function scoreLLM(
 			provider: (data._provider as string) ?? 'unknown',
 			fallback: false
 		};
-	} catch {
+	} catch (err) {
+		if (err instanceof DOMException && err.name === 'AbortError') {
+			console.warn('LLM scoring timed out after', CLIENT_TIMEOUT_MS, 'ms');
+		}
 		return null;
 	}
 }
@@ -105,11 +116,17 @@ function toStringArray(val: unknown): string[] {
 // legacy function for JD analysis and semantic matching
 export async function analyzWithLLM(payload: LLMRequestPayload): Promise<LLMResponse> {
 	try {
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), CLIENT_TIMEOUT_MS);
+
 		const response = await fetch('/api/analyze', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(payload)
+			body: JSON.stringify(payload),
+			signal: controller.signal
 		});
+
+		clearTimeout(timeout);
 
 		if (!response.ok) {
 			if (response.status === 429) {
