@@ -1,0 +1,37 @@
+# dependencies
+node_modules/
+
+# build output
+.svelte-kit/
+build/
+dist/
+
+# environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# testing
+coverage/
+test-results/
+playwright-report/
+blob-report/
+
+# cloudflare
+.wrangler/
+.dev.vars
+
+# misc
+*.log
+*.tsbuildinfo
