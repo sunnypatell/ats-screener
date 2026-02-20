@@ -219,7 +219,7 @@
 				<div class="tech-card">
 					<h4>AI</h4>
 					<ul>
-						<li>Google Gemini 2.0 Flash (primary)</li>
+						<li>Google Gemini 2.5 Flash-Lite (primary)</li>
 						<li>Groq Llama 3.3 70B (fallback)</li>
 						<li>Cerebras Llama 3.3 70B (fallback)</li>
 						<li>Rule-based fallback (offline capable)</li>
@@ -304,7 +304,7 @@
 							GitHub
 						</a>
 						<a
-							href="https://linkedin.com/in/sunnypatell"
+							href="https://www.linkedin.com/in/sunny-patel-30b460204/"
 							target="_blank"
 							rel="noopener"
 							class="creator-link"

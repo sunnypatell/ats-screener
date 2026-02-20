@@ -5,9 +5,6 @@
 	import ResumeStats from '$components/scoring/ResumeStats.svelte';
 	import { resumeStore } from '$stores/resume.svelte';
 	import { scoresStore } from '$stores/scores.svelte';
-	import { parseResume } from '$engine/parser';
-	import { scoreResume } from '$engine/scorer/engine';
-	import { scoreLLM } from '$engine/llm';
 	import type { ScoringInput } from '$engine/scorer/types';
 
 	// tracks whether the scan button has been clicked at least once
@@ -23,6 +20,8 @@
 
 		resumeStore.startParsing();
 		try {
+			// dynamic import: pdfjs-dist + parser only loaded when user uploads a file
+			const { parseResume } = await import('$engine/parser');
 			const result = await parseResume(resumeStore.file);
 			resumeStore.finishParsing(result);
 		} catch (err) {
@@ -62,7 +61,8 @@
 			const resume = resumeStore.resume!;
 			const jd = scoresStore.hasJobDescription ? scoresStore.jobDescription : undefined;
 
-			// try LLM-powered scoring first (Gemini → Groq → Cerebras)
+			// dynamic import: LLM client only loaded when scoring starts
+			const { scoreLLM } = await import('$engine/llm');
 			const llmResult = await scoreLLM(resume.rawText, jd);
 
 			if (llmResult && llmResult.results.length > 0) {
@@ -72,6 +72,7 @@
 			}
 
 			// all LLM providers failed, fall back to deterministic rule-based scoring
+			const { scoreResume } = await import('$engine/scorer/engine');
 			const input = buildScoringInput();
 			const results = scoreResume(input);
 			scoresStore.finishScoring(results);
