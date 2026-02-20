@@ -21,6 +21,7 @@
 	},
 	"dependencies": {
 		"@number-flow/svelte": "^0.3.11",
+		"@scalar/sveltekit": "^0.1.48",
 		"@selemondev/svelte-marquee": "^0.1.1",
 		"bits-ui": "^2.16.0",
 		"compromise": "^14.14.3",
