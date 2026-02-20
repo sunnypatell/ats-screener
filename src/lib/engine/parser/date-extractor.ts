@@ -50,11 +50,7 @@ const DATE_RANGE_PATTERNS = [
 	/(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*\.?\s*\d{4}/gi
 ];
 
-/**
- * extracts all date ranges from a block of text.
- * handles various formats: "Jan 2023 - Present", "2022 - 2024", "01/2023 - 12/2024"
- * prioritizes range patterns over standalone dates to avoid duplicates.
- */
+// extracts all date ranges from text, prioritizing ranges over standalone dates
 export function extractDateRanges(text: string): DateRange[] {
 	const ranges: DateRange[] = [];
 	// track which character positions have already been matched
@@ -83,9 +79,7 @@ export function extractDateRanges(text: string): DateRange[] {
 	return ranges;
 }
 
-/**
- * parses a date range string into a structured DateRange.
- */
+// parses a date range string into a structured DateRange
 function parseDateRange(raw: string): DateRange | null {
 	const isCurrent = CURRENT_INDICATORS.test(raw);
 
@@ -108,9 +102,7 @@ function parseDateRange(raw: string): DateRange | null {
 	};
 }
 
-/**
- * normalizes a date string to "YYYY-MM" or "YYYY" format.
- */
+// normalizes a date string to "YYYY-MM" or "YYYY" format
 function normalizeDate(dateStr: string): string | null {
 	const cleaned = dateStr.trim().toLowerCase();
 
@@ -155,10 +147,7 @@ function normalizeDate(dateStr: string): string | null {
 	return null;
 }
 
-/**
- * extracts the first date range found in a line of text.
- * useful for parsing experience/education entries.
- */
+// extracts the first date range found in a line of text
 export function extractFirstDateRange(text: string): DateRange | null {
 	const ranges = extractDateRanges(text);
 	return ranges.length > 0 ? ranges[0] : null;

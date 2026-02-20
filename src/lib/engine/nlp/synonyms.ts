@@ -1,11 +1,5 @@
-/**
- * cross-industry skill synonym map.
- * maps variant names/abbreviations to a canonical form.
- * this enables matching "JS" on a resume to "JavaScript" in a JD,
- * or "PM" to "Project Management".
- *
- * organized by industry cluster for maintainability.
- */
+// cross-industry synonym map: maps variant names/abbreviations to a canonical form
+// organized by industry cluster for maintainability
 const SYNONYM_GROUPS: string[][] = [
 	// === technology / programming ===
 	['javascript', 'js', 'ecmascript', 'es6', 'es2015'],
@@ -206,10 +200,7 @@ const SYNONYM_GROUPS: string[][] = [
 	['power bi', 'powerbi', 'microsoft power bi']
 ];
 
-/**
- * maps every variant to its canonical form (first item in the group).
- * lookups are case-insensitive.
- */
+// maps every variant to its canonical form (first in group), case-insensitive
 const synonymMap = new Map<string, string>();
 
 for (const group of SYNONYM_GROUPS) {
@@ -219,35 +210,26 @@ for (const group of SYNONYM_GROUPS) {
 	}
 }
 
-/**
- * returns the canonical form of a term, or the term itself if no synonym exists.
- */
+// returns the canonical form of a term, or the term itself if no synonym exists
 export function getCanonical(term: string): string {
 	return synonymMap.get(term.toLowerCase()) || term.toLowerCase();
 }
 
-/**
- * checks if two terms are synonymous.
- */
+// checks if two terms are synonymous
 export function areSynonyms(term1: string, term2: string): boolean {
 	const c1 = getCanonical(term1);
 	const c2 = getCanonical(term2);
 	return c1 === c2;
 }
 
-/**
- * finds all known synonyms for a term.
- */
+// finds all known synonyms for a term
 export function getSynonyms(term: string): string[] {
 	const canonical = getCanonical(term);
 	const group = SYNONYM_GROUPS.find((g) => g.some((v) => v.toLowerCase() === canonical));
 	return group ? [...group] : [term];
 }
 
-/**
- * normalizes a list of terms using the synonym map.
- * deduplicates based on canonical form.
- */
+// normalizes a list of terms using the synonym map, deduplicates by canonical form
 export function normalizeTerms(terms: string[]): string[] {
 	const seen = new Set<string>();
 	const result: string[] = [];

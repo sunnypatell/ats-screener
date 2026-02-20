@@ -6,23 +6,12 @@ import { scoreExperience } from './experience-scorer';
 import { scoreEducation } from './education-scorer';
 import { matchKeywords } from './keyword-matcher';
 
-/**
- * scores a resume against all 6 ATS system profiles.
- * this is the main entry point for the scoring engine.
- *
- * each profile applies different weights, strictness levels,
- * and keyword strategies to simulate how the real system would
- * evaluate the resume.
- *
- * deterministic: same input always produces the same output.
- */
+// scores a resume against all 6 ATS profiles. deterministic: same input = same output
 export function scoreResume(input: ScoringInput): ScoreResult[] {
 	return ALL_PROFILES.map((profile) => scoreAgainstProfile(input, profile));
 }
 
-/**
- * scores a resume against a single ATS profile.
- */
+// scores a resume against a single ATS profile
 export function scoreAgainstProfile(input: ScoringInput, profile: ATSProfile): ScoreResult {
 	const breakdown = computeBreakdown(input, profile);
 	const weightedScore = computeWeightedScore(breakdown, profile);
@@ -46,9 +35,7 @@ export function scoreAgainstProfile(input: ScoringInput, profile: ATSProfile): S
 	};
 }
 
-/**
- * computes the individual breakdown scores for each category.
- */
+// runs each individual scorer and assembles the breakdown
 function computeBreakdown(input: ScoringInput, profile: ATSProfile): ScoreBreakdown {
 	const formatting = scoreFormatting(input, profile.parsingStrictness);
 	const sections = scoreSections(input.resumeSections, profile.requiredSections);
@@ -91,10 +78,7 @@ function computeBreakdown(input: ScoringInput, profile: ATSProfile): ScoreBreakd
 	};
 }
 
-/**
- * applies the profile's category weights to produce a single weighted score.
- * the quantification weight is factored into the experience score.
- */
+// applies profile weights to produce a single 0-100 score
 function computeWeightedScore(breakdown: ScoreBreakdown, profile: ATSProfile): number {
 	const { weights } = profile;
 
@@ -117,10 +101,7 @@ function computeWeightedScore(breakdown: ScoreBreakdown, profile: ATSProfile): n
 	return weighted;
 }
 
-/**
- * runs all quirk checks for a profile and sums the adjustments.
- * negative penalties = deductions, negative penalties (like -5) = bonuses.
- */
+// runs quirk checks for a profile. negative penalty = bonus, positive = deduction
 function computeQuirkAdjustment(
 	input: ScoringInput,
 	profile: ATSProfile
@@ -139,11 +120,7 @@ function computeQuirkAdjustment(
 	return { totalAdjustment, messages };
 }
 
-/**
- * generates actionable suggestions based on scoring results.
- * these are rule-based (deterministic). LLM-powered suggestions
- * come later as an enhancement layer.
- */
+// generates rule-based suggestions. LLM enhancement is layered on top separately
 function generateSuggestions(
 	breakdown: ScoreBreakdown,
 	profile: ATSProfile,

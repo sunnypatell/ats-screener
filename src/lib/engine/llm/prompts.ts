@@ -1,8 +1,4 @@
-/**
- * prompt templates for Gemini 2.0 Flash.
- * designed to extract structured data from unstructured text.
- * works across any industry and role type.
- */
+// prompt templates for Gemini 2.0 Flash. structured JSON output, any industry
 
 export function buildJDAnalysisPrompt(jobDescription: string): string {
 	return `analyze this job description and extract structured requirements. respond ONLY with valid JSON, no markdown fences.

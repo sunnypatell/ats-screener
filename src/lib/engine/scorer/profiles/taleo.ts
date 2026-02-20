@@ -1,19 +1,7 @@
 import type { ATSProfile } from './types';
 
-/**
- * Oracle Taleo (taleo.net)
- *
- * one of the oldest and most established ATS platforms.
- * heavily used in enterprise, government, and large corporations.
- * known for rigid boolean keyword filtering and strict parsing.
- *
- * key behaviors:
- * - boolean keyword search is the primary filter mechanism
- * - recruiters set "knockout questions" that auto-reject resumes
- * - very structured parsing; sections must be clearly delineated
- * - date parsing is strict
- * - older parser technology, struggles with modern formats
- */
+// taleo: legacy oracle ATS, boolean keyword filtering, knockout questions
+// rigid parsing with strict date and section requirements
 export const TALEO_PROFILE: ATSProfile = {
 	name: 'Taleo',
 	vendor: 'Oracle Corporation',

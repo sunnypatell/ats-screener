@@ -1,19 +1,7 @@
 import type { ATSProfile } from './types';
 
-/**
- * iCIMS Talent Cloud (icims.com)
- *
- * modern ATS platform used by mid-to-large enterprises.
- * more tolerant of formatting variations than Workday/Taleo.
- * uses AI-assisted matching for better keyword understanding.
- *
- * key behaviors:
- * - more forgiving parser than Workday/Taleo
- * - AI-assisted matching considers context and related terms
- * - still relies on keyword matching but with fuzzy matching
- * - better handling of different resume formats
- * - supports skills taxonomies for broader matching
- */
+// icims: mid-to-large enterprise ATS, AI-assisted fuzzy keyword matching
+// more format-tolerant than Workday/Taleo, supports skills taxonomies
 export const ICIMS_PROFILE: ATSProfile = {
 	name: 'iCIMS',
 	vendor: 'iCIMS, Inc.',

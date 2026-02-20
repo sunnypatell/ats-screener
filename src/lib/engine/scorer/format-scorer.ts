@@ -6,11 +6,7 @@ interface FormatScore {
 	details: string[];
 }
 
-/**
- * scores resume formatting and parseability.
- * this is what determines if an ATS can even READ the resume.
- * strict ATS systems (Workday, Taleo) penalize formatting issues heavily.
- */
+// scores resume formatting and parseability; strict ATS systems penalize heavily
 export function scoreFormatting(input: ScoringInput, strictness: number): FormatScore {
 	const issues: string[] = [];
 	const details: string[] = [];

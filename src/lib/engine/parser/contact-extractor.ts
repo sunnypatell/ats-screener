@@ -7,10 +7,7 @@ const GITHUB_REGEX = /(?:https?:\/\/)?(?:www\.)?github\.com\/[\w-]+\/?/i;
 const WEBSITE_REGEX =
 	/https?:\/\/(?!.*(?:linkedin|github)\.com)[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/\S*)?/i;
 
-/**
- * extracts contact information from the top portion of a resume.
- * focuses on the first ~10 lines where contact info typically lives.
- */
+// extracts contact info from the top ~10 lines of the resume
 export function extractContact(lines: string[]): ContactInfo {
 	// contact info is almost always in the first 10 lines
 	const searchLines = lines.slice(0, Math.min(lines.length, 15));
@@ -32,13 +29,7 @@ function extractFirst(text: string, regex: RegExp): string | null {
 	return match ? match[0].trim() : null;
 }
 
-/**
- * extracts the candidate name from the resume.
- * the name is typically the first non-empty line that:
- * - doesn't contain an email, phone, or URL
- * - is relatively short (< 50 chars)
- * - contains at least 2 words
- */
+// extracts candidate name from first few lines (short, non-url, 2-5 word line)
 function extractName(lines: string[]): string | null {
 	for (const line of lines.slice(0, 5)) {
 		const trimmed = line.trim();
@@ -62,10 +53,7 @@ function extractName(lines: string[]): string | null {
 	return null;
 }
 
-/**
- * extracts location from the contact section.
- * looks for patterns like "City, State" or "City, State ZIP"
- */
+// extracts location from contact section (e.g. "City, State" or "City, ST ZIP")
 function extractLocation(lines: string[]): string | null {
 	const locationPatterns = [
 		// City, ST

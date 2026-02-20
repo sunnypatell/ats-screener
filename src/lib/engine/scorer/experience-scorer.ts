@@ -1,7 +1,4 @@
-/**
- * action verbs that indicate strong, quantifiable experience.
- * ATS systems and recruiters look for these in bullet points.
- */
+// strong action verbs that ATS systems and recruiters look for in bullet points
 const STRONG_ACTION_VERBS = new Set([
 	'achieved',
 	'accelerated',
@@ -102,10 +99,7 @@ const STRONG_ACTION_VERBS = new Set([
 	'upgraded'
 ]);
 
-/**
- * patterns that indicate quantified achievements.
- * these are gold for ATS scoring because they show measurable impact.
- */
+// patterns indicating quantified achievements (measurable impact boosts ATS scores)
 const QUANTIFICATION_PATTERNS = [
 	/\d+%/, // percentages: "increased by 30%"
 	/\$[\d,]+/, // dollar amounts: "$1.2M"
@@ -126,13 +120,7 @@ interface ExperienceScore {
 	highlights: string[];
 }
 
-/**
- * scores the quality and relevance of experience entries.
- * evaluates:
- * - quantified achievements (numbers, percentages, dollar amounts)
- * - strong action verbs (led, built, increased, etc.)
- * - bullet point density and quality
- */
+// scores experience quality: quantified achievements, action verbs, bullet density
 export function scoreExperience(bullets: string[]): ExperienceScore {
 	if (bullets.length === 0) {
 		return {

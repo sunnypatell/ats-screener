@@ -1,20 +1,7 @@
 import type { ATSProfile } from './types';
 
-/**
- * SAP SuccessFactors Recruiting (sap.com/products/hcm)
- *
- * enterprise HCM suite used by large multinationals.
- * very structured approach to resume parsing.
- * tightly integrated with SAP's HR ecosystem.
- *
- * key behaviors:
- * - enterprise-grade structured data parsing
- * - maps resume data to rigid internal fields
- * - expects very standard formatting and section structure
- * - keyword matching is exact and field-based
- * - heavily used in manufacturing, pharma, and large enterprise
- * - date format sensitivity is high
- */
+// successfactors: enterprise HCM by SAP, rigid field mapping, exact keyword matching
+// expects standard formatting and structured sections, date-sensitive
 export const SUCCESSFACTORS_PROFILE: ATSProfile = {
 	name: 'SuccessFactors',
 	vendor: 'SAP SE',

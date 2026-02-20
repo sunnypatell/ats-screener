@@ -2,11 +2,7 @@ import type { ParsedJobDescription } from './types';
 import { tokenize, extractNgrams } from '$engine/nlp/tokenizer';
 import { detectIndustry, getIndustrySkills } from '$engine/nlp/skills-taxonomy';
 
-/**
- * extracts structured data from a job description.
- * this is the rule-based extractor. LLM enhancement happens in the server endpoint.
- * works for any industry and role type.
- */
+// rule-based JD extractor. LLM enhancement happens server-side. works for any industry
 export function parseJobDescription(text: string): ParsedJobDescription {
 	const lower = text.toLowerCase();
 

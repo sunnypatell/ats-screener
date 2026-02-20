@@ -1,19 +1,7 @@
 import type { ATSProfile } from './types';
 
-/**
- * Workday Recruiting (workday.com)
- *
- * the most widely used ATS among Fortune 500 companies.
- * known for strict resume parsing, single-column preference,
- * and heavy reliance on exact keyword matching.
- *
- * key behaviors:
- * - very strict parser that struggles with creative formats
- * - prefers single-column, chronological resumes
- * - uses exact keyword matching against job requisition fields
- * - parses sections rigidly; expects clear headers
- * - date parsing is format-sensitive
- */
+// workday: most used ATS in Fortune 500, strict parsing, exact keyword matching
+// prefers single-column chronological resumes with clear section headers
 export const WORKDAY_PROFILE: ATSProfile = {
 	name: 'Workday',
 	vendor: 'Workday, Inc.',

@@ -7,11 +7,7 @@ interface DOCXParseResult {
 	hasImages: boolean;
 }
 
-/**
- * extracts text content from a DOCX file using mammoth.
- * mammoth converts DOCX to plaintext, stripping formatting
- * but preserving document structure (paragraphs, lists).
- */
+// extracts text from a DOCX file via mammoth, preserving paragraph/list structure
 export async function parseDOCX(file: File): Promise<DOCXParseResult> {
 	const buffer = await file.arrayBuffer();
 

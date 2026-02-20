@@ -14,9 +14,7 @@ import { GREENHOUSE_PROFILE } from './greenhouse';
 import { LEVER_PROFILE } from './lever';
 import { SUCCESSFACTORS_PROFILE } from './successfactors';
 
-/**
- * all ATS profiles in one array, ordered by market share/strictness.
- */
+// all ATS profiles ordered by market share/strictness
 export const ALL_PROFILES: ATSProfile[] = [
 	WORKDAY_PROFILE,
 	TALEO_PROFILE,
@@ -26,9 +24,7 @@ export const ALL_PROFILES: ATSProfile[] = [
 	LEVER_PROFILE
 ];
 
-/**
- * lookup a profile by name (case-insensitive).
- */
+// lookup a profile by name (case-insensitive)
 export function getProfile(name: string): ATSProfile | undefined {
 	return ALL_PROFILES.find((p) => p.name.toLowerCase() === name.toLowerCase());
 }

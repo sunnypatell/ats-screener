@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../app.css';
+	import Navbar from '$components/ui/Navbar.svelte';
 
 	let { children } = $props();
 </script>
@@ -8,4 +9,5 @@
 	<title>ATS Screener - Free Resume Scanner for Real HCMS Platforms</title>
 </svelte:head>
 
+<Navbar />
 {@render children()}

@@ -1,8 +1,4 @@
-/**
- * stop words to exclude from keyword analysis.
- * these are common english words that don't carry meaningful
- * semantic weight for resume/job description matching.
- */
+// stop words to exclude from keyword analysis (common english words with no semantic weight)
 const STOP_WORDS = new Set([
 	'a',
 	'an',
@@ -132,10 +128,7 @@ export interface Token {
 	position: number;
 }
 
-/**
- * tokenizes text into individual terms.
- * normalizes to lowercase, removes punctuation, filters stop words.
- */
+// tokenizes text into terms: lowercase, strip punctuation, filter stop words
 export function tokenize(text: string): Token[] {
 	const words = text.split(/[\s,;|]+/);
 	const tokens: Token[] = [];
@@ -156,11 +149,7 @@ export function tokenize(text: string): Token[] {
 	return tokens;
 }
 
-/**
- * extracts n-grams (multi-word phrases) from text.
- * useful for matching compound skills like "machine learning",
- * "project management", "data analysis".
- */
+// extracts n-grams (multi-word phrases) for matching compound skills
 export function extractNgrams(text: string, n: number): string[] {
 	const words = text
 		.toLowerCase()
@@ -181,10 +170,7 @@ export function extractNgrams(text: string, n: number): string[] {
 	return ngrams;
 }
 
-/**
- * extracts unique terms from text, combining unigrams and bigrams.
- * this gives us both individual skills ("python") and compound skills ("machine learning").
- */
+// extracts unique terms combining unigrams, bigrams, and trigrams
 export function extractTerms(text: string): string[] {
 	const tokens = tokenize(text);
 	const unigrams = tokens.map((t) => t.normalized);
@@ -195,9 +181,7 @@ export function extractTerms(text: string): string[] {
 	return [...new Set(all)];
 }
 
-/**
- * normalizes text for comparison: lowercase, trim, collapse whitespace.
- */
+// normalizes text for comparison: lowercase, trim, collapse whitespace
 export function normalizeText(text: string): string {
 	return text.toLowerCase().trim().replace(/\s+/g, ' ');
 }

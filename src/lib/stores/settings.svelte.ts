@@ -1,6 +1,4 @@
-/**
- * svelte 5 rune-based store for app settings.
- */
+// svelte 5 rune-based store for app settings
 class SettingsStore {
 	selectedSystems = $state<string[]>([
 		'Workday',

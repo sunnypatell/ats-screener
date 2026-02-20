@@ -13,10 +13,7 @@ interface TFIDFScore {
 	idf: number;
 }
 
-/**
- * computes term frequency for a document.
- * TF = (count of term in document) / (total terms in document)
- */
+// computes term frequency: TF = count of term / total terms in doc
 export function computeTF(text: string): TermFrequency[] {
 	const tokens = tokenize(text);
 	const counts = new Map<string, number>();
@@ -39,11 +36,7 @@ export function computeTF(text: string): TermFrequency[] {
 	return frequencies.sort((a, b) => b.tf - a.tf);
 }
 
-/**
- * computes inverse document frequency across a corpus.
- * IDF = log(N / (1 + df)) where N = total docs, df = docs containing term
- * the +1 prevents division by zero.
- */
+// computes inverse document frequency: IDF = log(N / (1 + df)), +1 prevents div by zero
 export function computeIDF(documents: string[]): Map<string, number> {
 	const docCount = documents.length;
 	const termDocCounts = new Map<string, number>();
@@ -65,11 +58,8 @@ export function computeIDF(documents: string[]): Map<string, number> {
 	return idf;
 }
 
-/**
- * computes TF-IDF scores for a target document against a corpus.
- * higher scores indicate terms that are important to the target
- * but not common across all documents.
- */
+// computes TF-IDF scores for a target doc against a corpus
+// higher scores = important to target but uncommon across all docs
 export function computeTFIDF(targetText: string, corpusTexts: string[]): TFIDFScore[] {
 	const allDocs = [targetText, ...corpusTexts];
 	const idfMap = computeIDF(allDocs);
@@ -90,10 +80,7 @@ export function computeTFIDF(targetText: string, corpusTexts: string[]): TFIDFSc
 	return scores.sort((a, b) => b.score - a.score);
 }
 
-/**
- * computes keyword overlap between two texts.
- * returns matched terms, missing terms, and a similarity score.
- */
+// computes keyword overlap between two texts: matched terms, missing terms, similarity score
 export function computeKeywordOverlap(
 	sourceText: string,
 	targetText: string
@@ -124,10 +111,7 @@ export function computeKeywordOverlap(
 	return { matched, missing, score };
 }
 
-/**
- * finds the most important terms in a document using TF-IDF.
- * useful for extracting key skills and requirements from job descriptions.
- */
+// extracts the most important terms in a doc using TF-IDF (key skills/requirements)
 export function extractKeyTerms(text: string, topN: number = 20): string[] {
 	// use the text as both target and a minimal corpus
 	// the IDF won't be meaningful with a single doc, so we rely mainly on TF
