@@ -3,7 +3,7 @@
 
 	const platforms = [
 		{ name: 'Workday', vendor: 'Workday Inc.', color: '#06b6d4' },
-		{ name: 'Taleo', vendor: 'Oracle', color: '#ef4444' },
+		{ name: 'Taleo', vendor: 'Oracle', color: '#f59e0b' },
 		{ name: 'iCIMS', vendor: 'iCIMS', color: '#3b82f6' },
 		{ name: 'Greenhouse', vendor: 'Greenhouse', color: '#22c55e' },
 		{ name: 'Lever', vendor: 'Employ', color: '#8b5cf6' },

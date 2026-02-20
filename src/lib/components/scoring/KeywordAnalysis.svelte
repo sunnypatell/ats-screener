@@ -256,7 +256,7 @@
 	}
 
 	.chips-container {
-		max-height: 300px;
+		max-height: 400px;
 		overflow-y: auto;
 		transition: max-height 0.3s ease;
 		scrollbar-width: thin;
@@ -264,8 +264,8 @@
 	}
 
 	.chips-container.collapsed {
-		max-height: none;
-		overflow: visible;
+		max-height: 60px;
+		overflow: hidden;
 	}
 
 	.chips {
@@ -286,10 +286,6 @@
 		transition:
 			transform 0.15s ease,
 			border-color 0.15s ease;
-		max-width: 280px;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
 	}
 
 	.chip:hover {

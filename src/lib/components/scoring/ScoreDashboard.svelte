@@ -13,6 +13,16 @@
 	// toggle between grid cards and detailed breakdown view
 	let activeView = $state<'cards' | 'detailed'>('cards');
 
+	// collapsible suggestion cards
+	let expandedSuggestion = $state<number | null>(null);
+
+	function toggleSuggestion(index: number) {
+		expandedSuggestion = expandedSuggestion === index ? null : index;
+	}
+
+	const impactLabels = ['Critical', 'High', 'Medium', 'Helpful', 'Polish'];
+	const impactColors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4'];
+
 	// exports results as a JSON file download
 	function exportResults() {
 		const data = {
@@ -229,7 +239,7 @@
 		<!-- keyword analysis (full-width) -->
 		<KeywordAnalysis results={scoresStore.results} />
 
-		<!-- deduplicated suggestions from all 6 ATS profiles -->
+		<!-- deduplicated suggestions as collapsible cards -->
 		{#if scoresStore.results.some((r) => r.suggestions.length > 0)}
 			<div class="suggestions-section">
 				<div class="suggestions-header">
@@ -248,14 +258,52 @@
 					<h3 class="suggestions-title">Optimization Suggestions</h3>
 				</div>
 				<p class="suggestions-subtitle">
-					Actionable recommendations based on analysis across all 6 ATS platforms.
+					Actionable recommendations based on analysis across all 6 ATS platforms. Click to expand.
 				</p>
-				<div class="suggestions-list">
-					{#each [...new Set(scoresStore.results.flatMap((r) => r.suggestions))].slice(0, 8) as suggestion, i}
-						<div class="suggestion-item">
-							<span class="suggestion-number">{i + 1}</span>
-							<span>{suggestion}</span>
-						</div>
+				<div class="suggestions-cards">
+					{#each [...new Set(scoresStore.results.flatMap((r) => r.suggestions))].slice(0, 5) as suggestion, i}
+						<button
+							class="suggestion-card"
+							class:expanded={expandedSuggestion === i}
+							onclick={() => toggleSuggestion(i)}
+						>
+							<div class="suggestion-card-header">
+								<div class="suggestion-card-left">
+									<span class="suggestion-priority" style="background: {impactColors[i]};">
+										{i + 1}
+									</span>
+									<span class="suggestion-summary">
+										{#if expandedSuggestion !== i}
+											{suggestion.length > 85 ? suggestion.slice(0, 85) + '...' : suggestion}
+										{:else}
+											Suggestion {i + 1}
+										{/if}
+									</span>
+								</div>
+								<div class="suggestion-card-right">
+									<span class="suggestion-impact" style="color: {impactColors[i]};"
+										>{impactLabels[i]}</span
+									>
+									<svg
+										class="suggestion-chevron"
+										class:rotated={expandedSuggestion === i}
+										width="14"
+										height="14"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+									>
+										<polyline points="6,9 12,15 18,9" />
+									</svg>
+								</div>
+							</div>
+							{#if expandedSuggestion === i}
+								<div class="suggestion-card-body">
+									<p>{suggestion}</p>
+								</div>
+							{/if}
+						</button>
 					{/each}
 				</div>
 			</div>
@@ -530,43 +578,124 @@
 		margin-bottom: 1.25rem;
 	}
 
-	.suggestions-list {
+	.suggestions-cards {
 		display: flex;
 		flex-direction: column;
-		gap: 0.6rem;
+		gap: 0.5rem;
 	}
 
-	.suggestion-item {
-		display: flex;
-		align-items: flex-start;
-		gap: 0.75rem;
-		font-size: 0.9rem;
-		color: var(--text-secondary);
-		line-height: 1.6;
-		padding: 0.6rem 0.85rem;
+	.suggestion-card {
+		width: 100%;
+		text-align: left;
+		padding: 0;
 		background: rgba(255, 255, 255, 0.02);
 		border: 1px solid var(--glass-border);
-		border-radius: var(--radius-md);
-		transition: border-color 0.2s ease;
+		border-radius: var(--radius-lg);
+		cursor: pointer;
+		transition:
+			border-color 0.2s ease,
+			background 0.2s ease;
+		overflow: hidden;
+		font-family: inherit;
 	}
 
-	.suggestion-item:hover {
-		border-color: rgba(6, 182, 212, 0.2);
+	.suggestion-card:hover {
+		border-color: rgba(6, 182, 212, 0.25);
+		background: rgba(6, 182, 212, 0.03);
 	}
 
-	.suggestion-number {
+	.suggestion-card.expanded {
+		border-color: rgba(6, 182, 212, 0.3);
+	}
+
+	.suggestion-card-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.85rem 1rem;
+		gap: 0.75rem;
+	}
+
+	.suggestion-card-left {
+		display: flex;
+		align-items: center;
+		gap: 0.65rem;
+		min-width: 0;
+		flex: 1;
+	}
+
+	.suggestion-priority {
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		width: 22px;
 		height: 22px;
 		border-radius: 50%;
-		background: rgba(6, 182, 212, 0.1);
-		color: var(--accent-cyan);
-		font-size: 0.72rem;
+		color: #fff;
+		font-size: 0.68rem;
 		font-weight: 700;
 		flex-shrink: 0;
-		margin-top: 0.1rem;
+	}
+
+	.suggestion-summary {
+		font-size: 0.88rem;
+		color: var(--text-secondary);
+		line-height: 1.4;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.suggestion-card.expanded .suggestion-summary {
+		white-space: normal;
+		font-weight: 600;
+		color: var(--text-primary);
+	}
+
+	.suggestion-card-right {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-shrink: 0;
+	}
+
+	.suggestion-impact {
+		font-size: 0.7rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+	}
+
+	.suggestion-chevron {
+		color: var(--text-tertiary);
+		transition: transform 0.2s ease;
+	}
+
+	.suggestion-chevron.rotated {
+		transform: rotate(180deg);
+	}
+
+	.suggestion-card-body {
+		padding: 0 1rem 1rem 3rem;
+		animation: cardExpand 0.25s ease;
+	}
+
+	.suggestion-card-body p {
+		font-size: 0.88rem;
+		color: var(--text-secondary);
+		line-height: 1.7;
+		margin: 0;
+	}
+
+	@keyframes cardExpand {
+		from {
+			opacity: 0;
+			transform: translateY(-6px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
 	}
 
 	@media (max-width: 900px) {
