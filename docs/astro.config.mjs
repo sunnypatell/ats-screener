@@ -4,7 +4,7 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://ats-screener.pages.dev',
+	site: 'https://ats-screener.vercel.app',
 	base: '/docs',
 	integrations: [
 		starlight({
@@ -25,7 +25,7 @@ export default defineConfig({
 				{
 					icon: 'external',
 					label: 'Launch Scanner',
-					href: 'https://ats-screener.pages.dev/scanner',
+					href: 'https://ats-screener.vercel.app/scanner',
 				},
 			],
 			customCss: ['./src/styles/custom.css'],
@@ -37,7 +37,7 @@ export default defineConfig({
 					tag: 'meta',
 					attrs: {
 						property: 'og:image',
-						content: 'https://ats-screener.pages.dev/og-image.png',
+						content: 'https://ats-screener.vercel.app/og-image.png',
 					},
 				},
 			],
