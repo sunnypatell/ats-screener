@@ -4,6 +4,7 @@
 	import ScoreDashboard from '$components/scoring/ScoreDashboard.svelte';
 	import ScanningAnimation from '$components/scoring/ScanningAnimation.svelte';
 	import ResumeStats from '$components/scoring/ResumeStats.svelte';
+	import ScanHistory from '$components/scoring/ScanHistory.svelte';
 	import { resumeStore } from '$stores/resume.svelte';
 	import { scoresStore } from '$stores/scores.svelte';
 	import type { ScoringInput } from '$engine/scorer/types';
@@ -269,6 +270,9 @@
 					</div>
 				{/if}
 			</section>
+
+			<!-- scan history: collapsible, shows past scans -->
+			<ScanHistory />
 
 			<!-- resume overview: shows immediately after parsing, before scanning -->
 			{#if resumeStore.isReady && !scoresStore.hasResults}
