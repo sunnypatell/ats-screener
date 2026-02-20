@@ -40,7 +40,7 @@
 			icon: 'shield',
 			title: 'Privacy First',
 			description:
-				'Everything runs client-side. Your resume never leaves your browser. No sign-up, no paywall, no data collection.',
+				'Your resume file is parsed entirely in your browser. Only extracted text is sent for AI scoring. No paywall, no premium tiers.',
 			gradient: 'linear-gradient(135deg, #22c55e, #06b6d4)'
 		}
 	];

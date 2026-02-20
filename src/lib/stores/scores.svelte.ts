@@ -2,9 +2,20 @@ import { browser } from '$app/environment';
 import type { ScoreResult } from '$engine/scorer/types';
 import type { LLMAnalysis } from '$engine/llm/types';
 import type { ParsedJobDescription } from '$engine/job-parser/types';
+import {
+	collection,
+	addDoc,
+	getDocs,
+	deleteDoc,
+	doc,
+	query,
+	orderBy,
+	limit
+} from 'firebase/firestore';
+import { db } from '$lib/firebase';
+import { authStore } from './auth.svelte';
 
-const HISTORY_KEY = 'ats-scan-history';
-const MAX_HISTORY = 10;
+const MAX_HISTORY = 20;
 
 export interface ScanHistoryEntry {
 	id: string;
@@ -25,6 +36,8 @@ class ScoresStore {
 	isAnalyzing = $state(false);
 	llmFallback = $state(false);
 	error = $state<string | null>(null);
+	scanHistory = $state<ScanHistoryEntry[]>([]);
+	historyLoading = $state(false);
 
 	get hasResults(): boolean {
 		return this.results.length > 0;
@@ -49,6 +62,10 @@ class ScoresStore {
 		return this.hasJobDescription ? 'targeted' : 'general';
 	}
 
+	get history(): ScanHistoryEntry[] {
+		return this.scanHistory;
+	}
+
 	setJobDescription(text: string) {
 		this.jobDescription = text;
 	}
@@ -64,38 +81,73 @@ class ScoresStore {
 		this.saveToHistory(results);
 	}
 
-	// scan history persisted in localStorage
-	get history(): ScanHistoryEntry[] {
-		if (!browser) return [];
+	// load scan history from Firestore for current user
+	async loadHistory() {
+		if (!browser || !authStore.isAuthenticated || !authStore.user) return;
+
+		this.historyLoading = true;
 		try {
-			const raw = localStorage.getItem(HISTORY_KEY);
-			return raw ? JSON.parse(raw) : [];
-		} catch {
-			return [];
+			const scansRef = collection(db, 'users', authStore.user.uid, 'scans');
+			const q = query(scansRef, orderBy('timestamp', 'desc'), limit(MAX_HISTORY));
+			const snapshot = await getDocs(q);
+
+			this.scanHistory = snapshot.docs.map((d) => ({
+				id: d.id,
+				...(d.data() as Omit<ScanHistoryEntry, 'id'>)
+			}));
+		} catch (err) {
+			console.warn('failed to load scan history:', err);
+			this.scanHistory = [];
+		} finally {
+			this.historyLoading = false;
 		}
 	}
 
-	private saveToHistory(results: ScoreResult[]) {
-		if (!browser || results.length === 0) return;
+	// save scan results to Firestore
+	private async saveToHistory(results: ScoreResult[]) {
+		if (!browser || results.length === 0 || !authStore.isAuthenticated || !authStore.user) return;
+
 		try {
-			const entry: ScanHistoryEntry = {
-				id: crypto.randomUUID(),
+			const scansRef = collection(db, 'users', authStore.user.uid, 'scans');
+			const entry: Omit<ScanHistoryEntry, 'id'> = {
 				timestamp: new Date().toISOString(),
 				mode: this.mode,
-				averageScore: Math.round(results.reduce((s, r) => s + r.overallScore, 0) / results.length),
+				averageScore: Math.round(
+					results.reduce((s, r) => s + r.overallScore, 0) / results.length
+				),
 				passingCount: results.filter((r) => r.passesFilter).length,
 				results
 			};
-			const existing = this.history;
-			const updated = [entry, ...existing].slice(0, MAX_HISTORY);
-			localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
-		} catch {
-			// localStorage full or unavailable, silently skip
+
+			await addDoc(scansRef, entry);
+
+			// enforce max history cap
+			await this.loadHistory();
+			if (this.scanHistory.length > MAX_HISTORY) {
+				const toDelete = this.scanHistory.slice(MAX_HISTORY);
+				for (const scan of toDelete) {
+					await deleteDoc(doc(db, 'users', authStore.user.uid, 'scans', scan.id));
+				}
+				this.scanHistory = this.scanHistory.slice(0, MAX_HISTORY);
+			}
+		} catch (err) {
+			console.warn('failed to save scan to history:', err);
 		}
 	}
 
-	clearHistory() {
-		if (browser) localStorage.removeItem(HISTORY_KEY);
+	async clearHistory() {
+		if (!browser || !authStore.isAuthenticated || !authStore.user) return;
+
+		try {
+			const scansRef = collection(db, 'users', authStore.user.uid, 'scans');
+			const snapshot = await getDocs(scansRef);
+			for (const d of snapshot.docs) {
+				await deleteDoc(d.ref);
+			}
+			this.scanHistory = [];
+		} catch (err) {
+			console.warn('failed to clear history:', err);
+		}
 	}
 
 	startAnalyzing() {

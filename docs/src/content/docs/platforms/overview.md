@@ -31,7 +31,7 @@ Not all ATS platforms parse resumes the same way. Some use their own parsers, wh
 
 This is where platforms diverge the most:
 
-- **Taleo** is the strictest. It does literal string matching. "Project Manager" will not match "Project Management." Abbreviations don't match full forms.
+- **Taleo** uses literal string matching in its base configuration. "Project Manager" will not match "Project Management." Abbreviations don't match full forms.
 - **Workday** does exact matching by default, but acquired HiredScore in 2024 for AI-powered semantic matching.
 - **iCIMS** uses its Role Fit AI to do semantic matching. "Led a team of 10" can match "Management experience."
 - **Greenhouse** uses LLM-based matching, the most forgiving of all platforms.

@@ -7,7 +7,15 @@
 	import ScanHistory from '$components/scoring/ScanHistory.svelte';
 	import { resumeStore } from '$stores/resume.svelte';
 	import { scoresStore } from '$stores/scores.svelte';
+	import { authStore } from '$stores/auth.svelte';
 	import type { ScoringInput } from '$engine/scorer/types';
+
+	// load history when auth state is ready
+	$effect(() => {
+		if (authStore.isAuthenticated) {
+			scoresStore.loadHistory();
+		}
+	});
 
 	// tracks whether the scan button has been clicked at least once
 	let hasScanned = $state(false);
@@ -115,6 +123,31 @@
 		<div class="bg-orb orb-2"></div>
 	</div>
 
+	{#if authStore.loading}
+		<div class="auth-gate">
+			<div class="auth-gate-card">
+				<div class="spinner-lg"></div>
+				<p class="auth-gate-text">Loading...</p>
+			</div>
+		</div>
+	{:else if !authStore.isAuthenticated}
+		<div class="auth-gate">
+			<div class="auth-gate-card">
+				<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="1.5" style="margin-bottom: 1rem;">
+					<rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+					<path d="M7 11V7a5 5 0 0 1 10 0v4" />
+				</svg>
+				<h2 class="auth-gate-title">Sign In to Scan</h2>
+				<p class="auth-gate-text">
+					Create a free account to scan your resume across 6 real ATS platforms.
+					Your scan history will be saved automatically.
+				</p>
+				<a href="/login" class="auth-gate-btn">
+					Sign In or Create Account
+				</a>
+			</div>
+		</div>
+	{:else}
 	<div class="container">
 		<div class="scanner-header">
 			<div class="page-badge">
@@ -317,6 +350,7 @@
 			{/if}
 		</div>
 	</div>
+	{/if}
 </main>
 
 <style>
@@ -631,6 +665,75 @@
 		color: var(--text-secondary);
 	}
 
+	/* auth gate */
+	.auth-gate {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 60vh;
+		position: relative;
+	}
+
+	.auth-gate-card {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+		max-width: 420px;
+		padding: 3rem 2.5rem;
+		background: var(--glass-bg);
+		border: 1px solid var(--glass-border);
+		border-radius: var(--radius-xl);
+		backdrop-filter: blur(20px);
+	}
+
+	.auth-gate-title {
+		font-size: 1.5rem;
+		font-weight: 700;
+		color: var(--text-primary);
+		margin-bottom: 0.75rem;
+	}
+
+	.auth-gate-text {
+		font-size: 0.9rem;
+		color: var(--text-secondary);
+		line-height: 1.6;
+		margin-bottom: 1.5rem;
+	}
+
+	.auth-gate-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.65rem 1.75rem;
+		font-size: 0.9rem;
+		font-weight: 600;
+		color: var(--color-bg-primary);
+		background: var(--gradient-primary);
+		border-radius: var(--radius-full);
+		text-decoration: none;
+		transition: transform 0.2s ease, box-shadow 0.2s ease;
+	}
+
+	.auth-gate-btn:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+	}
+
+	.spinner-lg {
+		width: 36px;
+		height: 36px;
+		border: 3px solid var(--glass-border);
+		border-top-color: var(--accent-cyan);
+		border-radius: 50%;
+		animation: spin 0.8s linear infinite;
+		margin-bottom: 1rem;
+	}
+
+	@keyframes spin {
+		to { transform: rotate(360deg); }
+	}
+
 	@media (max-width: 640px) {
 		.scanner {
 			padding: 5rem 1.5rem 3rem;
@@ -646,6 +749,11 @@
 
 		.steps-labels {
 			gap: 2rem;
+		}
+
+		.auth-gate-card {
+			padding: 2rem 1.5rem;
+			margin: 0 1rem;
 		}
 	}
 </style>

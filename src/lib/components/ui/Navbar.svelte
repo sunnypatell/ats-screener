@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import Logo from './Logo.svelte';
+	import UserMenu from './UserMenu.svelte';
+	import AuthButton from './AuthButton.svelte';
+	import { authStore } from '$stores/auth.svelte';
 
 	// controls the mobile menu visibility
 	let mobileOpen = $state(false);
@@ -33,6 +36,13 @@
 				GitHub
 			</a>
 			<a href="/scanner" class="nav-cta"> Scan Now </a>
+			{#if !authStore.loading}
+				{#if authStore.isAuthenticated}
+					<UserMenu />
+				{:else}
+					<AuthButton />
+				{/if}
+			{/if}
 		</div>
 
 		<!-- mobile hamburger -->

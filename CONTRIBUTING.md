@@ -53,7 +53,7 @@ The engine is fully decoupled from the UI. All scoring logic is pure TypeScript 
 
 ## Branching Strategy
 
-For early development, we push directly to `main`. As the project matures:
+For early development, I push directly to `main`. As the project matures:
 
 - `main` - production, always stable
 - `dev` - integration branch for feature merges
@@ -61,7 +61,7 @@ For early development, we push directly to `main`. As the project matures:
 
 ## Commit Conventions
 
-We use [Conventional Commits](https://www.conventionalcommits.org):
+This project uses [Conventional Commits](https://www.conventionalcommits.org):
 
 ```
 type(scope): description

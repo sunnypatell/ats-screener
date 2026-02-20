@@ -39,6 +39,19 @@
 							/>
 						</svg>
 					</a>
+					<a
+						href="https://sunnypatel.net"
+						target="_blank"
+						rel="noopener"
+						class="social-link"
+						aria-label="Personal Website"
+					>
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<circle cx="12" cy="12" r="10" />
+							<line x1="2" y1="12" x2="22" y2="12" />
+							<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+						</svg>
+					</a>
 				</div>
 			</div>
 
@@ -113,7 +126,7 @@
 			<p class="copyright">
 				&copy; {new Date().getFullYear()} Sunny Patel. Open source under MIT License.
 			</p>
-			<p class="tech-stack">Built with SvelteKit 5, TypeScript, and zero tracking.</p>
+			<p class="tech-stack">Built with SvelteKit 5, TypeScript, and open source.</p>
 		</div>
 	</div>
 </footer>
@@ -206,23 +219,22 @@
 	}
 
 	.disclaimer {
-		padding: 1.25rem 1.5rem;
 		margin-bottom: 2rem;
-		background: rgba(255, 255, 255, 0.015);
-		border: 1px solid var(--glass-border);
-		border-radius: var(--radius-md);
+		padding-top: 1.5rem;
+		border-top: 1px solid var(--glass-border);
 	}
 
 	.disclaimer p {
-		font-size: 0.72rem;
+		font-size: 0.68rem;
 		color: var(--text-tertiary);
-		line-height: 1.7;
-		opacity: 0.7;
+		line-height: 1.65;
+		opacity: 0.5;
 	}
 
 	.disclaimer strong {
-		color: var(--text-secondary);
+		color: var(--text-tertiary);
 		font-weight: 600;
+		opacity: 0.8;
 	}
 
 	.footer-bottom {

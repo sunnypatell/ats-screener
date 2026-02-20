@@ -16,7 +16,7 @@ ATS Screener implements rate limiting to protect the free-tier LLM APIs and prev
 
 Rate limiting is enforced at the SvelteKit server endpoint level:
 
-1. Each request is tracked by client IP address (via `cf-connecting-ip` or `x-forwarded-for`)
+1. Each request is tracked by client IP address (via `x-forwarded-for`)
 2. If the per-minute limit is exceeded, subsequent requests receive `429 Too Many Requests`
 3. If the daily limit is exceeded, requests are blocked until the window resets
 

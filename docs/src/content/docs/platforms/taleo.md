@@ -1,34 +1,38 @@
 ---
 title: Taleo (Oracle)
-description: How Oracle's Taleo ATS evaluates resumes with the strictest keyword matching of any platform.
+description: How Oracle's Taleo ATS evaluates resumes based on our research into its keyword matching behavior.
 ---
 
-**Taleo** by Oracle is one of the oldest and strictest ATS platforms still in widespread enterprise use. It's the only major ATS with visible candidate ranking percentages and automated rejection.
+:::note[Research Disclaimer]
+The information below is based on publicly available Oracle documentation, community reports, and third-party research. This simulation may not reflect current Oracle Taleo behavior. ATS Screener is not affiliated with or endorsed by Oracle.
+:::
+
+**Taleo** by Oracle is one of the oldest enterprise ATS platforms still in widespread use. Based on available documentation, it uses the strictest keyword matching configuration of the platforms simulated here.
 
 ## Key Facts
 
 | Attribute        | Value                                       |
 | ---------------- | ------------------------------------------- |
 | Vendor           | Oracle                                      |
-| Market Share     | Legacy enterprise (declining)               |
+| Market Share     | Legacy enterprise (transitioning to ORC)    |
 | Parser           | Proprietary                                 |
-| Keyword Strategy | Exact literal match                         |
-| Strictness       | Very High                                   |
+| Keyword Strategy | Exact literal match (base configuration)    |
+| Strictness       | Very High (in our simulation)               |
 | Auto-Reject      | Yes (disqualification questions + Req Rank) |
 
 ## Parsing Behavior
 
-Taleo's parser is the most rigid of all major ATS platforms:
+Based on publicly documented behavior, Taleo's base keyword matching is strict:
 
-- **Pure boolean keyword matching.** "Project Manager" will NOT match "Project Management." They are different strings.
-- **Abbreviations don't match.** "PM" ≠ "Project Manager." "JS" ≠ "JavaScript."
+- **Literal keyword matching** in the base configuration. "Project Manager" and "Project Management" are treated as different strings.
+- **Abbreviations may not match.** "PM" and "Project Manager" are treated as separate terms in the base system.
 - **Req Rank percentage** is visible to recruiters and used for auto-ranking candidates.
 - **Disqualification questions** can auto-reject before any human sees your resume.
-- **No synonym matching.** If the job says "Agile methodology" and you wrote "Scrum," Taleo won't connect them.
+- **Limited synonym matching** in the base system. The newer Oracle Recruiting Cloud (ORC) adds ML-based matching capabilities.
 
 ## Scoring Weights
 
-Taleo weights keywords more heavily than any other platform:
+In our simulation, Taleo weights keywords more heavily than other platforms:
 
 | Dimension            | Weight | Why                             |
 | -------------------- | ------ | ------------------------------- |
@@ -48,5 +52,5 @@ Taleo weights keywords more heavily than any other platform:
 6. **Don't rely on synonyms.** If they say "Java," don't just write "JVM languages."
 
 :::caution
-Taleo is the most unforgiving platform. A resume that scores well on Greenhouse or Lever can easily fail on Taleo if it doesn't include exact keyword matches.
+In our simulation, Taleo's strict keyword matching tends to produce the lowest scores for most resumes. A resume that scores well on Greenhouse or Lever can score significantly lower on Taleo if it doesn't include exact keyword matches. This reflects the documented behavior of Taleo's base keyword matching, though actual implementations may vary.
 :::

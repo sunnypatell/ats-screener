@@ -1,38 +1,41 @@
-# security policy
+# Security Policy
 
-## reporting a vulnerability
+## Reporting a Vulnerability
 
-if you discover a security vulnerability in ats screener, please report it responsibly.
+If you discover a security vulnerability in ATS Screener, please report it responsibly.
 
-**do not open a public issue.**
+**Do not open a public issue.**
 
-instead, email **sunnypatel124555@gmail.com** (or open a private advisory on GitHub) with:
+Instead, email **sunnypatel124555@gmail.com** (or open a private advisory on GitHub) with:
 
-- description of the vulnerability
-- steps to reproduce
-- potential impact
-- suggested fix (if you have one)
+- Description of the vulnerability
+- Steps to reproduce
+- Potential impact
+- Suggested fix (if you have one)
 
-i'll acknowledge receipt within 48 hours and work on a fix promptly.
+I'll acknowledge receipt within 48 hours and work on a fix promptly.
 
-## scope
+## Scope
 
-this project processes resumes client-side in the browser. the only server-side component is a Cloudflare Worker that proxies requests to the Gemini API. security considerations include:
+This project has both client-side and server-side components. Security considerations include:
 
-- **resume data privacy**: resumes are parsed entirely in the browser. only extracted text (not files) is sent to the LLM endpoint for semantic analysis
-- **API key protection**: the Gemini API key is stored as a Cloudflare environment secret, never exposed to the client
-- **rate limiting**: the LLM proxy endpoint implements per-IP rate limiting to prevent abuse
-- **input sanitization**: all user inputs (resume text, job descriptions) are sanitized before processing
+- **Resume file privacy**: Resume files (PDF/DOCX) are parsed entirely in the browser using Web Workers. The original file is never uploaded to any server.
+- **Text transmission**: Extracted text from your resume is sent to Google Gemini for AI-powered scoring analysis. Only the text content is transmitted, not the file itself.
+- **Authentication**: Firebase Authentication handles user sign-in (Google + email/password). Auth tokens are managed by the Firebase SDK.
+- **Data storage**: Scan history (scores and metadata) is stored in Cloud Firestore. Each user can only read/write their own data via Firestore security rules.
+- **API key protection**: Server-side API keys (Gemini, etc.) are stored as environment variables and never exposed to the client.
+- **Rate limiting**: The LLM proxy endpoint implements per-IP rate limiting to prevent abuse.
+- **Input sanitization**: All user inputs (resume text, job descriptions) are validated and length-capped before processing.
 
-## supported versions
+## Supported Versions
 
-| version | supported |
+| Version | Supported |
 | ------- | --------- |
-| latest  | yes       |
-| older   | no        |
+| Latest  | Yes       |
+| Older   | No        |
 
-## disclosure policy
+## Disclosure Policy
 
-- vulnerabilities will be patched in the latest version
-- a security advisory will be published on GitHub after the fix is released
-- credit will be given to the reporter (unless they prefer anonymity)
+- Vulnerabilities will be patched in the latest version
+- A security advisory will be published on GitHub after the fix is released
+- Credit will be given to the reporter (unless they prefer anonymity)

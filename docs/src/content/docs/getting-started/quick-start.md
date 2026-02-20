@@ -3,11 +3,11 @@ title: Quick Start
 description: Upload a resume and get scored in under 30 seconds.
 ---
 
-Getting your resume scored takes three steps. No account required.
+Getting your resume scored takes three steps. Create a free account, then start scanning.
 
 ## 1. Upload Your Resume
 
-Go to the [Scanner](/scanner) page. Drag and drop a **PDF** or **DOCX** file, or click to browse. Your file is parsed entirely in the browser using a Web Worker.
+Go to the [Scanner](/scanner) page and sign in with Google or email/password. Drag and drop a **PDF** or **DOCX** file, or click to browse. Your file is parsed entirely in the browser using a Web Worker.
 
 :::tip
 For best results, use a single-column PDF with standard section headings (Experience, Education, Skills). Avoid tables, multi-column layouts, and heavy graphics.
@@ -37,6 +37,8 @@ Each score includes:
 - **Matched keywords** (green) and **missing keywords** (red)
 - **Platform-specific suggestions** for improvement
 
+Your scan history is saved automatically so you can track improvements over time.
+
 ## What's a Good Score?
 
 | Score Range | Meaning                                                        |
@@ -47,5 +49,5 @@ Each score includes:
 | Below 40    | Major issues. Formatting or content problems across platforms. |
 
 :::caution
-Scores are approximations based on publicly documented platform behavior. They do not guarantee any specific outcome in actual application processes. See our [disclaimer](/docs/getting-started/introduction/) for details.
+Scores are approximations based on publicly documented platform behavior and community reports. They do not guarantee any specific outcome in actual application processes. This is a student research project, not an official tool from any ATS vendor.
 :::

@@ -247,7 +247,7 @@
 				</div>
 				<h2>100% Open Source</h2>
 				<p>
-					Every line of code is public. No hidden tracking, no data collection, no premium tiers.
+					Every line of code is public. No premium tiers, no paywalls.
 					MIT licensed. Fork it, improve it, self-host it.
 				</p>
 				<div class="os-links">

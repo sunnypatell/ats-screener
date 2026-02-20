@@ -40,7 +40,8 @@ export default ts.config(
 			'coverage/',
 			'playwright-report/',
 			'test-results/',
-			'docs/'
+			'docs/',
+			'static/docs/'
 		]
 	}
 );

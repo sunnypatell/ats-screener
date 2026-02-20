@@ -1,4 +1,4 @@
-import type { ScoreResult } from '$engine/scorer/types';
+import type { ScoreResult, Suggestion, StructuredSuggestion } from '$engine/scorer/types';
 import type { LLMAnalysis, LLMRequestPayload, LLMResponse } from './types';
 import { generateFallbackAnalysis } from './fallback';
 
@@ -100,7 +100,7 @@ function normalizeScoreResult(raw: Record<string, unknown>): ScoreResult {
 				notes: toStringArray(education.notes)
 			}
 		},
-		suggestions: toStringArray(raw.suggestions)
+		suggestions: toSuggestionArray(raw.suggestions)
 	};
 }
 
@@ -111,6 +111,33 @@ function clamp(n: number, min: number, max: number): number {
 function toStringArray(val: unknown): string[] {
 	if (!Array.isArray(val)) return [];
 	return val.filter((v) => typeof v === 'string');
+}
+
+function toSuggestionArray(val: unknown): Suggestion[] {
+	if (!Array.isArray(val)) return [];
+	return val
+		.map((item) => {
+			if (typeof item === 'string') return item;
+			if (item && typeof item === 'object' && 'summary' in item) {
+				return normalizeStructuredSuggestion(item as Record<string, unknown>);
+			}
+			return null;
+		})
+		.filter((v): v is Suggestion => v !== null);
+}
+
+function normalizeStructuredSuggestion(raw: Record<string, unknown>): StructuredSuggestion {
+	const validImpacts = ['critical', 'high', 'medium', 'low'] as const;
+	const impact = validImpacts.includes(raw.impact as (typeof validImpacts)[number])
+		? (raw.impact as StructuredSuggestion['impact'])
+		: 'medium';
+
+	return {
+		summary: String(raw.summary ?? ''),
+		details: toStringArray(raw.details),
+		impact,
+		platforms: toStringArray(raw.platforms)
+	};
 }
 
 // legacy function for JD analysis and semantic matching

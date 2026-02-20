@@ -167,6 +167,15 @@ For each of the 6 systems, evaluate these dimensions:
 - Lever: represents "likelihood of surfacing in recruiter keyword search." word stemming helps but abbreviation blindness hurts. formatting is less critical (more tolerant parser)
 - SuccessFactors: Textkernel's scoring combines skills, titles, education, experience, industry. taxonomy normalization means related terms count
 
+CALIBRATION ANCHORS (use these to calibrate your scoring):
+- A 3-line resume with just a name and email MUST score 10-25 across all systems. this is nearly empty content
+- A resume with no structure, no sections, and vague descriptions should score 20-40
+- A decent resume with clear sections but gaps should score 50-70
+- A well-matched resume with quantified achievements and strong keywords should score 75-95
+- Resume content quality MUST dramatically affect scores. the difference between a sparse resume and a polished one should be 30-50+ points
+- When a JD is provided: a nurse resume vs a software engineering JD should have keyword match below 20 on ALL platforms because the skills don't overlap at all
+- If the resume is short (under 200 words), scores CANNOT be high. brevity = missing content = low scores
+
 CRITICAL RULES:
 - Scores MUST vary meaningfully between platforms. a 15-25 point spread between the highest and lowest scoring system is expected. Taleo and Greenhouse should NEVER be within 5 points of each other
 - Taleo should score notably LOWER than average for most resumes because its literal keyword matching misses synonyms, abbreviations, and contextual skills that other platforms catch
@@ -177,9 +186,9 @@ CRITICAL RULES:
 - DO NOT give all systems similar scores. if you find yourself giving 70-80 to all six, you're doing it wrong. aim for realistic variety
 - ${jdSlice ? 'For targeted scoring: extract actual keywords from the JD. matched/missing keywords must be REAL terms from the JD, not made up. scores MUST change significantly for different JDs. a sysadmin resume scored against a DBA role should differ substantially from the same resume scored against a junior IT analyst role' : "For general scoring: keywords should reflect industry-standard terminology for the candidate's apparent field"}
 - ${jdSlice ? 'keyword match scores should be the MOST sensitive dimension to JD changes. if the JD requires skills the candidate lacks, keyword match must drop dramatically regardless of platform' : ''}
-- each platform gets MAXIMUM 2 suggestions. total across all 6 should not exceed 8-10 unique tips. deduplicate similar advice across platforms
-- suggestions must be specific and actionable. "add Kubernetes to your skills section" not "add more keywords"
+- suggestions must be specific and actionable, structured as objects with a summary line and 2-3 detail bullet points
 - suggestions must reference the actual platform behavior. e.g., for Taleo: "include both 'PM' and 'Project Manager' because Taleo uses literal keyword matching"
+- each platform gets MAXIMUM 2 suggestions. total across all 6 should not exceed 8-10 unique structured suggestions. deduplicate similar advice across platforms
 - IMPORTANT: the resume text may contain LaTeX rendering artifacts like #, ï, §, Æ, €, fi, fl ligatures, or unicode combining characters. these are font rendering artifacts from PDF extraction, NOT actual special characters in the resume. do NOT flag these as formatting issues or "special characters detected." treat them as normal text
 
 **passesFilter thresholds** (reflects each platform's filtering philosophy):
@@ -208,10 +217,27 @@ Respond ONLY with valid JSON matching this exact structure. no markdown fences, 
         "experience": { "score": 75, "quantifiedBullets": 5, "totalBullets": 10, "actionVerbCount": 7, "highlights": ["notable strength"] },
         "education": { "score": 90, "notes": ["observation about education section"] }
       },
-      "suggestions": ["specific actionable suggestion referencing this platform's actual behavior"]
+      "suggestions": [
+        {
+          "summary": "Include both abbreviated and full-form certifications",
+          "details": [
+            "Add 'CPA' alongside 'Certified Public Accountant' in your skills section",
+            "Taleo uses literal matching and won't connect abbreviations to full forms",
+            "This alone could improve your Taleo keyword match by 10-15 points"
+          ],
+          "impact": "critical",
+          "platforms": ["Taleo", "Workday"]
+        }
+      ]
     }
   ]
 }
+
+SUGGESTION FORMAT RULES:
+- "summary": one clear sentence describing the action (always visible to user)
+- "details": 2-3 bullet points with specific implementation guidance
+- "impact": "critical" | "high" | "medium" | "low" based on score improvement potential
+- "platforms": which ATS platforms benefit most from this change
 
 Return exactly 6 results in order: Workday, Taleo, iCIMS, Greenhouse, Lever, SuccessFactors.`;
 }

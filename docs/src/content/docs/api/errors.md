@@ -83,6 +83,6 @@ This means the AI returned malformed output. The system already tried fallback p
 }
 ```
 
-All configured providers (Gemini, Groq, Cerebras) either failed or hit their daily quotas.
+All configured LLM providers either failed or hit their daily quotas.
 
 **Fix:** Wait for quota reset (usually midnight UTC) or self-host with your own API keys.

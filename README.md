@@ -1,15 +1,15 @@
 <p align="center">
+  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License" />
   <img src="https://img.shields.io/badge/SvelteKit-5-FF3E00?style=for-the-badge&logo=svelte&logoColor=white" alt="SvelteKit 5" />
   <img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Vitest-106_Tests-6E9F18?style=for-the-badge&logo=vitest&logoColor=white" alt="Tests" />
+  <img src="https://img.shields.io/badge/Firebase-Auth-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase" />
   <img src="https://img.shields.io/badge/Cost-$0-22c55e?style=for-the-badge" alt="Free" />
-  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License" />
 </p>
 
 <h1 align="center">ATS Screener</h1>
 
 <p align="center">
-  <strong>Free, open-source ATS resume screener that simulates how 6 real enterprise HCMS platforms parse, filter, and score your resume.</strong>
+  <strong>Free, open-source resume screener that simulates how 6 real enterprise ATS platforms parse, filter, and score your resume.</strong>
 </p>
 
 <p align="center">
@@ -17,174 +17,137 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/sunnypatell/ats-screener">View Source</a> &bull;
-  <a href="https://github.com/sunnypatell/ats-screener/issues">Report Bug</a> &bull;
+  <a href="https://github.com/sunnypatell/ats-screener">Source</a> &bull;
+  <a href="https://github.com/sunnypatell/ats-screener/issues">Issues</a> &bull;
   <a href="https://github.com/sunnypatell/ats-screener/blob/main/CONTRIBUTING.md">Contribute</a>
 </p>
 
 ---
 
-## Why This Exists
+## About
 
-Every ATS screener on the market gives you a single generic score based on arbitrary algorithms that have nothing to do with how real applicant tracking systems work. They charge you $30/month for a number they made up.
+I built ATS Screener because every resume checker on the market gives you one generic score based on made-up algorithms, then charges $30/month for it. None of them reflect how real applicant tracking systems actually work.
 
-**ATS Screener is different.** It simulates 6 real enterprise HCMS platforms with researched scoring profiles, giving you 6 different scores that reflect how each system actually parses and filters resumes. And it's free. Forever. No sign-up.
+This tool simulates **6 real enterprise platforms** with researched scoring profiles, giving you 6 different scores that reflect each system's documented parsing behavior, keyword matching strategy, and scoring philosophy. It's free, open source, and always will be.
+
+> Built by [Sunny Patel](https://sunnypatel.net), a student who got tired of paying for meaningless ATS scores.
+
+**Disclaimer:** This is a student research project. All scoring simulations are based on publicly available documentation and community reports. ATS Screener is not affiliated with or endorsed by any ATS vendor.
 
 ## How It Works
 
 ```
-Resume (PDF/DOCX)  ──→  Parser Engine  ──→  Structured Data  ──→  6 ATS Profiles  ──→  6 Scores + Breakdown
-                         (Web Worker)         (sections,           (Workday,            (formatting, keywords,
-                         client-side          skills, education,    Taleo, iCIMS,        sections, experience,
-                                              experience)          Greenhouse,           education + suggestions)
-                                                                   Lever, SAP)
-              Job Description (optional)  ──→  JD Parser  ──→  Targeted Keyword Matching
+Resume (PDF/DOCX)  -->  Client-Side Parser  -->  Extracted Text  -->  Gemini AI  -->  6 Platform Scores
+                        (Web Worker)              (sections,          (server)        (formatting, keywords,
+                        file never uploaded       skills, dates)                       experience, education)
+
+Job Description (optional)  -->  Targeted Keyword Matching Against Each Platform's Strategy
 ```
 
 1. **Upload your resume** (PDF or DOCX). Parsed entirely client-side in a Web Worker. Your file never leaves your browser.
 2. **Optionally paste a job description** for targeted scoring with keyword matching.
 3. **Get scored by 6 systems**, each with different weights for formatting, keywords, sections, experience, and education.
-4. **See what to fix** with detailed breakdowns per system and actionable suggestions.
+4. **See what to fix** with platform-specific suggestions that explain exactly why each change matters.
 
-## ATS Profiles
+## Platform Profiles
 
-Each profile is researched based on how the actual platform handles resumes:
+Each profile is based on research into the platform's documented parsing and matching behavior:
 
-| System             | Vendor     | Strictness | Keywords | Key Behavior                                                               |
-| ------------------ | ---------- | ---------- | -------- | -------------------------------------------------------------------------- |
-| **Workday**        | Workday    | High       | Exact    | Strict parser, hates creative formats, penalizes multi-column layouts      |
-| **Taleo**          | Oracle     | High       | Exact    | Boolean keyword matching, very filter-driven, requires structured sections |
-| **iCIMS**          | iCIMS      | Medium     | Fuzzy    | More format-tolerant, AI-assisted matching, modern parsing                 |
-| **Greenhouse**     | Greenhouse | Low        | Semantic | Structured scorecards, lenient formatting, context-aware                   |
-| **Lever**          | Lever      | Low        | Semantic | Startup-friendly, relationship-focused, flexible parsing                   |
-| **SuccessFactors** | SAP        | High       | Exact    | Enterprise-grade, structured-data focused, strict section requirements     |
+| Platform           | Vendor     | Keyword Strategy       | Key Behavior                                                    |
+| ------------------ | ---------- | ---------------------- | --------------------------------------------------------------- |
+| **Workday**        | Workday    | Exact + HiredScore AI  | Strict parser, skips headers/footers, penalizes creative formats |
+| **Taleo**          | Oracle     | Literal exact match    | Strictest keyword matching, auto-reject via Req Rank             |
+| **iCIMS**          | iCIMS      | Semantic (ML-based)    | Role Fit AI, grammar-based NLP parser, most forgiving            |
+| **Greenhouse**     | Greenhouse | Semantic (LLM-based)   | No auto-scoring by design, human review with scorecards          |
+| **Lever**          | Employ     | Stemming-based         | No ranking, search-dependent, abbreviation-blind                 |
+| **SuccessFactors** | SAP        | Taxonomy normalization | Textkernel parser, Joule AI skills matching                      |
 
 ## Tech Stack
 
-Every layer was chosen for this specific use case. No defaults, no boilerplate stacks.
+| Layer            | Choice                                        | Why                                                              |
+| ---------------- | --------------------------------------------- | ---------------------------------------------------------------- |
+| **Framework**    | SvelteKit 5 (Svelte 5 runes)                  | Compiled to vanilla JS, ~15KB runtime. No VDOM overhead.         |
+| **Styling**      | Scoped CSS + CSS custom properties             | Dark glassmorphic design. No Tailwind. Component-scoped.         |
+| **PDF Parsing**  | pdfjs-dist (Web Worker)                        | Mozilla-maintained, fully client-side.                           |
+| **DOCX Parsing** | mammoth                                        | Client-side Word to text extraction.                             |
+| **NLP**          | Custom TF-IDF + tokenizer + skills taxonomy    | Lightweight, browser-native, supports 8+ industries.             |
+| **LLM**          | Gemini 2.5 Flash Lite                          | Free tier. Groq + Cerebras available as fallbacks for self-host. |
+| **Auth**         | Firebase Authentication                        | Google + email/password sign-in. Free Spark plan.                |
+| **Storage**      | Cloud Firestore                                | Scan history per user. Free Spark plan.                          |
+| **Hosting**      | Vercel                                         | Free hobby tier. Edge functions for API.                         |
+| **Testing**      | Vitest + Playwright + @testing-library/svelte  | Unit, integration, and E2E coverage.                             |
 
-| Layer            | Choice                                                 | Why                                                                                                                             |
-| ---------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| **Framework**    | SvelteKit 5 (Svelte 5 runes)                           | Compiled to vanilla JS, zero VDOM. ~15KB runtime vs React's 45KB+. Critical for computation-heavy PDF parsing + NLP in-browser. |
-| **Styling**      | Svelte scoped CSS + CSS custom properties + Open Props | Dark glassmorphic design system. No Tailwind. Scoped per component.                                                             |
-| **PDF Parsing**  | pdfjs-dist (Web Worker)                                | Mozilla-maintained, battle-tested, fully client-side.                                                                           |
-| **DOCX Parsing** | mammoth                                                | Client-side DOCX to text extraction.                                                                                            |
-| **NLP**          | Custom TF-IDF + tokenizer + skills taxonomy            | Lightweight, runs in browser, supports 8+ industries.                                                                           |
-| **LLM**          | Gemini 2.5 Flash Lite + Groq + Cerebras fallback chain | 3-provider fallback for high availability. All free tier.                                                                       |
-| **LLM Proxy**    | SvelteKit +server.ts endpoints                         | API key stays server-side. Rate limiting, input validation, security headers.                                                   |
-| **Hosting**      | Cloudflare Pages                                       | Free: 100k function invocations/day, unlimited static bandwidth.                                                                |
-| **Testing**      | Vitest + Playwright + @testing-library/svelte          | 106 unit/integration tests. E2E for critical flows.                                                                             |
-| **CI**           | GitHub Actions                                         | Lint + typecheck + test + build on every push.                                                                                  |
+**Total infrastructure cost: $0.** Everything runs on free tiers.
 
-**Total cost: $0** at any scale. The live instance at [ats-screener.pages.dev](https://ats-screener.pages.dev) is hosted by the developer using their own API keys.
+## Quick Start
+
+```bash
+git clone https://github.com/sunnypatell/ats-screener.git
+cd ats-screener
+pnpm install
+```
+
+Copy `.env.example` to `.env` and add your API keys:
+
+```bash
+cp .env.example .env
+# add GEMINI_API_KEY and PUBLIC_FIREBASE_* values
+```
+
+```bash
+pnpm dev        # start dev server
+pnpm test       # run tests
+pnpm check      # typecheck
+pnpm lint       # lint
+pnpm build      # production build
+```
 
 ## Project Structure
 
 ```
 src/
 ├── routes/
-│   ├── +page.svelte              # Landing page (Hero, Features, HowItWorks, Footer)
-│   ├── scanner/+page.svelte      # Scanner tool (upload → parse → score → results)
-│   └── api/analyze/+server.ts    # LLM proxy endpoint (Gemini)
+│   ├── +page.svelte              # Landing page
+│   ├── scanner/+page.svelte      # Scanner (upload, parse, score, results)
+│   ├── login/+page.svelte        # Auth (Google + email/password)
+│   └── api/analyze/+server.ts    # LLM proxy endpoint
 ├── lib/
 │   ├── components/
 │   │   ├── landing/              # Hero, Features, HowItWorks, Footer
-│   │   ├── scoring/              # ScoreDashboard, ScoreCard
+│   │   ├── scoring/              # ScoreDashboard, ScoreCard, ScoreBreakdown
 │   │   ├── upload/               # ResumeUploader, JobDescriptionInput
-│   │   └── ui/                   # Logo, Navbar, FlipWords, NumberTicker, EncryptedText,
-│   │                             # TextGenerateEffect, SparklesText, MovingBorder
+│   │   └── ui/                   # Navbar, UserMenu, AuthButton, Logo, animations
 │   ├── engine/
-│   │   ├── parser/               # PDF/DOCX parsing, section detection, contact extraction
-│   │   ├── scorer/               # Scoring engine + 6 ATS profiles (Workday, Taleo, etc.)
-│   │   ├── nlp/                  # Tokenizer, TF-IDF, synonyms, skills taxonomy
-│   │   ├── llm/                  # Gemini client, prompts, fallback
-│   │   └── job-parser/           # Job description extractor
-│   ├── stores/                   # Svelte 5 rune-based state (resume, scores, settings)
-│   └── styles/                   # CSS tokens, global styles, animations
-└── tests/
-    └── unit/                     # 106 tests across parser, scorer, NLP, integration
-```
-
-## Getting Started
-
-```bash
-# Clone
-git clone https://github.com/sunnypatell/ats-screener.git
-cd ats-screener
-
-# Install
-pnpm install
-
-# Dev server
-pnpm dev
-
-# Run tests
-pnpm test
-
-# Type check
-pnpm check
-
-# Lint
-pnpm lint
-
-# Build
-pnpm build
+│   │   ├── parser/               # PDF/DOCX parsing, section detection
+│   │   ├── scorer/               # 6 ATS profiles + scoring engine
+│   │   ├── nlp/                  # Tokenizer, TF-IDF, skills taxonomy
+│   │   └── llm/                  # Gemini client, prompts, fallback
+│   ├── stores/                   # Svelte 5 rune stores (auth, resume, scores)
+│   └── styles/                   # CSS tokens, global styles
+├── docs/                         # Astro Starlight documentation site
+└── tests/                        # Vitest unit + integration tests
 ```
 
 ## Scoring Engine
 
-The scoring engine is deterministic: same input always produces the same output. Each ATS profile applies different weights:
+Each ATS profile applies different weights to 5 scoring dimensions:
 
-```
-Overall Score = weighted sum of:
-  ├── Formatting Score     (parseability, structure, ATS-friendliness)
-  ├── Keyword Match Score  (exact/fuzzy/semantic matching against skills taxonomy)
-  ├── Section Score        (presence of required sections: contact, experience, education, skills)
-  ├── Experience Score     (quantified achievements, action verbs, recency weighting)
-  └── Education Score      (degree level, field relevance, institution)
-```
+- **Formatting** - parseability, structure, ATS-friendliness
+- **Keyword Match** - exact/fuzzy/semantic matching (varies by platform)
+- **Sections** - presence of required sections (contact, experience, education, skills)
+- **Experience** - quantified achievements, action verbs, recency
+- **Education** - degree, field relevance, institution
 
-**Two modes:**
-
-- **General Mode** (resume only): ATS-readiness score across all 6 systems
-- **Targeted Mode** (resume + JD): keyword matching against extracted job requirements
-
-## Industries Supported
-
-The skills taxonomy and NLP engine support any industry:
-
-- Technology / Software Engineering
-- Finance / Accounting
-- Healthcare / Nursing
-- Marketing / Content
-- Legal / Compliance
-- Operations / Supply Chain
-- Education
-- Sales / Business Development
-- Design / Creative
-
-## Design
-
-Dark glassmorphic aesthetic with Aceternity/Magic UI-inspired effects built natively in Svelte:
-
-- **FlipWords**: smooth word cycling with blur transitions
-- **EncryptedText**: character scramble reveal animation
-- **NumberTicker**: spring-physics animated counters
-- **TextGenerateEffect**: word-by-word reveal with blur-to-sharp
-- **SparklesText**: floating sparkle particles
-- **MovingBorder**: rotating conic-gradient borders
-- **Mesh gradient** background with floating orbs
-- **Mouse-tracking spotlight** on cards
-- **Grid pattern overlay** for depth
+Two modes: **General** (resume only) for ATS readiness, or **Targeted** (resume + job description) for role-specific keyword matching.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, commit conventions, and PR process.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution guidelines.
 
 ## Security
 
-See [SECURITY.md](SECURITY.md) for vulnerability reporting. Your resume data never leaves your browser.
+See [SECURITY.md](SECURITY.md) for vulnerability reporting. Resume files are parsed client-side and never uploaded. Extracted text is sent to Google Gemini for AI analysis.
 
 ## License
 
-[MIT](LICENSE) - Sunny Patel
+[MIT](LICENSE) - [Sunny Patel](https://sunnypatel.net)

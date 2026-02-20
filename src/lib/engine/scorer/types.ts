@@ -28,13 +28,22 @@ export interface ScoreBreakdown {
 	};
 }
 
+export interface StructuredSuggestion {
+	summary: string;
+	details: string[];
+	impact: 'critical' | 'high' | 'medium' | 'low';
+	platforms: string[];
+}
+
+export type Suggestion = string | StructuredSuggestion;
+
 export interface ScoreResult {
 	system: string;
 	vendor: string;
 	overallScore: number;
 	passesFilter: boolean;
 	breakdown: ScoreBreakdown;
-	suggestions: string[];
+	suggestions: Suggestion[];
 }
 
 export interface ScoringInput {

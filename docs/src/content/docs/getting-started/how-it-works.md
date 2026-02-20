@@ -51,26 +51,14 @@ The AI returns structured JSON with per-platform scores, breakdowns, keyword ana
 
 Your privacy is protected at every step:
 
-1. **Files stay local.** PDF/DOCX parsing happens entirely in your browser's Web Worker.
-2. **Only text is transmitted.** The extracted text (not the original file) is sent for AI analysis.
-3. **No storage.** The server endpoint is stateless. It proxies to Gemini and returns results. Nothing is logged or stored.
-4. **No accounts.** No sign-ups, no cookies (beyond basic session), no tracking.
+1. **Files stay local.** PDF/DOCX parsing happens entirely in your browser's Web Worker. The original file is never uploaded.
+2. **Only text is transmitted.** The extracted text (not the original file) is sent to Google Gemini for AI analysis.
+3. **Scan history is stored in Firebase.** Your scores and scan metadata are saved to your account in Firestore so you can track progress over time. Only you can access your own data.
+4. **Free account required.** Sign in with Google or email/password to use the scanner. This enables scan history and prevents abuse.
 5. **Open source.** You can verify all of the above by reading the [source code](https://github.com/sunnypatell/ats-screener).
 
-## LLM Provider Chain
-
-The server uses a fallback chain to maximize availability:
-
-| Priority | Provider      | Model                   | Free Tier Limit |
-| -------- | ------------- | ----------------------- | --------------- |
-| 1        | Google Gemini | gemini-2.5-flash-lite   | 1,000 req/day   |
-| 2        | Groq          | llama-3.3-70b-versatile | 14,400 req/day  |
-| 3        | Cerebras      | llama-3.3-70b           | 1,000 req/day   |
-
-If Gemini's daily quota is hit, the system automatically falls back to Groq, then Cerebras. If all providers fail, you'll get an error with a suggestion to try again later.
-
 :::note[Zero Cost to You]
-The live instance is hosted by the developer using their own API keys across all three providers. The fallback chain means you'll almost never hit a capacity wall, even during high traffic.
+The live instance is hosted by [Sunny Patel](https://sunnypatel.net) using free-tier API keys. All infrastructure (Vercel, Firebase Spark, Gemini) runs on free tiers.
 :::
 
 :::note

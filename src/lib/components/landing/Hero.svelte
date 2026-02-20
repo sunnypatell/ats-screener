@@ -62,7 +62,7 @@
 		<!-- trust badge -->
 		<div class="badge">
 			<span class="badge-dot"></span>
-			<span>Free Forever &bull; No Sign-Up &bull; No Limits</span>
+			<span>Free Forever &bull; Open Source &bull; No Limits</span>
 		</div>
 
 		<!-- encrypted text reveal tagline (cycles through phrases) -->

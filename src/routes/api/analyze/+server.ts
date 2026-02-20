@@ -217,13 +217,12 @@ interface RequestBody {
 	jobDescription?: string;
 }
 
-export const POST: RequestHandler = async ({ request, platform }) => {
-	// collect all API keys from platform env (Cloudflare) or SvelteKit $env (local dev)
-	const platformEnv = (platform?.env ?? {}) as Record<string, string>;
+export const POST: RequestHandler = async ({ request }) => {
+	// collect all API keys from SvelteKit $env
 	const keys: Record<string, string> = {
-		GEMINI_API_KEY: platformEnv.GEMINI_API_KEY ?? env.GEMINI_API_KEY ?? '',
-		GROQ_API_KEY: platformEnv.GROQ_API_KEY ?? env.GROQ_API_KEY ?? '',
-		CEREBRAS_API_KEY: platformEnv.CEREBRAS_API_KEY ?? env.CEREBRAS_API_KEY ?? ''
+		GEMINI_API_KEY: env.GEMINI_API_KEY ?? '',
+		GROQ_API_KEY: env.GROQ_API_KEY ?? '',
+		CEREBRAS_API_KEY: env.CEREBRAS_API_KEY ?? ''
 	};
 
 	const hasAnyKey = Object.values(keys).some((v) => v.length > 0);
@@ -232,8 +231,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	}
 
 	// rate limiting per IP
-	const ip =
-		request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for') ?? 'unknown';
+	const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
 	if (!checkRateLimit(ip)) {
 		return json({ error: 'rate limit exceeded. try again in 60 seconds.' }, { status: 429 });
 	}

@@ -5,6 +5,7 @@ node_modules/
 .svelte-kit/
 build/
 dist/
+static/docs/
 
 # environment
 .env
@@ -28,9 +29,12 @@ test-results/
 playwright-report/
 blob-report/
 
-# cloudflare
+# cloudflare (legacy)
 .wrangler/
 .dev.vars
+
+# vercel
+.vercel/
 
 # misc
 *.log

@@ -3,8 +3,10 @@
 	import ScoreCard from './ScoreCard.svelte';
 	import ScoreBreakdown from './ScoreBreakdown.svelte';
 	import KeywordAnalysis from './KeywordAnalysis.svelte';
-	import ComparisonChart from './ComparisonChart.svelte';
+	import WeakestAreas from './WeakestAreas.svelte';
 	import ResumeStats from './ResumeStats.svelte';
+	import type { Suggestion, StructuredSuggestion } from '$engine/scorer/types';
+
 	// derived stats for the summary card header
 	const avgScore = $derived(scoresStore.averageScore);
 	const passCount = $derived(scoresStore.passingCount);
@@ -20,8 +22,32 @@
 		expandedSuggestion = expandedSuggestion === index ? null : index;
 	}
 
-	const impactLabels = ['Critical', 'High', 'Medium', 'Helpful', 'Polish'];
-	const impactColors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4'];
+	function isStructured(s: Suggestion): s is StructuredSuggestion {
+		return typeof s === 'object' && 'summary' in s;
+	}
+
+	const impactColorMap: Record<string, string> = {
+		critical: '#ef4444',
+		high: '#f97316',
+		medium: '#eab308',
+		low: '#22c55e'
+	};
+
+	// deduplicate suggestions across all platforms
+	const allSuggestions = $derived.by(() => {
+		const seen = new Set<string>();
+		const suggestions: Suggestion[] = [];
+		for (const r of scoresStore.results) {
+			for (const s of r.suggestions) {
+				const key = isStructured(s) ? s.summary : s;
+				if (!seen.has(key)) {
+					seen.add(key);
+					suggestions.push(s);
+				}
+			}
+		}
+		return suggestions.slice(0, 8);
+	});
 
 	// exports results as a JSON file download
 	function exportResults() {
@@ -230,9 +256,9 @@
 			</div>
 		{/if}
 
-		<!-- two-column layout: comparison chart + resume stats -->
+		<!-- priority focus areas + resume overview -->
 		<div class="analysis-grid">
-			<ComparisonChart results={scoresStore.results} />
+			<WeakestAreas results={scoresStore.results} />
 			<ResumeStats />
 		</div>
 
@@ -240,7 +266,7 @@
 		<KeywordAnalysis results={scoresStore.results} />
 
 		<!-- deduplicated suggestions as collapsible cards -->
-		{#if scoresStore.results.some((r) => r.suggestions.length > 0)}
+		{#if allSuggestions.length > 0}
 			<div class="suggestions-section">
 				<div class="suggestions-header">
 					<svg
@@ -261,7 +287,10 @@
 					Actionable recommendations based on analysis across all 6 ATS platforms. Click to expand.
 				</p>
 				<div class="suggestions-cards">
-					{#each [...new Set(scoresStore.results.flatMap((r) => r.suggestions))].slice(0, 5) as suggestion, i}
+					{#each allSuggestions as suggestion, i}
+						{@const structured = isStructured(suggestion)}
+						{@const impactColor = structured ? impactColorMap[suggestion.impact] ?? '#eab308' : impactColorMap[i === 0 ? 'critical' : i === 1 ? 'high' : i < 4 ? 'medium' : 'low']}
+						{@const impactLabel = structured ? suggestion.impact : (i === 0 ? 'critical' : i === 1 ? 'high' : i < 4 ? 'medium' : 'low')}
 						<button
 							class="suggestion-card"
 							class:expanded={expandedSuggestion === i}
@@ -269,21 +298,24 @@
 						>
 							<div class="suggestion-card-header">
 								<div class="suggestion-card-left">
-									<span class="suggestion-priority" style="background: {impactColors[i]};">
+									<span class="suggestion-priority" style="background: {impactColor};">
 										{i + 1}
 									</span>
 									<span class="suggestion-summary">
-										{#if expandedSuggestion !== i}
-											{suggestion.length > 85 ? suggestion.slice(0, 85) + '...' : suggestion}
-										{:else}
-											Suggestion {i + 1}
-										{/if}
+										{structured ? suggestion.summary : (typeof suggestion === 'string' ? suggestion : '')}
 									</span>
 								</div>
 								<div class="suggestion-card-right">
-									<span class="suggestion-impact" style="color: {impactColors[i]};"
-										>{impactLabels[i]}</span
-									>
+									{#if structured && suggestion.platforms.length > 0}
+										<div class="suggestion-platforms">
+											{#each suggestion.platforms.slice(0, 3) as platform}
+												<span class="platform-chip">{platform}</span>
+											{/each}
+										</div>
+									{/if}
+									<span class="suggestion-impact" style="color: {impactColor};">
+										{impactLabel}
+									</span>
 									<svg
 										class="suggestion-chevron"
 										class:rotated={expandedSuggestion === i}
@@ -300,7 +332,15 @@
 							</div>
 							{#if expandedSuggestion === i}
 								<div class="suggestion-card-body">
-									<p>{suggestion}</p>
+									{#if structured && suggestion.details.length > 0}
+										<ul class="suggestion-details">
+											{#each suggestion.details as detail}
+												<li>{detail}</li>
+											{/each}
+										</ul>
+									{:else if !structured}
+										<p>{suggestion}</p>
+									{/if}
 								</div>
 							{/if}
 						</button>
@@ -641,15 +681,29 @@
 		font-size: 0.88rem;
 		color: var(--text-secondary);
 		line-height: 1.4;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
 	}
 
 	.suggestion-card.expanded .suggestion-summary {
-		white-space: normal;
 		font-weight: 600;
 		color: var(--text-primary);
+	}
+
+	.suggestion-platforms {
+		display: flex;
+		gap: 0.3rem;
+	}
+
+	.platform-chip {
+		padding: 0.15rem 0.5rem;
+		font-size: 0.6rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		background: rgba(6, 182, 212, 0.08);
+		border: 1px solid rgba(6, 182, 212, 0.2);
+		border-radius: 999px;
+		color: var(--accent-cyan);
+		white-space: nowrap;
 	}
 
 	.suggestion-card-right {
@@ -685,6 +739,35 @@
 		color: var(--text-secondary);
 		line-height: 1.7;
 		margin: 0;
+	}
+
+	.suggestion-details {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.suggestion-details li {
+		font-size: 0.85rem;
+		color: var(--text-secondary);
+		line-height: 1.6;
+		padding-left: 1.1rem;
+		position: relative;
+	}
+
+	.suggestion-details li::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		top: 0.55rem;
+		width: 5px;
+		height: 5px;
+		border-radius: 50%;
+		background: var(--accent-cyan);
+		opacity: 0.6;
 	}
 
 	@keyframes cardExpand {

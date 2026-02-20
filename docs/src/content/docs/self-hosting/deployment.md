@@ -1,57 +1,36 @@
 ---
 title: Deployment
-description: Deploy ATS Screener to Cloudflare Pages, Vercel, or other platforms.
+description: Deploy ATS Screener to Vercel, Netlify, or other platforms.
 ---
 
-ATS Screener is designed for Cloudflare Pages but works on any platform that supports SvelteKit.
+ATS Screener is designed for Vercel but works on any platform that supports SvelteKit.
 
-## Cloudflare Pages (Recommended)
+## Vercel (Recommended)
 
-The project includes a `wrangler.toml` for Cloudflare Pages deployment.
-
-```bash
-# install Wrangler CLI globally
-pnpm add -g wrangler
-
-# login to Cloudflare
-wrangler login
-
-# deploy
-pnpm build && wrangler pages deploy .svelte-kit/cloudflare
-```
-
-### Set Environment Variables
-
-In the Cloudflare dashboard:
-
-1. Go to **Pages** > your project > **Settings** > **Environment variables**
-2. Add your API keys as production secrets:
-   - `GEMINI_API_KEY`
-   - `GROQ_API_KEY` (optional)
-   - `CEREBRAS_API_KEY` (optional)
-
-:::tip
-Environment variables set in the Cloudflare dashboard are encrypted at rest and never exposed to the client. They're only accessible in server-side code (`+server.ts` files).
-:::
-
-## Vercel
+The project is pre-configured with `@sveltejs/adapter-vercel`.
 
 ```bash
 # install Vercel CLI
 pnpm add -g vercel
 
-# swap the adapter in svelte.config.js
-# change: import adapter from '@sveltejs/adapter-cloudflare';
-# to:     import adapter from '@sveltejs/adapter-vercel';
-
-# install the adapter
-pnpm add -D @sveltejs/adapter-vercel
-
 # deploy
 vercel --prod
 ```
 
-Set environment variables in the Vercel dashboard under **Settings** > **Environment Variables**.
+### Set Environment Variables
+
+In the Vercel dashboard:
+
+1. Go to your project > **Settings** > **Environment Variables**
+2. Add your API keys:
+   - `GEMINI_API_KEY` (required)
+   - `GROQ_API_KEY` (optional fallback)
+   - `CEREBRAS_API_KEY` (optional fallback)
+3. Add your Firebase config (all `PUBLIC_FIREBASE_*` variables from `.env.example`)
+
+:::tip
+Environment variables set in the Vercel dashboard are encrypted at rest and never exposed to the client. Server-side keys (like `GEMINI_API_KEY`) are only accessible in `+server.ts` files. `PUBLIC_` prefixed variables are available client-side.
+:::
 
 ## Netlify
 
@@ -92,9 +71,9 @@ For Docker deployments, use `@sveltejs/adapter-node` and set environment variabl
 
 ## Custom Domain
 
-After deploying to Cloudflare Pages:
+After deploying to Vercel:
 
-1. Go to your project's **Custom Domains** tab
+1. Go to your project's **Settings** > **Domains**
 2. Add your domain
 3. Follow the DNS instructions
 4. SSL is automatic
