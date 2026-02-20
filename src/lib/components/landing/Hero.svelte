@@ -65,9 +65,16 @@
 			<span>Free Forever &bull; No Sign-Up &bull; No Limits</span>
 		</div>
 
-		<!-- encrypted text reveal tagline -->
+		<!-- encrypted text reveal tagline (cycles through phrases) -->
 		<div class="encrypted-tagline">
-			<EncryptedText text="Crack the screening." />
+			<EncryptedText
+				phrases={[
+					'Crack the screening.',
+					'Beat the algorithms.',
+					'Know your real score.',
+					'Stop guessing. Start scoring.'
+				]}
+			/>
 		</div>
 
 		<!-- main heading with sparkles effect on the gradient text -->
@@ -183,7 +190,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: 7rem 2rem 4rem;
+		padding: 7rem 2rem 5rem;
 		overflow: hidden;
 	}
 
