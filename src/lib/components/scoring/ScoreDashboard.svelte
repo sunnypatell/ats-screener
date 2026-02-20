@@ -5,8 +5,6 @@
 	import KeywordAnalysis from './KeywordAnalysis.svelte';
 	import ComparisonChart from './ComparisonChart.svelte';
 	import ResumeStats from './ResumeStats.svelte';
-	import NumberFlow from '@number-flow/svelte';
-
 	// derived stats for the summary card header
 	const avgScore = $derived(scoresStore.averageScore);
 	const passCount = $derived(scoresStore.passingCount);
@@ -39,7 +37,7 @@
 				<div class="summary-left">
 					<div class="summary-score">
 						<span class="score-number" style="color: {getAvgColor(avgScore)}">
-							<NumberFlow value={avgScore} />
+							{avgScore}
 						</span>
 						<span class="score-verdict" style="color: {getAvgColor(avgScore)}">
 							{getScoreLabel(avgScore)}

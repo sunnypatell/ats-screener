@@ -2,6 +2,7 @@
 	import ResumeUploader from '$components/upload/ResumeUploader.svelte';
 	import JobDescriptionInput from '$components/upload/JobDescriptionInput.svelte';
 	import ScoreDashboard from '$components/scoring/ScoreDashboard.svelte';
+	import ScanningAnimation from '$components/scoring/ScanningAnimation.svelte';
 	import ResumeStats from '$components/scoring/ResumeStats.svelte';
 	import { resumeStore } from '$stores/resume.svelte';
 	import { scoresStore } from '$stores/scores.svelte';
@@ -139,6 +140,31 @@
 				Upload your resume and optionally paste a job description for targeted scoring. Everything
 				is parsed client-side. Your data never leaves your browser.
 			</p>
+
+			<!-- step progress -->
+			<div class="steps-progress">
+				<div class="step-dot" class:active={true} class:done={resumeStore.file !== null}>
+					<span class="step-num">1</span>
+				</div>
+				<div class="step-line" class:done={resumeStore.file !== null}></div>
+				<div class="step-dot" class:active={resumeStore.file !== null} class:done={resumeStore.isReady}>
+					<span class="step-num">2</span>
+				</div>
+				<div class="step-line" class:done={resumeStore.isReady && hasScanned}></div>
+				<div class="step-dot" class:active={hasScanned} class:done={scoresStore.hasResults}>
+					<span class="step-num">3</span>
+				</div>
+				<div class="step-line" class:done={scoresStore.hasResults}></div>
+				<div class="step-dot" class:active={scoresStore.hasResults} class:done={scoresStore.hasResults}>
+					<span class="step-num">4</span>
+				</div>
+			</div>
+			<div class="steps-labels">
+				<span class:active={true}>Upload</span>
+				<span class:active={resumeStore.file !== null}>Parse</span>
+				<span class:active={hasScanned}>Scan</span>
+				<span class:active={scoresStore.hasResults}>Results</span>
+			</div>
 		</div>
 
 		<div class="scanner-body">
@@ -264,8 +290,15 @@
 				</section>
 			{/if}
 
+			<!-- scanning animation: shown while LLM is processing -->
+			{#if scoresStore.isScoring}
+				<section class="results-section">
+					<ScanningAnimation />
+				</section>
+			{/if}
+
 			<!-- results section: fades in smoothly after scanning -->
-			{#if hasScanned}
+			{#if hasScanned && scoresStore.hasResults}
 				<section class="results-section">
 					<ScoreDashboard />
 				</section>
@@ -506,6 +539,86 @@
 		}
 	}
 
+	/* step progress indicator */
+	.steps-progress {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0;
+		margin-top: 2.5rem;
+	}
+
+	.step-dot {
+		width: 32px;
+		height: 32px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 50%;
+		background: var(--glass-bg);
+		border: 2px solid var(--glass-border);
+		transition:
+			border-color 0.4s ease,
+			background 0.4s ease,
+			box-shadow 0.4s ease;
+	}
+
+	.step-dot.active {
+		border-color: rgba(6, 182, 212, 0.4);
+	}
+
+	.step-dot.done {
+		border-color: rgba(34, 197, 94, 0.5);
+		background: rgba(34, 197, 94, 0.08);
+		box-shadow: 0 0 12px rgba(34, 197, 94, 0.15);
+	}
+
+	.step-num {
+		font-size: 0.7rem;
+		font-weight: 700;
+		color: var(--text-tertiary);
+		transition: color 0.4s ease;
+	}
+
+	.step-dot.active .step-num {
+		color: var(--accent-cyan);
+	}
+
+	.step-dot.done .step-num {
+		color: #22c55e;
+	}
+
+	.step-line {
+		width: 60px;
+		height: 2px;
+		background: var(--glass-border);
+		transition: background 0.6s ease;
+	}
+
+	.step-line.done {
+		background: linear-gradient(90deg, rgba(34, 197, 94, 0.5), rgba(6, 182, 212, 0.3));
+	}
+
+	.steps-labels {
+		display: flex;
+		justify-content: center;
+		gap: 4.5rem;
+		margin-top: 0.5rem;
+	}
+
+	.steps-labels span {
+		font-size: 0.7rem;
+		font-weight: 500;
+		color: var(--text-tertiary);
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		transition: color 0.3s ease;
+	}
+
+	.steps-labels span.active {
+		color: var(--text-secondary);
+	}
+
 	@media (max-width: 640px) {
 		.scanner {
 			padding: 5rem 1.5rem 3rem;
@@ -513,6 +626,14 @@
 
 		.actions {
 			flex-direction: column;
+		}
+
+		.step-line {
+			width: 30px;
+		}
+
+		.steps-labels {
+			gap: 2rem;
 		}
 	}
 </style>
