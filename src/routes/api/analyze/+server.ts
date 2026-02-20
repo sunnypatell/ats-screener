@@ -231,12 +231,18 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		return json({ error: 'no LLM providers configured', fallback: true }, { status: 503 });
 	}
 
-	// rate limiting (disabled for testing - re-enable before deploy)
-	// const ip =
-	// 	request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for') ?? 'unknown';
-	// if (!checkRateLimit(ip)) {
-	// 	return json({ error: 'rate limit exceeded' }, { status: 429 });
-	// }
+	// rate limiting per IP
+	const ip =
+		request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for') ?? 'unknown';
+	if (!checkRateLimit(ip)) {
+		return json({ error: 'rate limit exceeded. try again in 60 seconds.' }, { status: 429 });
+	}
+
+	// validate Content-Type
+	const contentType = request.headers.get('content-type') ?? '';
+	if (!contentType.includes('application/json')) {
+		throw error(400, 'Content-Type must be application/json');
+	}
 
 	let body: RequestBody;
 	try {
@@ -245,9 +251,24 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		throw error(400, 'invalid JSON body');
 	}
 
-	// validate resume text isn't empty/whitespace
-	if (body.resumeText !== undefined && body.resumeText.trim().length === 0) {
-		throw error(400, 'resumeText cannot be empty');
+	// validate resume text isn't empty/whitespace and enforce length cap
+	if (body.resumeText !== undefined) {
+		if (body.resumeText.trim().length === 0) {
+			throw error(400, 'resumeText cannot be empty');
+		}
+		if (body.resumeText.length > 50_000) {
+			throw error(400, 'resumeText exceeds maximum length of 50,000 characters');
+		}
+	}
+
+	// enforce length cap on job description
+	if (body.jobDescription !== undefined && body.jobDescription.length > 20_000) {
+		throw error(400, 'jobDescription exceeds maximum length of 20,000 characters');
+	}
+
+	// validate mode is a known value (prevent prompt injection via mode)
+	if (body.mode && !['full-score', 'analyze-jd'].includes(body.mode)) {
+		throw error(400, 'invalid mode');
 	}
 
 	// build the prompt based on mode
@@ -279,9 +300,18 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		return json({ error: 'failed to parse LLM response', fallback: true }, { status: 502 });
 	}
 
-	return json({
-		...(parsed as Record<string, unknown>),
-		_provider: result.provider,
-		_fallback: false
-	});
+	return json(
+		{
+			...(parsed as Record<string, unknown>),
+			_provider: result.provider,
+			_fallback: false
+		},
+		{
+			headers: {
+				'X-Content-Type-Options': 'nosniff',
+				'X-Frame-Options': 'DENY',
+				'Cache-Control': 'no-store'
+			}
+		}
+	);
 };
