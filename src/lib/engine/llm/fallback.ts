@@ -2,11 +2,7 @@ import type { LLMAnalysis, LLMRequestPayload } from './types';
 import { tokenize } from '$engine/nlp/tokenizer';
 import { detectIndustry } from '$engine/nlp/skills-taxonomy';
 
-/**
- * rule-based fallback when LLM is unavailable (quota exhausted, errors, offline).
- * provides reasonable analysis using the NLP engine directly.
- * not as accurate as LLM semantic analysis, but deterministic and free.
- */
+// rule-based fallback when LLM is unavailable. deterministic, uses NLP engine directly
 export function generateFallbackAnalysis(payload: LLMRequestPayload): LLMAnalysis {
 	const { resumeText, jobDescription, resumeSkills } = payload;
 

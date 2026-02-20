@@ -2,10 +2,7 @@ import type { ScoreResult } from '$engine/scorer/types';
 import type { LLMAnalysis } from '$engine/llm/types';
 import type { ParsedJobDescription } from '$engine/job-parser/types';
 
-/**
- * svelte 5 rune-based store for scoring state.
- * tracks all ATS scores, LLM analysis, and JD parsing.
- */
+// tracks ATS scores, LLM analysis, and job description state
 class ScoresStore {
 	results = $state<ScoreResult[]>([]);
 	llmAnalysis = $state<LLMAnalysis | null>(null);

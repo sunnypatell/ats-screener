@@ -1,9 +1,6 @@
 import type { ParsedResume, ParseResult } from '$engine/parser/types';
 
-/**
- * svelte 5 rune-based store for resume state.
- * tracks the uploaded file, parsed data, and parsing status.
- */
+// tracks uploaded file, parsed data, and parsing status
 class ResumeStore {
 	file = $state<File | null>(null);
 	parseResult = $state<ParseResult | null>(null);

@@ -1,20 +1,7 @@
 import type { ATSProfile } from './types';
 
-/**
- * Greenhouse (greenhouse.io)
- *
- * modern ATS popular with tech companies and high-growth startups.
- * uses structured scorecards and is more lenient on formatting.
- * focuses on experience relevance over keyword density.
- *
- * key behaviors:
- * - lenient parser that handles most formats well
- * - structured hiring with scorecards
- * - values experience quality over keyword quantity
- * - semantic matching considers context
- * - less reliant on exact keyword matching
- * - supports structured data import
- */
+// greenhouse: modern ATS for tech/startups, lenient parsing, semantic matching
+// values experience quality and scorecards over keyword density
 export const GREENHOUSE_PROFILE: ATSProfile = {
 	name: 'Greenhouse',
 	vendor: 'Greenhouse Software',

@@ -4,11 +4,7 @@ interface SectionScore {
 	missing: string[];
 }
 
-/**
- * scores section completeness based on what the ATS profile expects.
- * different systems have different required sections.
- * e.g., Workday expects very structured sections while Lever is more lenient.
- */
+// scores section completeness based on the ATS profile's required sections
 export function scoreSections(presentSections: string[], requiredSections: string[]): SectionScore {
 	const presentSet = new Set(presentSections.map((s) => s.toLowerCase()));
 	const present: string[] = [];

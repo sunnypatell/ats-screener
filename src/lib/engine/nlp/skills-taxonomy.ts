@@ -1,10 +1,5 @@
-/**
- * categorized skills database organized by industry and domain.
- * used for:
- * 1. identifying which industry a resume/JD belongs to
- * 2. suggesting relevant skills the candidate might be missing
- * 3. weighting keyword matches by relevance to the target role
- */
+// categorized skills database by industry/domain
+// used for industry detection, skill suggestions, and relevance weighting
 
 export interface SkillCategory {
 	domain: string;
@@ -557,10 +552,7 @@ export const SKILLS_TAXONOMY: SkillCategory[] = [
 	}
 ];
 
-/**
- * detects the most likely industry of a text based on skill keyword presence.
- * returns industries sorted by match count.
- */
+// detects the most likely industry based on skill keyword presence, sorted by match count
 export function detectIndustry(text: string): Array<{ industry: string; matchCount: number }> {
 	const lowerText = text.toLowerCase();
 	const industryCounts = new Map<string, number>();
@@ -584,16 +576,12 @@ export function detectIndustry(text: string): Array<{ industry: string; matchCou
 		.sort((a, b) => b.matchCount - a.matchCount);
 }
 
-/**
- * gets all skills for a given industry.
- */
+// gets all skills for a given industry
 export function getIndustrySkills(industry: string): string[] {
 	return SKILLS_TAXONOMY.filter((cat) => cat.industry === industry).flatMap((cat) => cat.skills);
 }
 
-/**
- * gets the domain/category for a given skill.
- */
+// gets the domain/category for a given skill
 export function getSkillDomain(skill: string): string | null {
 	const lower = skill.toLowerCase();
 	for (const category of SKILLS_TAXONOMY) {

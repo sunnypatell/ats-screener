@@ -1,20 +1,7 @@
 import type { ATSProfile } from './types';
 
-/**
- * Lever (lever.co)
- *
- * modern ATS/CRM hybrid popular with startups and tech companies.
- * emphasizes candidate relationship and context matching.
- * most lenient of the major ATS platforms.
- *
- * key behaviors:
- * - very lenient parser
- * - CRM-style candidate tracking
- * - contextual matching beyond keywords
- * - values narrative and cultural fit signals
- * - good at extracting meaning from unstructured text
- * - supports diverse resume formats well
- */
+// lever: ATS/CRM hybrid for startups, most lenient parser of the major platforms
+// contextual matching, values narrative quality over strict keyword density
 export const LEVER_PROFILE: ATSProfile = {
 	name: 'Lever',
 	vendor: 'Lever (Employ Inc.)',

@@ -24,11 +24,7 @@ interface PDFParseResult {
 	hasImages: boolean;
 }
 
-/**
- * extracts text content from a PDF file with layout awareness.
- * reconstructs line ordering based on y-position to handle
- * multi-column layouts that ATS parsers struggle with.
- */
+// extracts text from a PDF with layout-aware line reconstruction
 export async function parsePDF(file: File): Promise<PDFParseResult> {
 	const buffer = await file.arrayBuffer();
 	const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
@@ -85,11 +81,7 @@ export async function parsePDF(file: File): Promise<PDFParseResult> {
 	};
 }
 
-/**
- * groups text items into lines based on y-position clustering.
- * items within 3px y-distance are considered the same line.
- * lines are sorted top-to-bottom, items within a line left-to-right.
- */
+// groups text items into lines by y-position (3px threshold), sorted top-to-bottom
 function reconstructLines(items: PDFTextLine[]): string[] {
 	if (items.length === 0) return [];
 
@@ -125,10 +117,7 @@ function reconstructLines(items: PDFTextLine[]): string[] {
 	return lines.filter((line) => line.trim().length > 0);
 }
 
-/**
- * merges text items on the same line, inserting spaces
- * where there are significant gaps between items.
- */
+// merges text items on the same line, inserting spaces at significant gaps
 function mergeLine(items: PDFTextLine[]): string {
 	if (items.length === 0) return '';
 	if (items.length === 1) return items[0].text;
@@ -149,10 +138,7 @@ function mergeLine(items: PDFTextLine[]): string {
 	return result;
 }
 
-/**
- * detects multi-column layouts by analyzing x-position distribution.
- * if text items cluster into 2+ distinct x-ranges, it's likely multi-column.
- */
+// detects multi-column layouts by checking for distinct x-position clusters
 function detectMultipleColumns(items: PDFTextLine[]): boolean {
 	if (items.length < 20) return false;
 
@@ -180,10 +166,7 @@ function detectMultipleColumns(items: PDFTextLine[]): boolean {
 	return false;
 }
 
-/**
- * detects table-like structures by looking for aligned columns
- * of text with consistent spacing patterns.
- */
+// detects table-like structures by looking for aligned columns with consistent gaps
 function detectTables(items: PDFTextLine[]): boolean {
 	if (items.length < 10) return false;
 

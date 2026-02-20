@@ -1,9 +1,6 @@
 import type { ResumeSection, SectionType } from './types';
 
-/**
- * maps common resume section headers to their canonical types.
- * handles variations across industries and formats.
- */
+// maps common resume section headers to canonical types
 const SECTION_PATTERNS: Record<SectionType, RegExp[]> = {
 	contact: [/^(contact\s*(info(rmation)?)?|personal\s*(info(rmation)?|details))$/i],
 	summary: [
@@ -34,13 +31,7 @@ const SECTION_PATTERNS: Record<SectionType, RegExp[]> = {
 	unknown: []
 };
 
-/**
- * heuristics for identifying section headers:
- * - all caps or title case
- * - short (1-5 words)
- * - often followed by a colon or horizontal rule
- * - may be preceded by a blank line
- */
+// checks if a line is a section header using pattern matching and heuristics
 function isSectionHeader(line: string, prevLine: string | null, nextLine: string | null): boolean {
 	const trimmed = line.trim();
 
@@ -77,9 +68,7 @@ function isSectionHeader(line: string, prevLine: string | null, nextLine: string
 	return false;
 }
 
-/**
- * classifies a section header string into a canonical section type.
- */
+// classifies a section header string into a canonical SectionType
 function classifySection(header: string): SectionType {
 	const cleaned = header.replace(/[:\-_|]/g, '').trim();
 
@@ -92,10 +81,7 @@ function classifySection(header: string): SectionType {
 	return 'unknown';
 }
 
-/**
- * detects and extracts sections from resume text.
- * returns an array of sections with their type, header, content, and line ranges.
- */
+// detects and extracts sections from resume lines with type, header, content, and line ranges
 export function detectSections(lines: string[]): ResumeSection[] {
 	const sections: ResumeSection[] = [];
 	const headerIndices: { index: number; header: string; type: SectionType }[] = [];

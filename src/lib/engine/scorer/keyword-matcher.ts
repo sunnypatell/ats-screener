@@ -9,16 +9,8 @@ interface KeywordMatchResult {
 	synonymMatched: string[];
 }
 
-/**
- * matches resume keywords against job description keywords.
- * supports three strategies that map to different ATS behaviors:
- *
- * - exact: only counts literal keyword matches (Workday, Taleo, SuccessFactors)
- * - fuzzy: exact + synonym matching via the synonym database (iCIMS)
- * - semantic: fuzzy + partial/contextual matching (Greenhouse, Lever)
- *
- * the strategy reflects how strict the real ATS system is.
- */
+// matches resume keywords against JD keywords using exact, fuzzy, or semantic strategy
+// strategy reflects real ATS strictness (exact for Workday/Taleo, semantic for Greenhouse/Lever)
 export function matchKeywords(
 	resumeText: string,
 	jobDescription: string,
@@ -111,10 +103,7 @@ export function matchKeywords(
 	return { score, matched, missing, synonymMatched };
 }
 
-/**
- * performs a quick keyword overlap check without synonym matching.
- * used for the general (no JD) scoring mode.
- */
+// quick keyword overlap check without synonym matching, used for no-JD scoring mode
 export function quickKeywordScore(resumeText: string, referenceText: string): number {
 	const overlap = computeKeywordOverlap(resumeText, referenceText);
 	return Math.round(overlap.score * 100);

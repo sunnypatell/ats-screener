@@ -34,11 +34,7 @@ const DEGREE_LEVELS: Record<string, number> = {
 	certification: 1
 };
 
-/**
- * scores education section quality.
- * evaluates: degree presence, institution mention, dates, GPA, honors.
- * this is a general score; JD-specific matching happens in the keyword matcher.
- */
+// scores education section: degree, institution, dates, GPA, honors
 export function scoreEducation(educationText: string): EducationScore {
 	if (!educationText || educationText.trim().length === 0) {
 		return {

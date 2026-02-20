@@ -13,11 +13,7 @@ import type {
 	ResumeSection
 } from './types';
 
-/**
- * main entry point for parsing a resume file.
- * supports PDF and DOCX formats.
- * returns a fully structured ParsedResume or errors.
- */
+// main entry point: parses PDF/DOCX into structured ParsedResume
 export async function parseResume(file: File): Promise<ParseResult> {
 	const errors: string[] = [];
 	const warnings: string[] = [];
@@ -130,9 +126,7 @@ function getFileType(file: File): 'pdf' | 'docx' | null {
 	return null;
 }
 
-/**
- * extracts structured experience entries from experience sections.
- */
+// extracts structured experience entries from experience sections
 function extractExperience(sections: ResumeSection[]): ExperienceEntry[] {
 	const expSections = sections.filter((s) => s.type === 'experience');
 	const entries: ExperienceEntry[] = [];
@@ -169,14 +163,7 @@ function extractExperience(sections: ResumeSection[]): ExperienceEntry[] {
 	return entries;
 }
 
-/**
- * parses a job title and company from the header lines of an experience entry.
- * handles formats like:
- * - "Software Engineer | Google"
- * - "Software Engineer, Google"
- * - "Software Engineer at Google"
- * - "Google" (line 1) "Software Engineer" (line 2)
- */
+// parses title/company from header. handles "Title | Co", "Title at Co", "Title, Co", two-line
 function parseJobHeader(line1: string, line2: string): { title: string; company: string } {
 	// remove date patterns from lines for cleaner parsing
 	const cleanLine1 = line1
@@ -218,9 +205,7 @@ function parseJobHeader(line1: string, line2: string): { title: string; company:
 	return { title: cleanLine1, company: '' };
 }
 
-/**
- * extracts structured education entries from education sections.
- */
+// extracts structured education entries from education sections
 function extractEducation(sections: ResumeSection[]): EducationEntry[] {
 	const eduSections = sections.filter((s) => s.type === 'education');
 	const entries: EducationEntry[] = [];
@@ -307,9 +292,7 @@ function extractHonors(lines: string[]): string[] {
 	return lines.filter((l) => honorsKeywords.test(l)).map((l) => l.trim());
 }
 
-/**
- * extracts project entries from project sections.
- */
+// extracts project entries from project sections
 function extractProjects(sections: ResumeSection[]): ProjectEntry[] {
 	const projSections = sections.filter((s) => s.type === 'projects');
 	const entries: ProjectEntry[] = [];
@@ -353,9 +336,7 @@ function extractProjects(sections: ResumeSection[]): ProjectEntry[] {
 	return entries;
 }
 
-/**
- * extracts certifications from certification sections.
- */
+// extracts certifications from certification sections
 function extractCertifications(sections: ResumeSection[]): CertificationEntry[] {
 	const certSections = sections.filter((s) => s.type === 'certifications');
 	const entries: CertificationEntry[] = [];
@@ -383,10 +364,7 @@ function extractCertifications(sections: ResumeSection[]): CertificationEntry[] 
 	return entries;
 }
 
-/**
- * extracts skills from skills sections.
- * handles various formats: comma-separated, bullet lists, "Category: skill1, skill2"
- */
+// extracts skills from skills sections. handles comma-separated, bullets, "Category: skill1, skill2"
 function extractSkills(sections: ResumeSection[]): string[] {
 	const skillSections = sections.filter((s) => s.type === 'skills');
 	const skills: string[] = [];
@@ -422,19 +400,13 @@ function extractSkills(sections: ResumeSection[]): string[] {
 	});
 }
 
-/**
- * extracts the summary/objective from the resume.
- */
+// extracts the summary/objective section text
 function extractSummary(sections: ResumeSection[]): string | null {
 	const summarySection = sections.find((s) => s.type === 'summary');
 	return summarySection ? summarySection.content.trim() : null;
 }
 
-/**
- * splits section content into individual entries.
- * entries are separated by blank lines or by lines that look like new entry headers
- * (e.g., lines with dates, company names, or titles).
- */
+// splits section content into entries using blank lines and date-containing headers as boundaries
 function splitIntoEntries(content: string): string[] {
 	const lines = content.split('\n');
 	const entries: string[] = [];
