@@ -60,7 +60,9 @@ export async function parseResume(file: File): Promise<ParseResult> {
 			return {
 				success: false,
 				resume: null,
-				errors: ['could not extract any text from the file. it may be an image-based PDF or corrupted.'],
+				errors: [
+					'could not extract any text from the file. it may be an image-based PDF or corrupted.'
+				],
 				warnings: []
 			};
 		}
@@ -70,7 +72,9 @@ export async function parseResume(file: File): Promise<ParseResult> {
 		}
 
 		if (hasTables) {
-			warnings.push('detected tables in the document. most ATS systems struggle with tabular layouts.');
+			warnings.push(
+				'detected tables in the document. most ATS systems struggle with tabular layouts.'
+			);
 		}
 
 		const contact = extractContact(lines);
@@ -175,8 +179,18 @@ function extractExperience(sections: ResumeSection[]): ExperienceEntry[] {
  */
 function parseJobHeader(line1: string, line2: string): { title: string; company: string } {
 	// remove date patterns from lines for cleaner parsing
-	const cleanLine1 = line1.replace(/(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*\d{4}\s*[-–—]\s*(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*\d{4}|present|current|now)/gi, '').trim();
-	const cleanLine2 = line2.replace(/(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*\d{4}\s*[-–—]\s*(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*\d{4}|present|current|now)/gi, '').trim();
+	const cleanLine1 = line1
+		.replace(
+			/(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*\d{4}\s*[-–—]\s*(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*\d{4}|present|current|now)/gi,
+			''
+		)
+		.trim();
+	const cleanLine2 = line2
+		.replace(
+			/(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*\d{4}\s*[-–—]\s*(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*\d{4}|present|current|now)/gi,
+			''
+		)
+		.trim();
 
 	// try "Title | Company" or "Title - Company"
 	const separatorMatch = cleanLine1.match(/^(.+?)\s*[|–—]\s*(.+)$/);
@@ -240,8 +254,8 @@ function extractEducation(sections: ResumeSection[]): EducationEntry[] {
 }
 
 function parseEduHeader(lines: string[]): { degree: string; field: string; institution: string } {
-	const degreePatterns = /\b(ph\.?d\.?|doctor|master'?s?|m\.?s\.?|m\.?a\.?|m\.?b\.?a\.?|bachelor'?s?|b\.?s\.?|b\.?a\.?|b\.?eng\.?|associate'?s?|a\.?s\.?|a\.?a\.?|diploma)\b/i;
-	const fullText = lines.join(' ');
+	const degreePatterns =
+		/\b(ph\.?d\.?|doctor|master'?s?|m\.?s\.?|m\.?a\.?|m\.?b\.?a\.?|bachelor'?s?|b\.?s\.?|b\.?a\.?|b\.?eng\.?|associate'?s?|a\.?s\.?|a\.?a\.?|diploma)\b/i;
 
 	let degree = '';
 	let field = '';
@@ -258,8 +272,12 @@ function parseEduHeader(lines: string[]): { degree: string; field: string; insti
 				const fieldMatch = cleaned.match(/(?:in|of)\s+(.+?)(?:\s*[-–—,|]|$)/i);
 				if (fieldMatch) field = fieldMatch[1].trim();
 				// if degree is on a line with the institution
-				const afterDegree = cleaned.replace(degreePatterns, '').replace(/(?:in|of)\s+.+/, '').trim();
-				if (afterDegree && !institution) institution = afterDegree.replace(/^[-–—,|\s]+|[-–—,|\s]+$/g, '');
+				const afterDegree = cleaned
+					.replace(degreePatterns, '')
+					.replace(/(?:in|of)\s+.+/, '')
+					.trim();
+				if (afterDegree && !institution)
+					institution = afterDegree.replace(/^[-–—,|\s]+|[-–—,|\s]+$/g, '');
 			}
 		} else if (!institution && cleaned.length > 3) {
 			institution = cleaned.replace(/^[-–—,|\s]+|[-–—,|\s]+$/g, '');
@@ -284,10 +302,9 @@ function extractGPA(text: string): string | null {
 }
 
 function extractHonors(lines: string[]): string[] {
-	const honorsKeywords = /\b(cum laude|magna cum laude|summa cum laude|dean'?s?\s*list|honors?|distinction|valedictorian|salutatorian)\b/i;
-	return lines
-		.filter((l) => honorsKeywords.test(l))
-		.map((l) => l.trim());
+	const honorsKeywords =
+		/\b(cum laude|magna cum laude|summa cum laude|dean'?s?\s*list|honors?|distinction|valedictorian|salutatorian)\b/i;
+	return lines.filter((l) => honorsKeywords.test(l)).map((l) => l.trim());
 }
 
 /**
@@ -305,13 +322,19 @@ function extractProjects(sections: ResumeSection[]): ProjectEntry[] {
 			if (lines.length === 0) continue;
 
 			const name = lines[0].replace(/^[\s•\-*]\s*/, '').trim();
-			const bullets = lines.slice(1).map((l) => l.replace(/^[\s•\-*·▪►➤○●]\s*/, '').trim()).filter(Boolean);
+			const bullets = lines
+				.slice(1)
+				.map((l) => l.replace(/^[\s•\-*·▪►➤○●]\s*/, '').trim())
+				.filter(Boolean);
 			const fullText = lines.join(' ');
 
 			// extract technologies from parentheses or "Technologies:" prefix
 			const techMatch = fullText.match(/(?:\(([^)]+)\)|technologies?\s*:?\s*(.+?)(?:\.|$))/i);
 			const technologies = techMatch
-				? (techMatch[1] || techMatch[2]).split(/[,|;]/).map((t) => t.trim()).filter(Boolean)
+				? (techMatch[1] || techMatch[2])
+						.split(/[,|;]/)
+						.map((t) => t.trim())
+						.filter(Boolean)
 				: [];
 
 			const urlMatch = fullText.match(/https?:\/\/[^\s)]+/);
@@ -380,7 +403,10 @@ function extractSkills(sections: ResumeSection[]): string[] {
 			const skillPart = colonSplit.length > 1 ? colonSplit.slice(1).join(':') : cleaned;
 
 			// split on commas, pipes, semicolons, or bullet-like separators
-			const items = skillPart.split(/[,|;•·▪]/).map((s) => s.trim()).filter((s) => s.length > 0 && s.length < 50);
+			const items = skillPart
+				.split(/[,|;•·▪]/)
+				.map((s) => s.trim())
+				.filter((s) => s.length > 0 && s.length < 50);
 
 			skills.push(...items);
 		}

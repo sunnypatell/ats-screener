@@ -10,12 +10,10 @@
 				<span class="gradient-text">ATS score</span>
 			</h1>
 			<p class="hero-subtitle">
-				free resume screener that simulates real HCMS platforms.
-				accurate scores for Workday, Taleo, Greenhouse, iCIMS, Lever, and SuccessFactors.
+				free resume screener that simulates real HCMS platforms. accurate scores for Workday, Taleo,
+				Greenhouse, iCIMS, Lever, and SuccessFactors.
 			</p>
-			<a href="/scanner" class="cta-button">
-				scan your resume
-			</a>
+			<a href="/scanner" class="cta-button"> scan your resume </a>
 		</div>
 	</section>
 </main>

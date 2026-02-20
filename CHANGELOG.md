@@ -8,6 +8,7 @@ and this project adheres to [semantic versioning](https://semver.org/spec/v2.0.0
 ## [unreleased]
 
 ### added
+
 - initial project scaffold (SvelteKit 5, TypeScript, Vitest, Playwright)
 - glassmorphic design system with CSS custom properties
 - project documentation (README, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT)

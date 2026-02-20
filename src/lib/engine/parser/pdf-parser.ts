@@ -45,8 +45,8 @@ export async function parsePDF(file: File): Promise<PDFParseResult> {
 		// detect images via operator list
 		const imageOps = [
 			pdfjsLib.OPS.paintImageXObject,
-			pdfjsLib.OPS.paintJpegXObject,
-			pdfjsLib.OPS.paintImageMaskXObject
+			pdfjsLib.OPS.paintImageMaskXObject,
+			pdfjsLib.OPS.paintXObject
 		];
 		if (operators.fnArray.some((op: number) => imageOps.includes(op))) {
 			hasImages = true;
@@ -199,7 +199,7 @@ function detectTables(items: PDFTextLine[]): boolean {
 
 	// count lines with 3+ separate text items (potential table rows)
 	let tableRowCount = 0;
-	for (const [_, lineItems] of lineGroups) {
+	for (const [, lineItems] of lineGroups) {
 		if (lineItems.length >= 3) {
 			const sorted = lineItems.sort((a, b) => a.x - b.x);
 			const gaps = [];

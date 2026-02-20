@@ -5,9 +5,7 @@ import type { ResumeSection, SectionType } from './types';
  * handles variations across industries and formats.
  */
 const SECTION_PATTERNS: Record<SectionType, RegExp[]> = {
-	contact: [
-		/^(contact\s*(info(rmation)?)?|personal\s*(info(rmation)?|details))$/i
-	],
+	contact: [/^(contact\s*(info(rmation)?)?|personal\s*(info(rmation)?|details))$/i],
 	summary: [
 		/^(summary|profile|about(\s*me)?|objective|professional\s*summary|career\s*summary|executive\s*summary|personal\s*statement)$/i
 	],
@@ -26,21 +24,13 @@ const SECTION_PATTERNS: Record<SectionType, RegExp[]> = {
 	certifications: [
 		/^(certifications?|licenses?(\s*(&|and)\s*certifications?)?|professional\s*certifications?|accreditations?)$/i
 	],
-	awards: [
-		/^(awards?|honors?(\s*(&|and)\s*awards?)?|achievements?|recognition|scholarships?)$/i
-	],
-	publications: [
-		/^(publications?|research|papers?|presentations?)$/i
-	],
+	awards: [/^(awards?|honors?(\s*(&|and)\s*awards?)?|achievements?|recognition|scholarships?)$/i],
+	publications: [/^(publications?|research|papers?|presentations?)$/i],
 	volunteer: [
 		/^(volunteer(ing)?(\s*experience)?|community\s*(service|involvement)|extracurricular(\s*activities)?)$/i
 	],
-	languages: [
-		/^(languages?|language\s*proficiency)$/i
-	],
-	interests: [
-		/^(interests?|hobbies(\s*(&|and)\s*interests?)?)$/i
-	],
+	languages: [/^(languages?|language\s*proficiency)$/i],
+	interests: [/^(interests?|hobbies(\s*(&|and)\s*interests?)?)$/i],
 	unknown: []
 };
 
@@ -81,7 +71,8 @@ function isSectionHeader(line: string, prevLine: string | null, nextLine: string
 	// avoid matching personal names (typically 2-3 title-case words at document start)
 	const isLikelyName = wordCount >= 2 && wordCount <= 3 && /^[A-Z][a-z]+ [A-Z]/.test(cleaned);
 
-	if (isAlphaOnly && isShort && prevIsBlank && nextIsContent && !isLikelyName && cleaned.length > 2) return true;
+	if (isAlphaOnly && isShort && prevIsBlank && nextIsContent && !isLikelyName && cleaned.length > 2)
+		return true;
 
 	return false;
 }

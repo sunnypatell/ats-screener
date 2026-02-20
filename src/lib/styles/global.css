@@ -48,7 +48,12 @@ a:hover {
 	color: var(--accent-blue);
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
 	line-height: var(--leading-tight);
 	font-weight: var(--weight-semibold);
 }

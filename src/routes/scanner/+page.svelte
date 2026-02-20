@@ -5,7 +5,9 @@
 <main class="scanner">
 	<div class="container">
 		<h1 class="page-title">resume scanner</h1>
-		<p class="page-subtitle">upload your resume and optionally paste a job description for targeted scoring</p>
+		<p class="page-subtitle">
+			upload your resume and optionally paste a job description for targeted scoring
+		</p>
 	</div>
 </main>
 

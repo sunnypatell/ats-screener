@@ -3,28 +3,32 @@ import { detectIndustry, getIndustrySkills, getSkillDomain } from '$engine/nlp/s
 
 describe('skills-taxonomy', () => {
 	it('detects technology industry from tech resume', () => {
-		const text = 'software engineer with experience in react, node.js, postgresql, docker, kubernetes';
+		const text =
+			'software engineer with experience in react, node.js, postgresql, docker, kubernetes';
 		const industries = detectIndustry(text);
 
 		expect(industries[0].industry).toBe('technology');
 	});
 
 	it('detects finance industry from finance resume', () => {
-		const text = 'financial analyst experienced in financial modeling, valuation, dcf analysis, bloomberg terminal';
+		const text =
+			'financial analyst experienced in financial modeling, valuation, dcf analysis, bloomberg terminal';
 		const industries = detectIndustry(text);
 
 		expect(industries[0].industry).toBe('finance');
 	});
 
 	it('detects healthcare industry from medical resume', () => {
-		const text = 'registered nurse with experience in patient care, ehr, epic, hipaa compliance, bls certified';
+		const text =
+			'registered nurse with experience in patient care, ehr, epic, hipaa compliance, bls certified';
 		const industries = detectIndustry(text);
 
 		expect(industries[0].industry).toBe('healthcare');
 	});
 
 	it('detects marketing industry from marketing resume', () => {
-		const text = 'digital marketer skilled in seo, sem, google analytics, content marketing, email marketing';
+		const text =
+			'digital marketer skilled in seo, sem, google analytics, content marketing, email marketing';
 		const industries = detectIndustry(text);
 
 		expect(industries[0].industry).toBe('marketing');
