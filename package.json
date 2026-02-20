@@ -1,0 +1,57 @@
+{
+	"name": "ats-screener",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage",
+		"test:e2e": "playwright test",
+		"validate": "pnpm check && pnpm lint && pnpm test"
+	},
+	"dependencies": {
+		"bits-ui": "^2.16.0",
+		"compromise": "^14.14.3",
+		"mammoth": "^1.8.0",
+		"motion": "^12.0.0",
+		"pdfjs-dist": "^4.10.38"
+	},
+	"devDependencies": {
+		"@playwright/test": "^1.49.0",
+		"@sveltejs/adapter-cloudflare": "^4.8.0",
+		"@sveltejs/kit": "^2.16.0",
+		"@sveltejs/vite-plugin-svelte": "^5.0.0",
+		"@testing-library/svelte": "^5.2.0",
+		"@types/node": "^22.10.0",
+		"eslint": "^9.16.0",
+		"eslint-plugin-svelte": "^2.46.0",
+		"globals": "^15.14.0",
+		"jsdom": "^25.0.0",
+		"open-props": "^1.7.0",
+		"prettier": "^3.4.0",
+		"prettier-plugin-svelte": "^3.3.0",
+		"svelte": "^5.16.0",
+		"svelte-check": "^4.1.0",
+		"typescript": "^5.7.0",
+		"typescript-eslint": "^8.18.0",
+		"vite": "^6.0.0",
+		"vitest": "^2.1.0"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"esbuild",
+			"sharp",
+			"workerd"
+		]
+	}
+}
