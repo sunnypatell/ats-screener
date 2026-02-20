@@ -1,5 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import FlipWords from '$components/ui/FlipWords.svelte';
+	import SparklesText from '$components/ui/SparklesText.svelte';
+	import NumberTicker from '$components/ui/NumberTicker.svelte';
+	import TextGenerateEffect from '$components/ui/TextGenerateEffect.svelte';
+	import MovingBorder from '$components/ui/MovingBorder.svelte';
 
 	// delays fade-in until hydrated to prevent flash
 	let mounted = $state(false);
@@ -18,16 +23,8 @@
 		mouseY = ((e.clientY - rect.top) / rect.height) * 100;
 	}
 
-	// animated ATS system names that cycle in the description
+	// ATS system names for the FlipWords component
 	const systems = ['Workday', 'Taleo', 'iCIMS', 'Greenhouse', 'Lever', 'SuccessFactors'];
-	let activeSystem = $state(0);
-
-	onMount(() => {
-		const interval = setInterval(() => {
-			activeSystem = (activeSystem + 1) % systems.length;
-		}, 2000);
-		return () => clearInterval(interval);
-	});
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -45,6 +42,13 @@
 	<!-- grid pattern overlay for depth -->
 	<div class="grid-overlay"></div>
 
+	<!-- floating particles -->
+	<div class="particles" aria-hidden="true">
+		{#each Array(6) as _, i}
+			<div class="particle" style="--i: {i}"></div>
+		{/each}
+	</div>
+
 	<div class="hero-content">
 		<!-- trust badge -->
 		<div class="badge">
@@ -52,17 +56,29 @@
 			<span>Free Forever &bull; No Sign-Up &bull; No Limits</span>
 		</div>
 
+		<!-- main heading with sparkles effect on the gradient text -->
 		<h1 class="hero-title">
 			Your Resume vs.
 			<br />
-			<span class="gradient-text animated-gradient">Real ATS Systems</span>
+			<SparklesText>
+				<span class="gradient-text animated-gradient">Real ATS Systems</span>
+			</SparklesText>
 		</h1>
 
+		<!-- description with FlipWords cycling through ATS names -->
 		<p class="hero-description">
-			See exactly how <strong>{systems[activeSystem]}</strong> and 5 other enterprise platforms parse,
-			filter, and score your resume. Powered by researched ATS profiles, not generic algorithms.
+			<TextGenerateEffect
+				text="See exactly how"
+				delay={400}
+			/>
+			<strong class="flip-system"><FlipWords words={systems} interval={2200} /></strong>
+			<TextGenerateEffect
+				text="and 5 other enterprise platforms parse, filter, and score your resume. Powered by researched ATS profiles, not generic algorithms."
+				delay={600}
+			/>
 		</p>
 
+		<!-- CTA buttons -->
 		<div class="hero-actions">
 			<a href="/scanner" class="btn-primary">
 				<span class="btn-shimmer"></span>
@@ -96,31 +112,47 @@
 			</a>
 		</div>
 
-		<!-- floating score preview cards -->
+		<!-- floating score preview cards with MovingBorder and NumberTicker -->
 		<div class="score-preview">
-			<div class="preview-card card-1">
-				<span class="preview-system">Workday</span>
-				<span class="preview-score score-high">92</span>
-			</div>
-			<div class="preview-card card-2">
-				<span class="preview-system">Taleo</span>
-				<span class="preview-score score-mid">74</span>
-			</div>
-			<div class="preview-card card-3">
-				<span class="preview-system">Greenhouse</span>
-				<span class="preview-score score-high">88</span>
-			</div>
+			<MovingBorder borderRadius="12px" duration={4000}>
+				<div class="preview-card-inner">
+					<span class="preview-system">Workday</span>
+					<span class="preview-score score-high">
+						<NumberTicker value={92} delay={800} duration={1500} />
+					</span>
+				</div>
+			</MovingBorder>
+			<MovingBorder borderRadius="12px" duration={5000}>
+				<div class="preview-card-inner">
+					<span class="preview-system">Taleo</span>
+					<span class="preview-score score-mid">
+						<NumberTicker value={74} delay={1200} duration={1500} />
+					</span>
+				</div>
+			</MovingBorder>
+			<MovingBorder borderRadius="12px" duration={3500}>
+				<div class="preview-card-inner">
+					<span class="preview-system">Greenhouse</span>
+					<span class="preview-score score-high">
+						<NumberTicker value={88} delay={1000} duration={1500} />
+					</span>
+				</div>
+			</MovingBorder>
 		</div>
 
-		<!-- stats strip -->
+		<!-- stats strip with animated number tickers -->
 		<div class="hero-stats">
 			<div class="stat">
-				<span class="stat-number">6</span>
+				<span class="stat-number">
+					<NumberTicker value={6} delay={1400} duration={800} />
+				</span>
 				<span class="stat-label">ATS Platforms</span>
 			</div>
 			<div class="stat-divider"></div>
 			<div class="stat">
-				<span class="stat-number">100%</span>
+				<span class="stat-number">
+					<NumberTicker value={100} delay={1600} duration={1000} suffix="%" />
+				</span>
 				<span class="stat-label">Free & Open Source</span>
 			</div>
 			<div class="stat-divider"></div>
@@ -130,7 +162,9 @@
 			</div>
 			<div class="stat-divider"></div>
 			<div class="stat">
-				<span class="stat-number">0</span>
+				<span class="stat-number">
+					<NumberTicker value={0} delay={1800} duration={600} />
+				</span>
 				<span class="stat-label">Data Sent to Servers</span>
 			</div>
 		</div>
@@ -202,6 +236,42 @@
 		}
 		75% {
 			transform: translate(15px, 30px) scale(1.02);
+		}
+	}
+
+	/* floating particles for ambient depth */
+	.particles {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+	}
+
+	.particle {
+		position: absolute;
+		width: 3px;
+		height: 3px;
+		border-radius: 50%;
+		background: rgba(6, 182, 212, 0.3);
+		animation: particle-float 15s ease-in-out infinite;
+		animation-delay: calc(var(--i) * -2.5s);
+		left: calc(15% + var(--i) * 12%);
+		top: calc(20% + var(--i) * 8%);
+	}
+
+	@keyframes particle-float {
+		0%, 100% {
+			transform: translateY(0) translateX(0);
+			opacity: 0;
+		}
+		10% {
+			opacity: 1;
+		}
+		50% {
+			transform: translateY(-80px) translateX(30px);
+			opacity: 0.5;
+		}
+		90% {
+			opacity: 0;
 		}
 	}
 
@@ -321,10 +391,9 @@
 		line-height: 1.7;
 	}
 
-	.hero-description strong {
+	.flip-system {
 		color: var(--accent-cyan);
-		font-weight: 600;
-		transition: color 0.3s ease;
+		font-weight: 700;
 	}
 
 	.hero-actions {
@@ -396,7 +465,7 @@
 		color: var(--text-primary);
 	}
 
-	/* floating score preview cards show what the results look like */
+	/* floating score preview cards with moving border effect */
 	.score-preview {
 		display: flex;
 		justify-content: center;
@@ -404,36 +473,12 @@
 		margin-bottom: 3rem;
 	}
 
-	.preview-card {
+	.preview-card-inner {
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
-		padding: 0.75rem 1.25rem;
-		background: var(--glass-bg);
-		border: 1px solid var(--glass-border);
-		border-radius: var(--radius-lg);
+		padding: 0.85rem 1.5rem;
 		backdrop-filter: blur(16px);
-		animation: float-card 6s ease-in-out infinite;
-	}
-
-	.card-1 {
-		animation-delay: 0s;
-	}
-	.card-2 {
-		animation-delay: -2s;
-	}
-	.card-3 {
-		animation-delay: -4s;
-	}
-
-	@keyframes float-card {
-		0%,
-		100% {
-			transform: translateY(0);
-		}
-		50% {
-			transform: translateY(-8px);
-		}
 	}
 
 	.preview-system {
@@ -443,7 +488,7 @@
 	}
 
 	.preview-score {
-		font-size: 1.25rem;
+		font-size: 1.35rem;
 		font-weight: 800;
 		font-variant-numeric: tabular-nums;
 	}
@@ -523,6 +568,10 @@
 		.stat-divider {
 			width: 3rem;
 			height: 1px;
+		}
+
+		.particles {
+			display: none;
 		}
 	}
 </style>

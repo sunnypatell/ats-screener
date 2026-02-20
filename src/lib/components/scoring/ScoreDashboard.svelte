@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { scoresStore } from '$stores/scores.svelte';
 	import ScoreCard from './ScoreCard.svelte';
+	import NumberTicker from '$components/ui/NumberTicker.svelte';
 
 	// derived stats for the summary card header
 	const avgScore = $derived(scoresStore.averageScore);
@@ -23,7 +24,9 @@
 			<div class="summary-card">
 				<div class="summary-left">
 					<div class="summary-score">
-						<span class="score-number" style="color: {getAvgColor(avgScore)}">{avgScore}</span>
+						<span class="score-number" style="color: {getAvgColor(avgScore)}">
+						<NumberTicker value={avgScore} duration={1200} />
+					</span>
 						<span class="score-label">Average Score</span>
 					</div>
 				</div>
