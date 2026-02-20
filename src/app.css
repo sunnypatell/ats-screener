@@ -1,0 +1,5 @@
+@import 'open-props/style';
+@import 'open-props/normalize';
+@import '$styles/tokens.css';
+@import '$styles/global.css';
+@import '$styles/animations.css';

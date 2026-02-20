@@ -1,0 +1,120 @@
+:root {
+	/* === color palette === */
+	--color-bg-primary: #0a0a1a;
+	--color-bg-secondary: #0d0d24;
+	--color-bg-tertiary: #12122e;
+
+	/* glass surfaces */
+	--glass-bg: rgba(255, 255, 255, 0.03);
+	--glass-bg-hover: rgba(255, 255, 255, 0.06);
+	--glass-bg-active: rgba(255, 255, 255, 0.08);
+	--glass-border: rgba(255, 255, 255, 0.08);
+	--glass-border-hover: rgba(255, 255, 255, 0.15);
+	--glass-blur: 20px;
+	--glass-blur-heavy: 40px;
+
+	/* accent gradients */
+	--accent-cyan: #06b6d4;
+	--accent-blue: #3b82f6;
+	--accent-purple: #8b5cf6;
+	--accent-pink: #ec4899;
+	--accent-green: #10b981;
+	--accent-amber: #f59e0b;
+	--accent-red: #ef4444;
+
+	--gradient-primary: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple));
+	--gradient-warm: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+	--gradient-success: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+	--gradient-danger: linear-gradient(135deg, var(--accent-red), var(--accent-pink));
+
+	/* text */
+	--text-primary: rgba(255, 255, 255, 0.95);
+	--text-secondary: rgba(255, 255, 255, 0.65);
+	--text-tertiary: rgba(255, 255, 255, 0.4);
+	--text-accent: var(--accent-cyan);
+
+	/* === typography === */
+	--font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+	--font-mono: 'Geist Mono', 'SF Mono', 'Fira Code', monospace;
+
+	--text-xs: 0.75rem;
+	--text-sm: 0.875rem;
+	--text-base: 1rem;
+	--text-lg: 1.125rem;
+	--text-xl: 1.25rem;
+	--text-2xl: 1.5rem;
+	--text-3xl: 1.875rem;
+	--text-4xl: 2.25rem;
+	--text-5xl: 3rem;
+	--text-6xl: 3.75rem;
+	--text-7xl: 4.5rem;
+
+	--leading-tight: 1.15;
+	--leading-normal: 1.5;
+	--leading-relaxed: 1.75;
+
+	--weight-light: 300;
+	--weight-normal: 400;
+	--weight-medium: 500;
+	--weight-semibold: 600;
+	--weight-bold: 700;
+
+	/* === spacing === */
+	--space-1: 0.25rem;
+	--space-2: 0.5rem;
+	--space-3: 0.75rem;
+	--space-4: 1rem;
+	--space-5: 1.25rem;
+	--space-6: 1.5rem;
+	--space-8: 2rem;
+	--space-10: 2.5rem;
+	--space-12: 3rem;
+	--space-16: 4rem;
+	--space-20: 5rem;
+	--space-24: 6rem;
+	--space-32: 8rem;
+
+	/* === borders === */
+	--radius-sm: 8px;
+	--radius-md: 12px;
+	--radius-lg: 16px;
+	--radius-xl: 24px;
+	--radius-2xl: 32px;
+	--radius-full: 9999px;
+
+	/* === shadows & glows === */
+	--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+	--shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+	--shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+	--shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+	--glow-cyan: 0 0 20px rgba(6, 182, 212, 0.3);
+	--glow-blue: 0 0 20px rgba(59, 130, 246, 0.3);
+	--glow-purple: 0 0 20px rgba(139, 92, 246, 0.3);
+	--glow-accent: 0 0 30px rgba(6, 182, 212, 0.2), 0 0 60px rgba(59, 130, 246, 0.1);
+
+	/* === transitions === */
+	--ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+	--ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+	--ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+	--duration-fast: 150ms;
+	--duration-normal: 250ms;
+	--duration-slow: 400ms;
+	--duration-slower: 600ms;
+
+	/* === z-index scale === */
+	--z-base: 0;
+	--z-elevated: 10;
+	--z-overlay: 100;
+	--z-modal: 200;
+	--z-toast: 300;
+	--z-max: 999;
+
+	/* === layout === */
+	--container-sm: 640px;
+	--container-md: 768px;
+	--container-lg: 1024px;
+	--container-xl: 1280px;
+	--container-2xl: 1440px;
+}
