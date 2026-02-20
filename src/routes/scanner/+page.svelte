@@ -148,7 +148,11 @@
 					<span class="step-num">1</span>
 				</div>
 				<div class="step-line" class:done={resumeStore.file !== null}></div>
-				<div class="step-dot" class:active={resumeStore.file !== null} class:done={resumeStore.isReady}>
+				<div
+					class="step-dot"
+					class:active={resumeStore.file !== null}
+					class:done={resumeStore.isReady}
+				>
 					<span class="step-num">2</span>
 				</div>
 				<div class="step-line" class:done={resumeStore.isReady && hasScanned}></div>
@@ -156,7 +160,11 @@
 					<span class="step-num">3</span>
 				</div>
 				<div class="step-line" class:done={scoresStore.hasResults}></div>
-				<div class="step-dot" class:active={scoresStore.hasResults} class:done={scoresStore.hasResults}>
+				<div
+					class="step-dot"
+					class:active={scoresStore.hasResults}
+					class:done={scoresStore.hasResults}
+				>
 					<span class="step-num">4</span>
 				</div>
 			</div>

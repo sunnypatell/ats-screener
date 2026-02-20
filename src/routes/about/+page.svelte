@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Logo from '$components/ui/Logo.svelte';
 </script>
 
 <svelte:head>
@@ -161,10 +160,9 @@
 					<div class="approach-content">
 						<h3>Six Real ATS Profiles</h3>
 						<p>
-							We simulate Workday, Taleo (Oracle), iCIMS, Greenhouse, Lever, and SAP
-							SuccessFactors. Each profile reflects the actual parsing strictness, keyword strategy,
-							and scoring behavior of that platform based on research into their documented
-							capabilities.
+							We simulate Workday, Taleo (Oracle), iCIMS, Greenhouse, Lever, and SAP SuccessFactors.
+							Each profile reflects the actual parsing strictness, keyword strategy, and scoring
+							behavior of that platform based on research into their documented capabilities.
 						</p>
 					</div>
 				</div>

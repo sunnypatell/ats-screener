@@ -96,6 +96,18 @@
 			</div>
 		</div>
 
+		<!-- legal disclaimer -->
+		<div class="disclaimer">
+			<p>
+				<strong>Disclaimer:</strong> ATS Screener provides simulated scoring based on publicly documented
+				platform behaviors, independent research, and community knowledge. It is not affiliated with,
+				endorsed by, or officially connected to Workday, Oracle (Taleo), iCIMS, Greenhouse, Lever (Employ),
+				SAP (SuccessFactors), or any other ATS vendor. Scores are approximations intended for educational
+				and resume improvement purposes only and do not guarantee any particular outcome in actual application
+				processes. No proprietary algorithms or trade secrets are reverse-engineered or disclosed.
+			</p>
+		</div>
+
 		<!-- bottom bar -->
 		<div class="footer-bottom">
 			<p class="copyright">
@@ -191,6 +203,26 @@
 
 	.footer-link:hover {
 		color: var(--accent-cyan);
+	}
+
+	.disclaimer {
+		padding: 1.25rem 1.5rem;
+		margin-bottom: 2rem;
+		background: rgba(255, 255, 255, 0.015);
+		border: 1px solid var(--glass-border);
+		border-radius: var(--radius-md);
+	}
+
+	.disclaimer p {
+		font-size: 0.72rem;
+		color: var(--text-tertiary);
+		line-height: 1.7;
+		opacity: 0.7;
+	}
+
+	.disclaimer strong {
+		color: var(--text-secondary);
+		font-weight: 600;
 	}
 
 	.footer-bottom {

@@ -32,6 +32,14 @@
 				r.breakdown.keywordMatch.missing.includes(keyword)
 		).length;
 	}
+
+	// collapsible sections
+	let matchedExpanded = $state(true);
+	let missingExpanded = $state(true);
+
+	// show counts for collapsed state
+	const matchedPreviewCount = 12;
+	const missingPreviewCount = 8;
 </script>
 
 {#if allMatched.length > 0 || allMissing.length > 0}
@@ -68,25 +76,45 @@
 			<!-- matched keywords -->
 			{#if allMatched.length > 0}
 				<div class="keyword-section">
-					<div class="section-label">
+					<button class="section-toggle" onclick={() => (matchedExpanded = !matchedExpanded)}>
+						<div class="section-label">
+							<svg
+								width="14"
+								height="14"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="#22c55e"
+								stroke-width="2.5"
+							>
+								<polyline points="20,6 9,17 4,12" />
+							</svg>
+							<span>Matched Keywords ({allMatched.length})</span>
+						</div>
 						<svg
+							class="toggle-chevron"
+							class:open={matchedExpanded}
 							width="14"
 							height="14"
 							viewBox="0 0 24 24"
 							fill="none"
-							stroke="#22c55e"
-							stroke-width="2.5"
+							stroke="currentColor"
+							stroke-width="2"
 						>
-							<polyline points="20,6 9,17 4,12" />
+							<polyline points="6,9 12,15 18,9" />
 						</svg>
-						<span>Matched Keywords ({allMatched.length})</span>
-					</div>
-					<div class="chips">
-						{#each allMatched as keyword}
-							<span class="chip matched" title="Found in {getKeywordSystemCount(keyword)} systems">
-								{keyword}
-							</span>
-						{/each}
+					</button>
+					<div class="chips-container" class:collapsed={!matchedExpanded}>
+						<div class="chips">
+							{#each matchedExpanded ? allMatched : allMatched.slice(0, matchedPreviewCount) as keyword}
+								<span class="chip matched">
+									{keyword}
+									<span class="chip-count">{getKeywordSystemCount(keyword)}</span>
+								</span>
+							{/each}
+							{#if !matchedExpanded && allMatched.length > matchedPreviewCount}
+								<span class="chip more-chip">+{allMatched.length - matchedPreviewCount} more</span>
+							{/if}
+						</div>
 					</div>
 				</div>
 			{/if}
@@ -94,29 +122,46 @@
 			<!-- missing keywords -->
 			{#if allMissing.length > 0}
 				<div class="keyword-section">
-					<div class="section-label">
+					<button class="section-toggle" onclick={() => (missingExpanded = !missingExpanded)}>
+						<div class="section-label">
+							<svg
+								width="14"
+								height="14"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="#ef4444"
+								stroke-width="2.5"
+							>
+								<line x1="18" y1="6" x2="6" y2="18" />
+								<line x1="6" y1="6" x2="18" y2="18" />
+							</svg>
+							<span>Missing Keywords ({allMissing.length})</span>
+						</div>
 						<svg
+							class="toggle-chevron"
+							class:open={missingExpanded}
 							width="14"
 							height="14"
 							viewBox="0 0 24 24"
 							fill="none"
-							stroke="#ef4444"
-							stroke-width="2.5"
+							stroke="currentColor"
+							stroke-width="2"
 						>
-							<line x1="18" y1="6" x2="6" y2="18" />
-							<line x1="6" y1="6" x2="18" y2="18" />
+							<polyline points="6,9 12,15 18,9" />
 						</svg>
-						<span>Missing Keywords ({allMissing.length})</span>
-					</div>
-					<div class="chips">
-						{#each allMissing as keyword}
-							<span
-								class="chip missing"
-								title="Expected by {getKeywordSystemCount(keyword)} systems"
-							>
-								{keyword}
-							</span>
-						{/each}
+					</button>
+					<div class="chips-container" class:collapsed={!missingExpanded}>
+						<div class="chips">
+							{#each missingExpanded ? allMissing : allMissing.slice(0, missingPreviewCount) as keyword}
+								<span class="chip missing">
+									{keyword}
+									<span class="chip-count">{getKeywordSystemCount(keyword)}</span>
+								</span>
+							{/each}
+							{#if !missingExpanded && allMissing.length > missingPreviewCount}
+								<span class="chip more-chip">+{allMissing.length - missingPreviewCount} more</span>
+							{/if}
+						</div>
 					</div>
 				</div>
 			{/if}
@@ -179,6 +224,19 @@
 		gap: 1.25rem;
 	}
 
+	.section-toggle {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0;
+		margin-bottom: 0.5rem;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: var(--text-secondary);
+	}
+
 	.section-label {
 		display: flex;
 		align-items: center;
@@ -186,7 +244,28 @@
 		font-size: 0.85rem;
 		font-weight: 600;
 		color: var(--text-secondary);
-		margin-bottom: 0.5rem;
+	}
+
+	.toggle-chevron {
+		transition: transform 0.2s ease;
+		opacity: 0.5;
+	}
+
+	.toggle-chevron.open {
+		transform: rotate(180deg);
+	}
+
+	.chips-container {
+		max-height: 300px;
+		overflow-y: auto;
+		transition: max-height 0.3s ease;
+		scrollbar-width: thin;
+		scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+	}
+
+	.chips-container.collapsed {
+		max-height: none;
+		overflow: visible;
 	}
 
 	.chips {
@@ -196,16 +275,31 @@
 	}
 
 	.chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
 		padding: 0.25rem 0.7rem;
 		border-radius: var(--radius-full);
 		font-size: 0.78rem;
 		font-weight: 500;
 		cursor: default;
-		transition: transform 0.15s ease;
+		transition:
+			transform 0.15s ease,
+			border-color 0.15s ease;
+		max-width: 280px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.chip:hover {
-		transform: scale(1.05);
+		transform: scale(1.03);
+	}
+
+	.chip-count {
+		font-size: 0.6rem;
+		opacity: 0.6;
+		font-weight: 700;
 	}
 
 	.chip.matched {
@@ -214,9 +308,24 @@
 		border: 1px solid rgba(34, 197, 94, 0.2);
 	}
 
+	.chip.matched:hover {
+		border-color: rgba(34, 197, 94, 0.4);
+	}
+
 	.chip.missing {
 		background: rgba(239, 68, 68, 0.1);
 		color: #ef4444;
 		border: 1px solid rgba(239, 68, 68, 0.2);
+	}
+
+	.chip.missing:hover {
+		border-color: rgba(239, 68, 68, 0.4);
+	}
+
+	.more-chip {
+		background: var(--glass-bg);
+		color: var(--text-tertiary);
+		border: 1px dashed var(--glass-border);
+		font-style: italic;
 	}
 </style>

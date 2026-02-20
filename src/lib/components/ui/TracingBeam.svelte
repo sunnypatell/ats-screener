@@ -3,12 +3,10 @@
 
 	let {
 		children,
-		color = 'var(--accent-cyan)',
-		width = 2
+		color = 'var(--accent-cyan)'
 	}: {
 		children: import('svelte').Snippet;
 		color?: string;
-		width?: number;
 	} = $props();
 
 	let containerEl: HTMLDivElement;

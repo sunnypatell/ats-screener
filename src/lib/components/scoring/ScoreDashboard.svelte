@@ -142,66 +142,66 @@
 
 		<!-- view toggle + export -->
 		<div class="toolbar">
-		<div class="view-toggle">
-			<button
-				class="toggle-btn"
-				class:active={activeView === 'cards'}
-				onclick={() => (activeView = 'cards')}
-			>
-				<svg
-					width="16"
-					height="16"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
+			<div class="view-toggle">
+				<button
+					class="toggle-btn"
+					class:active={activeView === 'cards'}
+					onclick={() => (activeView = 'cards')}
 				>
-					<rect x="3" y="3" width="7" height="7" />
-					<rect x="14" y="3" width="7" height="7" />
-					<rect x="3" y="14" width="7" height="7" />
-					<rect x="14" y="14" width="7" height="7" />
-				</svg>
-				Card View
-			</button>
-			<button
-				class="toggle-btn"
-				class:active={activeView === 'detailed'}
-				onclick={() => (activeView = 'detailed')}
-			>
-				<svg
-					width="16"
-					height="16"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
+					<svg
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
+						<rect x="3" y="3" width="7" height="7" />
+						<rect x="14" y="3" width="7" height="7" />
+						<rect x="3" y="14" width="7" height="7" />
+						<rect x="14" y="14" width="7" height="7" />
+					</svg>
+					Card View
+				</button>
+				<button
+					class="toggle-btn"
+					class:active={activeView === 'detailed'}
+					onclick={() => (activeView = 'detailed')}
 				>
-					<line x1="8" y1="6" x2="21" y2="6" />
-					<line x1="8" y1="12" x2="21" y2="12" />
-					<line x1="8" y1="18" x2="21" y2="18" />
-					<line x1="3" y1="6" x2="3.01" y2="6" />
-					<line x1="3" y1="12" x2="3.01" y2="12" />
-					<line x1="3" y1="18" x2="3.01" y2="18" />
-				</svg>
-				Detailed View
-			</button>
-		</div>
+					<svg
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
+						<line x1="8" y1="6" x2="21" y2="6" />
+						<line x1="8" y1="12" x2="21" y2="12" />
+						<line x1="8" y1="18" x2="21" y2="18" />
+						<line x1="3" y1="6" x2="3.01" y2="6" />
+						<line x1="3" y1="12" x2="3.01" y2="12" />
+						<line x1="3" y1="18" x2="3.01" y2="18" />
+					</svg>
+					Detailed View
+				</button>
+			</div>
 
-		<button class="export-btn" onclick={exportResults} title="Export results as JSON">
-			<svg
-				width="16"
-				height="16"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-			>
-				<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-				<polyline points="7,10 12,15 17,10" />
-				<line x1="12" y1="15" x2="12" y2="3" />
-			</svg>
-			Export
-		</button>
+			<button class="export-btn" onclick={exportResults} title="Export results as JSON">
+				<svg
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
+					<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+					<polyline points="7,10 12,15 17,10" />
+					<line x1="12" y1="15" x2="12" y2="3" />
+				</svg>
+				Export
+			</button>
 		</div>
 
 		<!-- card view: 6 ATS score cards in a grid -->
@@ -251,7 +251,7 @@
 					Actionable recommendations based on analysis across all 6 ATS platforms.
 				</p>
 				<div class="suggestions-list">
-					{#each [...new Set(scoresStore.results.flatMap((r) => r.suggestions))] as suggestion, i}
+					{#each [...new Set(scoresStore.results.flatMap((r) => r.suggestions))].slice(0, 8) as suggestion, i}
 						<div class="suggestion-item">
 							<span class="suggestion-number">{i + 1}</span>
 							<span>{suggestion}</span>

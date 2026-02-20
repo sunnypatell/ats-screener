@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { scoresStore, type ScanHistoryEntry } from '$stores/scores.svelte';
+	import { scoresStore } from '$stores/scores.svelte';
 
 	let expanded = $state(false);
 
@@ -92,7 +92,9 @@
 						stroke-width="2"
 					>
 						<polyline points="3,6 5,6 21,6" />
-						<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+						<path
+							d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+						/>
 					</svg>
 					Clear History
 				</button>

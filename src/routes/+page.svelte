@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Hero from '$components/landing/Hero.svelte';
 	import LogoMarquee from '$components/landing/LogoMarquee.svelte';
+	import MacbookScroll from '$components/landing/MacbookScroll.svelte';
 	import Features from '$components/landing/Features.svelte';
 	import HowItWorks from '$components/landing/HowItWorks.svelte';
 	import CallToAction from '$components/landing/CallToAction.svelte';
@@ -18,6 +19,7 @@
 <main class="landing">
 	<Hero />
 	<LogoMarquee />
+	<MacbookScroll />
 	<Features />
 	<HowItWorks />
 	<CallToAction />

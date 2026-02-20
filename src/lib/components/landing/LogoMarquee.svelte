@@ -23,16 +23,15 @@
 <section class="marquee-section">
 	<p class="marquee-label">Simulates real enterprise ATS platforms used by 75%+ of Fortune 500</p>
 
-	<!-- primary marquee: platform names -->
+	<!-- primary marquee: platform logos (monochrome wordmarks) -->
 	<div class="marquee-container" aria-hidden="true">
 		<div class="marquee-track">
 			{#each [0, 1] as _copy}
 				{#each platforms as platform}
 					<div class="marquee-item">
-						<span class="platform-name">{platform.name}</span>
+						<span class="logo-wordmark">{platform.name}</span>
 						<span class="platform-share">{platform.share}</span>
 					</div>
-					<span class="marquee-dot">&#x2022;</span>
 				{/each}
 			{/each}
 		</div>
@@ -72,20 +71,8 @@
 		position: relative;
 		width: 100%;
 		overflow: hidden;
-		mask-image: linear-gradient(
-			90deg,
-			transparent,
-			black 8%,
-			black 92%,
-			transparent
-		);
-		-webkit-mask-image: linear-gradient(
-			90deg,
-			transparent,
-			black 8%,
-			black 92%,
-			transparent
-		);
+		mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
+		-webkit-mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
 	}
 
 	.marquee-reverse {
@@ -96,7 +83,7 @@
 		display: flex;
 		align-items: center;
 		width: max-content;
-		animation: marquee-scroll 40s linear infinite;
+		animation: marquee-scroll 45s linear infinite;
 	}
 
 	.marquee-track.reverse {
@@ -129,41 +116,40 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 0.25rem;
-		padding: 0 2rem;
+		gap: 0.35rem;
+		padding: 0 3rem;
 		flex-shrink: 0;
 	}
 
-	.platform-name {
-		font-size: 1.6rem;
-		font-weight: 700;
+	/* monochrome wordmark logos - like Vercel/Supabase partner logos */
+	.logo-wordmark {
+		font-size: 1.8rem;
+		font-weight: 800;
+		letter-spacing: -0.04em;
+		white-space: nowrap;
 		color: var(--text-primary);
-		letter-spacing: -0.03em;
+		opacity: 0.15;
+		transition: opacity 0.4s ease;
+		user-select: none;
+	}
+
+	.marquee-item:hover .logo-wordmark {
+		opacity: 0.45;
+	}
+
+	.platform-share {
+		font-size: 0.62rem;
+		color: var(--text-tertiary);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		font-weight: 500;
 		white-space: nowrap;
 		opacity: 0.35;
 		transition: opacity 0.4s ease;
 	}
 
-	.marquee-item:hover .platform-name {
-		opacity: 0.8;
-	}
-
-	.platform-share {
-		font-size: 0.65rem;
-		color: var(--text-tertiary);
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		font-weight: 500;
-		white-space: nowrap;
-		opacity: 0.5;
-	}
-
-	.marquee-dot {
-		color: var(--accent-cyan);
-		opacity: 0.2;
-		font-size: 0.5rem;
-		flex-shrink: 0;
-		padding: 0 0.5rem;
+	.marquee-item:hover .platform-share {
+		opacity: 0.6;
 	}
 
 	/* capability chips */
@@ -194,12 +180,12 @@
 			padding: 2.5rem 0 1rem;
 		}
 
-		.platform-name {
-			font-size: 1.2rem;
+		.logo-wordmark {
+			font-size: 1.3rem;
 		}
 
 		.marquee-item {
-			padding: 0 1.25rem;
+			padding: 0 1.75rem;
 		}
 
 		.marquee-reverse {

@@ -132,7 +132,7 @@ For each of the 6 systems, evaluate these dimensions:
 - Lever: can handle some columns/tables. penalize images and non-standard characters
 - SuccessFactors: Textkernel is solid. penalize scanned PDFs, image content
 
-**keywordMatch** (0-100): ${jdSlice ? 'how well resume keywords match the JD requirements, weighted by this platform\'s matching strategy' : 'keyword density and professional terminology quality for the candidate\'s apparent field'}
+**keywordMatch** (0-100): ${jdSlice ? "how well resume keywords match the JD requirements, weighted by this platform's matching strategy" : "keyword density and professional terminology quality for the candidate's apparent field"}
 - Taleo: ONLY count exact keyword matches. "project management" and "project manager" are DIFFERENT
 - Lever: use word stemming (variations of same root word count). but abbreviations are separate terms
 - iCIMS: semantic matching. related skills and contextual evidence count
@@ -155,7 +155,7 @@ For each of the 6 systems, evaluate these dimensions:
 
 **education** (0-100): education completeness and relevance
 - degree present and parseable
-- field of study relevant to ${jdSlice ? 'the job requirements' : 'the candidate\'s career path'}
+- field of study relevant to ${jdSlice ? 'the job requirements' : "the candidate's career path"}
 - dates present and parseable
 - GPA, honors if applicable
 
@@ -174,7 +174,8 @@ CRITICAL RULES:
 - Taleo should have the widest score variation across dimensions because it computes granular independent scores
 - Greenhouse scores should reflect human readability and keyword searchability, not algorithmic matching
 - DO NOT give all systems similar scores. if you find yourself giving 70-80 to all six, you're doing it wrong
-- ${jdSlice ? 'For targeted scoring: extract actual keywords from the JD. matched/missing keywords must be REAL terms from the JD, not made up' : 'For general scoring: keywords should reflect industry-standard terminology for the candidate\'s apparent field'}
+- ${jdSlice ? 'For targeted scoring: extract actual keywords from the JD. matched/missing keywords must be REAL terms from the JD, not made up' : "For general scoring: keywords should reflect industry-standard terminology for the candidate's apparent field"}
+- each platform gets MAXIMUM 2 suggestions. total across all 6 should not exceed 8-10 unique tips. deduplicate similar advice across platforms
 - suggestions must be specific and actionable. "add Kubernetes to your skills section" not "add more keywords"
 - suggestions must reference the actual platform behavior. e.g., for Taleo: "include both 'PM' and 'Project Manager' because Taleo uses literal keyword matching"
 

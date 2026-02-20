@@ -23,8 +23,8 @@
 		mouseY = ((e.clientY - rect.top) / rect.height) * 100;
 	}
 
-	// ATS system names for the FlipWords component
-	const systems = ['Workday', 'Taleo', 'iCIMS', 'Greenhouse', 'Lever', 'SuccessFactors'];
+	// ATS system names for the FlipWords component (short names only to prevent layout shift)
+	const systems = ['Workday', 'Taleo', 'iCIMS', 'Greenhouse', 'Lever', 'SAP SF'];
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -67,10 +67,10 @@
 
 		<!-- description with FlipWords cycling through ATS names -->
 		<p class="hero-description">
-			<TextGenerateEffect text="See exactly how" delay={400} />
+			<TextGenerateEffect text="Simulates how" delay={400} />
 			<strong class="flip-system"><FlipWords words={systems} interval={2200} /></strong>
 			<TextGenerateEffect
-				text="and 5 other enterprise platforms parse, filter, and score your resume. Powered by researched ATS profiles, not generic algorithms."
+				text="and 5 other enterprise platforms parse, filter, and score your resume. Powered by documented ATS behavior, not generic algorithms."
 				delay={600}
 			/>
 		</p>
@@ -389,6 +389,9 @@
 	.flip-system {
 		color: var(--accent-cyan);
 		font-weight: 700;
+		display: inline-block;
+		min-width: 7ch;
+		text-align: left;
 	}
 
 	.hero-actions {
