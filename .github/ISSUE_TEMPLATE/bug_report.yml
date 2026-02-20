@@ -1,0 +1,46 @@
+name: bug report
+description: something isn't working correctly
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: what happened?
+      description: describe the bug clearly
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: steps to reproduce
+      description: how can we reproduce this?
+      placeholder: |
+        1. go to /scanner
+        2. upload a PDF resume
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: expected behavior
+      description: what should have happened instead?
+    validations:
+      required: true
+  - type: dropdown
+    id: browser
+    attributes:
+      label: browser
+      options:
+        - Chrome
+        - Firefox
+        - Safari
+        - Edge
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: additional context
+      description: screenshots, error messages, console output, etc.
