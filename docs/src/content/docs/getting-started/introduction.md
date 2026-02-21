@@ -62,6 +62,8 @@ Built with performance and privacy in mind:
 
 :::note[Completely Free]
 The live instance at [ats-screener.vercel.app](https://ats-screener.vercel.app) is hosted and maintained by [Sunny Patel](https://sunnypatel.net) using free-tier API keys. There is no catch, no upsell, and no usage tier. If you want full control, you can also [self-host](/docs/self-hosting/setup/) with your own keys.
+
+If you find this tool useful and want to help keep it running, consider [buying me a coffee](https://buymeacoffee.com/sunnypatell) or [sponsoring on GitHub](https://github.com/sponsors/sunnypatell).
 :::
 
 :::note
