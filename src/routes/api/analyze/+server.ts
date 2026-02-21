@@ -3,7 +3,7 @@ import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
 import { buildFullScoringPrompt, buildJDAnalysisPrompt } from '$engine/llm/prompts';
 
-// provider configuration: Gemma 3 27B (14,400 RPD) → Gemini fallbacks (20 RPD each) → Groq → Cerebras
+// provider configuration: Gemma 3 27B (14,400 RPD) → Gemini Flash (20 RPD) → Flash Lite (20 RPD)
 interface LLMProvider {
 	name: string;
 	apiKeyName: string;
@@ -15,12 +15,6 @@ interface LLMProvider {
 const googleExtractText = (data: unknown) => {
 	const d = data as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
 	return d.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-};
-
-// shared extractor for OpenAI-compatible APIs (Groq, Cerebras)
-const openaiExtractText = (data: unknown) => {
-	const d = data as { choices?: { message?: { content?: string } }[] };
-	return d.choices?.[0]?.message?.content ?? '';
 };
 
 function buildGoogleProvider(
@@ -57,53 +51,7 @@ const PROVIDERS: LLMProvider[] = [
 	// fallback 1: Gemini 2.5 Flash - 20 RPD, 5 RPM (supports JSON mode)
 	buildGoogleProvider('gemini-2.5-flash', 'gemini-2.5-flash', { jsonMode: true }),
 	// fallback 2: Gemini 2.5 Flash Lite - 20 RPD, 10 RPM (supports JSON mode)
-	buildGoogleProvider('gemini-2.5-flash-lite', 'gemini-2.5-flash-lite', { jsonMode: true }),
-	// fallback 3: Groq
-	{
-		name: 'groq',
-		apiKeyName: 'GROQ_API_KEY',
-		buildRequest: (prompt, apiKey) => ({
-			url: 'https://api.groq.com/openai/v1/chat/completions',
-			init: {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${apiKey}`
-				},
-				body: JSON.stringify({
-					model: 'llama-3.3-70b-versatile',
-					messages: [{ role: 'user', content: prompt }],
-					temperature: 0.3,
-					max_tokens: 4096,
-					response_format: { type: 'json_object' }
-				})
-			}
-		}),
-		extractText: openaiExtractText
-	},
-	// fallback 4: Cerebras
-	{
-		name: 'cerebras',
-		apiKeyName: 'CEREBRAS_API_KEY',
-		buildRequest: (prompt, apiKey) => ({
-			url: 'https://api.cerebras.ai/v1/chat/completions',
-			init: {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${apiKey}`
-				},
-				body: JSON.stringify({
-					model: 'llama-3.3-70b',
-					messages: [{ role: 'user', content: prompt }],
-					temperature: 0.3,
-					max_tokens: 4096,
-					response_format: { type: 'json_object' }
-				})
-			}
-		}),
-		extractText: openaiExtractText
-	}
+	buildGoogleProvider('gemini-2.5-flash-lite', 'gemini-2.5-flash-lite', { jsonMode: true })
 ];
 
 // simple in-memory rate limiter per IP
@@ -112,7 +60,7 @@ const dailyLimits = new Map<string, { count: number; resetAt: number }>();
 const MAX_RPM = 10;
 const MAX_RPD = 200;
 const MAX_MAP_SIZE = 10_000;
-const PROVIDER_TIMEOUT_MS = 60_000;
+const PROVIDER_TIMEOUT_MS = 15_000;
 
 function checkRateLimit(ip: string): boolean {
 	const now = Date.now();
@@ -242,9 +190,7 @@ interface RequestBody {
 export const POST: RequestHandler = async ({ request }) => {
 	// collect all API keys from SvelteKit $env
 	const keys: Record<string, string> = {
-		GEMINI_API_KEY: env.GEMINI_API_KEY ?? '',
-		GROQ_API_KEY: env.GROQ_API_KEY ?? '',
-		CEREBRAS_API_KEY: env.CEREBRAS_API_KEY ?? ''
+		GEMINI_API_KEY: env.GEMINI_API_KEY ?? ''
 	};
 
 	const hasAnyKey = Object.values(keys).some((v) => v.length > 0);
