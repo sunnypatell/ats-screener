@@ -2,7 +2,7 @@ import type { ScoreResult, Suggestion, StructuredSuggestion } from '$engine/scor
 import type { LLMAnalysis, LLMRequestPayload, LLMResponse } from './types';
 import { generateFallbackAnalysis } from './fallback';
 
-const CLIENT_TIMEOUT_MS = 70_000;
+const CLIENT_TIMEOUT_MS = 65_000;
 
 // performs full LLM-powered ATS scoring via the server endpoint
 // falls back to rule-based if all providers fail
