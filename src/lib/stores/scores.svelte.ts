@@ -132,15 +132,18 @@ class ScoresStore {
 			const docRef = await addDoc(scansRef, sanitized);
 			console.warn('[scores] saved scan to history:', docRef.id);
 
-			// enforce max history cap
-			await this.loadHistory();
-			if (this.scanHistory.length > MAX_HISTORY) {
-				const toDelete = this.scanHistory.slice(MAX_HISTORY);
-				for (const scan of toDelete) {
-					await deleteDoc(doc(db, 'users', uid, 'scans', scan.id));
+			// prune old scans beyond the cap
+			const allScansQuery = query(scansRef, orderBy('timestamp', 'desc'));
+			const allSnap = await getDocs(allScansQuery);
+			if (allSnap.size > MAX_HISTORY) {
+				const toDelete = allSnap.docs.slice(MAX_HISTORY);
+				for (const d of toDelete) {
+					await deleteDoc(doc(db, 'users', uid, 'scans', d.id));
 				}
-				this.scanHistory = this.scanHistory.slice(0, MAX_HISTORY);
 			}
+
+			// reload with the pruned set
+			await this.loadHistory();
 		} catch (err) {
 			console.error('[scores] failed to save scan to history:', err);
 		}
