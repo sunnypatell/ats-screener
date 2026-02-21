@@ -65,17 +65,45 @@
 						href="https://buymeacoffee.com/sunnypatell"
 						target="_blank"
 						rel="noopener"
-						class="sponsor-btn"
+						class="footer-pill coffee-pill"
 					>
 						<svg
 							width="14"
 							height="14"
 							viewBox="0 0 24 24"
-							fill="currentColor"
-							class="sponsor-heart"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<path d="M10 2v2" />
+							<path d="M14 2v2" />
+							<path
+								d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"
+							/>
+							<path d="M6 2v2" />
+						</svg>
+						Coffee
+					</a>
+					<a
+						href="https://github.com/sponsors/sunnypatell"
+						target="_blank"
+						rel="noopener"
+						class="footer-pill sponsor-pill"
+					>
+						<svg
+							width="14"
+							height="14"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
 						>
 							<path
-								d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+								d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
 							/>
 						</svg>
 						Sponsor
@@ -221,7 +249,7 @@
 		background: rgba(6, 182, 212, 0.05);
 	}
 
-	.sponsor-btn {
+	.footer-pill {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.35rem;
@@ -229,8 +257,6 @@
 		padding: 0 0.75rem;
 		border-radius: var(--radius-md);
 		background: var(--glass-bg);
-		border: 1px solid rgba(219, 39, 119, 0.3);
-		color: var(--text-secondary);
 		font-size: 0.8rem;
 		font-weight: 500;
 		text-decoration: none;
@@ -240,14 +266,24 @@
 			background 0.2s ease;
 	}
 
-	.sponsor-btn:hover {
-		color: #db2777;
-		border-color: rgba(219, 39, 119, 0.5);
-		background: rgba(219, 39, 119, 0.08);
+	.footer-pill.coffee-pill {
+		border: 1px solid rgba(255, 221, 0, 0.3);
+		color: #ffdd00;
 	}
 
-	.sponsor-heart {
-		color: #db2777;
+	.footer-pill.coffee-pill:hover {
+		border-color: rgba(255, 221, 0, 0.5);
+		background: rgba(255, 221, 0, 0.08);
+	}
+
+	.footer-pill.sponsor-pill {
+		border: 1px solid rgba(219, 39, 119, 0.3);
+		color: #ec4899;
+	}
+
+	.footer-pill.sponsor-pill:hover {
+		border-color: rgba(219, 39, 119, 0.5);
+		background: rgba(219, 39, 119, 0.08);
 	}
 
 	.footer-col {
