@@ -50,12 +50,14 @@ When you receive a `429` response:
 
 When self-hosting, rate limits are configurable. The actual bottleneck becomes your LLM provider's free tier:
 
-| Provider | Model          | RPM | RPD    |
-| -------- | -------------- | --- | ------ |
-| Gemini   | 2.5 Flash Lite | 15  | 1,000  |
-| Groq     | Llama 3.3 70B  | 30  | 14,400 |
-| Cerebras | Llama 3.3 70B  | 30  | 1,000  |
+| Provider | Model           | RPM | RPD    |
+| -------- | --------------- | --- | ------ |
+| Gemma    | 3 27B (primary) | 30  | 14,400 |
+| Gemini   | 2.5 Flash       | 5   | 20     |
+| Gemini   | 2.5 Flash Lite  | 10  | 20     |
+| Groq     | Llama 3.3 70B   | 30  | 14,400 |
+| Cerebras | Llama 3.3 70B   | 30  | 1,000  |
 
 :::tip
-For the highest throughput on a self-hosted instance, configure both Gemini and Groq API keys. The fallback chain gives you up to 15,400 requests per day across both providers.
+The hosted version uses Gemma 3 27B as the primary model (14,400 RPD), giving roughly 14,000+ scans per day on the free tier. Groq and Cerebras are available as optional fallbacks for self-hosted instances.
 :::

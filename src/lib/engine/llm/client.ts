@@ -36,7 +36,9 @@ export async function scoreLLM(
 		const data = await response.json();
 
 		if (data._fallback || !data.results || !Array.isArray(data.results)) {
-			console.warn('[scoreLLM] response missing results or is fallback, falling back to rule-based');
+			console.warn(
+				'[scoreLLM] response missing results or is fallback, falling back to rule-based'
+			);
 			return null;
 		}
 

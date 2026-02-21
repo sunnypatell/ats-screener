@@ -23,13 +23,13 @@ the ATS itself is usually NOT the parser. most ATS platforms use a third-party p
 
 ### the big parsing engines
 
-| engine | used by | languages | fields | notes |
-|--------|---------|-----------|--------|-------|
-| **Textkernel (absorbed Sovren)** | Oracle, SuccessFactors, Lever, Bullhorn, Salesforce | 29 | 100+ | industry leader, processes 2B+ resumes/year. now has LLM parser powered by GPT-3.5 |
-| **RChilli** | SAP SuccessFactors (native), many mid-market | 40+ | 200+ | SAP's go-to parser. strong taxonomy normalization |
-| **Affinda** | white-label for many ATS vendors | 50+ | 100+ | ML-based (non-LLM), agentic AI for format adaptation. self-hosted option available |
-| **DaXtra** | staffing/recruiting platforms | many | 150+ | strong in staffing industry, includes candidate management |
-| **HireAbility** | mid-market ATS platforms | multilingual | standard | solid multilingual support |
+| engine                           | used by                                             | languages    | fields   | notes                                                                              |
+| -------------------------------- | --------------------------------------------------- | ------------ | -------- | ---------------------------------------------------------------------------------- |
+| **Textkernel (absorbed Sovren)** | Oracle, SuccessFactors, Lever, Bullhorn, Salesforce | 29           | 100+     | industry leader, processes 2B+ resumes/year. now has LLM parser powered by GPT-3.5 |
+| **RChilli**                      | SAP SuccessFactors (native), many mid-market        | 40+          | 200+     | SAP's go-to parser. strong taxonomy normalization                                  |
+| **Affinda**                      | white-label for many ATS vendors                    | 50+          | 100+     | ML-based (non-LLM), agentic AI for format adaptation. self-hosted option available |
+| **DaXtra**                       | staffing/recruiting platforms                       | many         | 150+     | strong in staffing industry, includes candidate management                         |
+| **HireAbility**                  | mid-market ATS platforms                            | multilingual | standard | solid multilingual support                                                         |
 
 ### how parsing actually works (technical pipeline)
 
@@ -57,13 +57,13 @@ metadata: total_years_experience, management_level, executive_type
 
 ### format compatibility reality
 
-| format | support level | notes |
-|--------|--------------|-------|
-| DOCX | best | most reliably parsed. ATS engines treat bold as section delimiter signals. single-column layouts parse cleanest |
-| PDF (text-based) | good | modern parsers handle these well. problems only with complex layouts, multi-column, or locked PDFs |
-| PDF (scanned/image) | poor-to-fair | requires OCR. Textkernel supports it, many native ATS parsers do not. Oracle Recruiting Cloud explicitly cannot parse scanned PDFs |
-| TXT/RTF | good | universally readable, no formatting issues, but lose all visual structure |
-| Images (PNG/JPG) | poor | almost no ATS handles these well. Greenhouse explicitly warns against image uploads |
+| format              | support level | notes                                                                                                                              |
+| ------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| DOCX                | best          | most reliably parsed. ATS engines treat bold as section delimiter signals. single-column layouts parse cleanest                    |
+| PDF (text-based)    | good          | modern parsers handle these well. problems only with complex layouts, multi-column, or locked PDFs                                 |
+| PDF (scanned/image) | poor-to-fair  | requires OCR. Textkernel supports it, many native ATS parsers do not. Oracle Recruiting Cloud explicitly cannot parse scanned PDFs |
+| TXT/RTF             | good          | universally readable, no formatting issues, but lose all visual structure                                                          |
+| Images (PNG/JPG)    | poor          | almost no ATS handles these well. Greenhouse explicitly warns against image uploads                                                |
 
 ---
 
@@ -76,6 +76,7 @@ metadata: total_years_experience, management_level, executive_type
 **parsing engine:** proprietary, tightly integrated with Workday HCM. not publicly confirmed to use Textkernel/Sovren, but Textkernel offers connectors for Workday.
 
 **how scoring/ranking works:**
+
 - Workday historically did NOT have AI-driven candidate scoring. recruiters used keyword search + manual filtering
 - **in 2024, Workday acquired HiredScore**, which fundamentally changes the story
 - HiredScore provides AI-powered candidate matching that scores candidates against job requirements
@@ -84,6 +85,7 @@ metadata: total_years_experience, management_level, executive_type
 - the system provides automatic candidate ranking with bias audits and compliance configuration
 
 **key technical details:**
+
 - expects standard section headings: "Experience," "Education," "Skills," "Certifications"
 - nontraditional headings and complex formatting (columns, tables, graphics) may not parse
 - favors single-column, text-based resumes in DOCX or PDF
@@ -91,12 +93,14 @@ metadata: total_years_experience, management_level, executive_type
 - recruiters filter using keyword searches within the ATS
 
 **what causes rejection:**
+
 - formatting that breaks parsing (columns, tables, images, fancy templates)
 - missing standard section headings
 - knockout questions on the application (work authorization, willingness to relocate, etc.)
 - recruiter never sees the resume if keyword search doesn't surface it
 
 **quirks:**
+
 - Workday's application process is notoriously long and tedious for candidates
 - the HiredScore acquisition is still being rolled out; many Workday customers may not have it enabled yet
 - HiredScore explicitly avoids generative AI for compliance/auditability reasons
@@ -133,6 +137,7 @@ taleo is one of the few ATS platforms that actually auto-scores candidates again
    - candidate is automatically exited from the process
 
 **matching criteria (from Oracle docs):**
+
 - preferred jobs/job title
 - preferred locations/location
 - organizations
@@ -145,6 +150,7 @@ taleo is one of the few ATS platforms that actually auto-scores candidates again
 - minimum salary
 
 **what causes rejection:**
+
 - failing knockout questions (automatic, instant)
 - low prescreening score below threshold
 - missing required certifications/education
@@ -152,6 +158,7 @@ taleo is one of the few ATS platforms that actually auto-scores candidates again
 - low keyword match percentage
 
 **quirks:**
+
 - Taleo is the only major ATS that does genuine automated resume scoring with a visible rank percentage
 - the Candidate Suggestions feature is ML-based and can recognize synonyms
 - Taleo's parsing is known to strip HTML tags, special characters, and certain fonts
@@ -174,18 +181,21 @@ taleo is one of the few ATS platforms that actually auto-scores candidates again
 - proprietary algorithms combined with third-party ML technologies
 
 **technical approach:**
+
 - keyword-density algorithm: counts frequency and placement of relevant terms
 - section-recognition engine: favors clean headings, simple fonts, standard bullet styles
 - AI goes beyond keywords to analyze related skills, experiences, and qualities of past successful hires
 - includes bias audits and transparency features with opt-out options
 
 **what causes rejection:**
+
 - poor formatting that breaks the section-recognition engine
 - lack of keywords matching the job description
 - failing pre-screening questions
 - iCIMS supports both automated and manual candidate advancement
 
 **quirks:**
+
 - iCIMS has embraced AI cautiously, combining innovation with bias audits and transparency
 - the "Copilot" feature assists recruiters but doesn't auto-reject
 - the platform generates its own skills inference from resume text, which means your explicit skills list isn't the only thing scored
@@ -203,6 +213,7 @@ taleo is one of the few ATS platforms that actually auto-scores candidates again
 **this is a critical insight: Greenhouse fundamentally does NOT auto-score or auto-rank candidates.**
 
 per co-founder Jon Stross:
+
 - "We don't have some magic AI" that judges applicants
 - greenhouse does NOT utilize a match score
 - human intervention is required to advance, reject, or hire a candidate
@@ -210,6 +221,7 @@ per co-founder Jon Stross:
 - if companies get many applicants, they may look at referrals first, or the first 50 applicants, and once they have enough "pretty good" candidates, they interview those and ignore the rest
 
 **what Greenhouse actually does:**
+
 - **structured hiring scorecards** - the core differentiator. before interviews, the hiring team defines:
   - required attributes/skills for the role
   - focus attributes to test in each interview stage
@@ -221,11 +233,13 @@ per co-founder Jon Stross:
 - **Talent Matching** (newer feature) - ML-based parsing that extracts skills, titles, experience as structured data for filtering
 
 **what causes "rejection":**
+
 - never reaching human review because the recruiter stopped looking after the first batch of good candidates
 - failing knockout questions (manual review still required in most configs)
 - not surfacing in keyword searches because of missing terminology
 
 **quirks:**
+
 - Greenhouse's philosophy is explicitly anti-auto-rejection. this is a selling point
 - the scorecard system means the real "scoring" happens during interviews, not resume screening
 - the platform is designed around reducing bias through structured evaluation
@@ -240,6 +254,7 @@ per co-founder Jon Stross:
 **parsing engine:** confirmed to use Sovren (now Textkernel) for resume parsing. sends resumes to hosted Sovren instances for extraction.
 
 **how scoring/ranking works:**
+
 - Lever does NOT automatically rank resumes against job descriptions
 - recruiters use keyword search to filter through applications
 - LeverTRM's search supports word stemming (e.g., searching "collaborating" finds "collaborate," "collaboration," etc.)
@@ -247,17 +262,20 @@ per co-founder Jon Stross:
 - the platform focuses on relationship management (CRM-like) rather than automated scoring
 
 **technical details:**
+
 - Sovren integration extracts contact info, experience, education into structured fields
 - keyword search pulls from all parseable content in candidate profiles
 - supports word stemming but cannot identify abbreviations (e.g., "PM" won't match "Project Manager")
 - AI features (newer): can analyze resume content with deeper technical understanding, evaluating project complexity and impact beyond keyword matches
 
 **what causes rejection:**
+
 - not appearing in keyword searches
 - recruiter manually passing on the candidate
 - failing screening questions
 
 **quirks:**
+
 - despite using Sovren (a sophisticated parser), Lever's matching is fundamentally keyword-search-based, not score-based
 - the word stemming support is a nice feature but abbreviation blindness is a real limitation
 - Lever recently added AI innovations but details on the scoring algorithm are sparse
@@ -271,6 +289,7 @@ per co-founder Jon Stross:
 **parsing engine:** native parsing with limited capabilities. primary third-party parser is **RChilli** (SAP's official partner). Textkernel also available as an add-on.
 
 **how scoring/ranking works:**
+
 - native: basic parsing that feeds candidate search and filtering
 - with RChilli: AI-powered search & match that:
   - parses resumes into 200+ structured fields
@@ -282,18 +301,21 @@ per co-founder Jon Stross:
   - recruiters can define custom weighting: skill match, title relevance, location, education, years of experience
 
 **technical details:**
+
 - resume parsing supported in 15+ languages natively; 40+ with RChilli
 - parsed data maps through "Candidate Standardization" configuration with picklist mapping
 - the system requires completing a mapping exercise to configure how parsed data maps to profile fields
 - profile-before-application architecture (profile must exist before application)
 
 **what causes rejection:**
+
 - scanned PDFs / image-based PDFs will NOT parse (native parser lacks OCR; Textkernel add-on needed for this)
 - resume parsing breaks when Mobile Apply is enabled
 - incomplete profile mapping configuration
 - failing screening criteria
 
 **quirks:**
+
 - the native parser is weak; RChilli or Textkernel is essentially required for real resume parsing
 - the mapping/configuration step is complex and many orgs don't set it up properly
 - RChilli's bias-removal feature can strip name, gender, nationality from parsed data
@@ -308,12 +330,14 @@ per co-founder Jon Stross:
 **parsing engine:** AI-powered talent acquisition tools with intelligent candidate matching. ADP's native parsing is basic. the platform supports third-party ATS integrations (ApplicantStack, JazzHR, JobScore) for more advanced parsing.
 
 **how scoring/ranking works:**
+
 - basic keyword matching against job posting requirements
 - automated workflows for candidate processing
 - no publicly documented scoring algorithm
 - relies heavily on clean, structured formatting for accurate parsing
 
 **what causes rejection:**
+
 - complex layouts, unusual fonts, or inconsistent formatting that disrupts parsing
 - content in headers/footers (ATS cannot read these)
 - tables, graphics, italics
@@ -321,6 +345,7 @@ per co-founder Jon Stross:
 - file format issues (scanned PDFs)
 
 **quirks:**
+
 - ADP recommends DOCX over PDF for best ATS compatibility
 - primarily an HR/payroll platform with recruiting bolted on; the ATS is not its core strength
 - many ADP customers use third-party ATS integrations rather than the native recruiting module
@@ -335,16 +360,19 @@ per co-founder Jon Stross:
 **parsing engine:** BambooHR does NOT have built-in resume parsing in its ATS. users must integrate third-party solutions (CandidateZip, Parseur via Zapier/Make, Skima AI, etc.) for parsing.
 
 **how scoring/ranking works:**
+
 - no automated scoring or ranking
 - applicants are tagged and labeled based on resume information (manually or via integrations)
 - the ATS tracks applied date, status, rating (manual), resume/cover letter file IDs
 - AI/NLP capabilities come only through third-party integrations
 
 **what causes rejection:**
+
 - manual decision by recruiter
 - failing application questions
 
 **quirks:**
+
 - the lack of native parsing is a significant gap
 - primarily an HRIS with a basic ATS, not a recruiting-first platform
 - for our simulator, BambooHR-style means essentially no automated filtering; everything is manual
@@ -360,6 +388,7 @@ these are a different category from traditional ATS. they sit on top of or repla
 **approach:** deep learning talent intelligence platform
 
 **technical architecture:**
+
 - built on 1.6+ billion career profiles and 1.6+ million skills
 - uses **token-level embedding models** to embed skills, titles, companies, degrees, and schools into vector space
 - extracts hundreds of features per candidate: embeddings, similarity scores, structured data
@@ -369,6 +398,7 @@ these are a different category from traditional ATS. they sit on top of or repla
 - **adjacent skills detection**: identifies skills a candidate could learn based on their existing skill graph
 
 **what makes it different from keyword matching:**
+
 - understands that a "Senior Java Developer" at Amazon and a "Lead Backend Engineer" at Google have overlapping capability profiles even with zero keyword overlap
 - matches on potential, not just past role titles
 - the skill taxonomy has 1.6M+ skills with relationships mapped between them
@@ -378,6 +408,7 @@ these are a different category from traditional ATS. they sit on top of or repla
 **approach:** responsible AI for talent orchestration
 
 **technical architecture:**
+
 - NOT using generative AI; uses traditional ML for auditability
 - scores candidates based strictly on criteria listed in the job description
 - 100% auditable logs of scoring decisions
@@ -391,6 +422,7 @@ these are a different category from traditional ATS. they sit on top of or repla
 **approach:** neuroscience-based behavioral assessment
 
 **technical architecture:**
+
 - gamified cognitive/emotional assessments (not resume parsing)
 - measures traits like: learning speed from mistakes, memory capacity, risk tolerance, attention to detail
 - AI compares candidate game performance against profiles of high-performers in the role
@@ -406,18 +438,21 @@ this is the core technical distinction our scoring engine needs to understand.
 ### keyword matching (traditional, still dominant)
 
 how it works:
+
 1. extract keywords from job description
 2. search for exact keyword matches in resume text
 3. count matches, optionally weight by frequency or placement
 4. rank by match count or percentage
 
 techniques:
+
 - **exact string matching** - "Java" matches "Java" but not "JavaScript"
 - **TF-IDF (term frequency-inverse document frequency)** - weights terms by how often they appear in the resume vs how common they are across all resumes. rare, specific terms get higher weight
 - **boolean filtering** - AND/OR/NOT queries on keyword presence
 - **keyword density** - frequency of matching terms relative to total text
 
 limitations:
+
 - "project management" won't match "program management"
 - "JS" won't match "JavaScript"
 - cannot understand context: "managed a team developing software" vs "developed software for a management team"
@@ -426,11 +461,13 @@ limitations:
 ### semantic matching (modern, growing adoption)
 
 how it works:
+
 1. convert both resume and job description into vector representations (embeddings)
 2. compute similarity between vectors using mathematical distance measures
 3. rank by similarity score
 
 techniques:
+
 - **word embeddings (Word2Vec, GloVe)** - map words to dense vectors where semantically similar words are close together. "project management" and "program management" end up near each other in vector space
 - **transformer models (BERT, RoBERTa, DistilBERT)** - generate contextual embeddings that understand meaning based on surrounding words
 - **cosine similarity** - measures angular distance between vectors: `cos(theta) = (A . B) / (||A|| * ||B||)`. scores 0-1 where 1 = identical meaning
@@ -444,6 +481,7 @@ techniques:
 Textkernel's Search & Match engine is the most documented scoring algorithm in the industry. here's how it actually works:
 
 **8 scoring categories:**
+
 1. Education
 2. Job Titles
 3. Skills
@@ -454,16 +492,18 @@ Textkernel's Search & Match engine is the most documented scoring algorithm in t
 8. Management Level
 
 **scoring process:**
+
 1. parse both source document (job) and target document (resume)
 2. normalize all extracted entities to taxonomy concepts (skills are ONLY scored as normalized concepts, not raw keywords; this eliminates false negatives from synonym mismatches)
 3. generate complex queries across all 8 categories
 4. calculate unweighted score for each category (0-100)
 5. apply category weights (auto-suggested or custom)
-6. compute **Weighted Score** = sum of (category_score * category_weight) for each category. score 0-100 representing how well resume matches job
+6. compute **Weighted Score** = sum of (category_score \* category_weight) for each category. score 0-100 representing how well resume matches job
 7. compute **Reverse Compatibility Score (RCS)** = how well the job matches the resume (the other direction). this penalizes overqualified candidates
 8. blend into **SovScore** = proprietary combination of Weighted Score and RCS. this bidirectional scoring prevents overqualified candidates from topping results
 
 **dynamic weight adjustments:**
+
 - remote jobs: location weight drops to zero
 - IT roles: IT skills weighted more heavily
 - recent experience: current job title weighted higher than title from 5 years ago
@@ -478,6 +518,7 @@ Textkernel's Search & Match engine is the most documented scoring algorithm in t
 based on research across all platforms, here are the real filtering mechanisms in order of how common they are:
 
 **tier 1: hard filters (automatic, binary)**
+
 - knockout/disqualification questions (work authorization, required certifications, willing to relocate)
 - minimum education level not met
 - required years of experience threshold
@@ -485,6 +526,7 @@ based on research across all platforms, here are the real filtering mechanisms i
 - file format unreadable (scanned image PDF, corrupted file)
 
 **tier 2: parsing failures (the resume never makes it into the system properly)**
+
 - tables/columns break text extraction, content ends up jumbled
 - content in headers/footers gets ignored
 - graphics/images/charts are invisible to parsers
@@ -493,6 +535,7 @@ based on research across all platforms, here are the real filtering mechanisms i
 - multi-column layouts merge content from different sections
 
 **tier 3: low relevance score (candidate exists in system but ranks low)**
+
 - missing keywords from job description
 - wrong terminology (abbreviations vs full terms, synonyms)
 - skills mentioned but not in the context the parser expects
@@ -500,6 +543,7 @@ based on research across all platforms, here are the real filtering mechanisms i
 - no overlap between resume title/summary and job title
 
 **tier 4: human filtering (the recruiter never gets to your resume)**
+
 - recruiter stops reviewing after finding enough "good" candidates (confirmed by Greenhouse co-founder)
 - resume appears after a large batch of strong candidates
 - recruiter uses keyword search and resume doesn't surface
@@ -517,29 +561,29 @@ the widely cited "75% of resumes are rejected by ATS" originated from a 2012 sal
 
 **overall market (all company sizes):**
 
-| rank | platform | market share |
-|------|----------|-------------|
-| 1 | iCIMS | 10.7% |
-| 2 | Oracle (Taleo + ORC) | ~9% |
-| 3 | Workday | ~8% |
-| 4 | Greenhouse | ~6% |
-| 5 | Lever | ~5% |
-| 6 | SmartRecruiters | ~4% |
-| 7 | ADP Recruiting | ~3% |
-| 8 | Ceridian Dayforce | ~3% |
-| 9 | SAP SuccessFactors | ~3% |
-| 10 | Bullhorn | ~2% |
+| rank | platform             | market share |
+| ---- | -------------------- | ------------ |
+| 1    | iCIMS                | 10.7%        |
+| 2    | Oracle (Taleo + ORC) | ~9%          |
+| 3    | Workday              | ~8%          |
+| 4    | Greenhouse           | ~6%          |
+| 5    | Lever                | ~5%          |
+| 6    | SmartRecruiters      | ~4%          |
+| 7    | ADP Recruiting       | ~3%          |
+| 8    | Ceridian Dayforce    | ~3%          |
+| 9    | SAP SuccessFactors   | ~3%          |
+| 10   | Bullhorn             | ~2%          |
 
 top 10 = 51.1% of total market. the other ~49% is hundreds of smaller vendors.
 
 **Fortune 500 specifically:**
 
-| platform | Fortune 500 usage |
-|----------|------------------|
-| Workday | 37.1% |
-| SAP SuccessFactors | 13.4% |
-| Taleo/Oracle | significant (legacy) |
-| iCIMS | significant |
+| platform           | Fortune 500 usage    |
+| ------------------ | -------------------- |
+| Workday            | 37.1%                |
+| SAP SuccessFactors | 13.4%                |
+| Taleo/Oracle       | significant (legacy) |
+| iCIMS              | significant          |
 
 the ATSs with the largest clients are BrassRing (IBM Kenexa), Taleo/Oracle, and Workday.
 

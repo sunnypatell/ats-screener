@@ -62,29 +62,29 @@ Job Description (optional)  -->  Targeted Keyword Matching Against Each Platform
 
 Each profile is based on research into the platform's documented parsing and matching behavior:
 
-| Platform | Vendor | Keyword Strategy | Key Behavior |
-| --- | --- | --- | --- |
-| **Workday** | Workday | Exact + HiredScore AI | Strict parser, skips headers/footers, penalizes creative formats |
-| **Taleo** | Oracle | Literal exact match | Strictest keyword matching, auto-reject via Req Rank |
-| **iCIMS** | iCIMS | Semantic (ML-based) | Role Fit AI, grammar-based NLP parser, most forgiving |
-| **Greenhouse** | Greenhouse | Semantic (LLM-based) | No auto-scoring by design, human review with scorecards |
-| **Lever** | Employ | Stemming-based | No ranking, search-dependent, abbreviation-blind |
-| **SuccessFactors** | SAP | Taxonomy normalization | Textkernel parser, Joule AI skills matching |
+| Platform           | Vendor     | Keyword Strategy       | Key Behavior                                                     |
+| ------------------ | ---------- | ---------------------- | ---------------------------------------------------------------- |
+| **Workday**        | Workday    | Exact + HiredScore AI  | Strict parser, skips headers/footers, penalizes creative formats |
+| **Taleo**          | Oracle     | Literal exact match    | Strictest keyword matching, auto-reject via Req Rank             |
+| **iCIMS**          | iCIMS      | Semantic (ML-based)    | Role Fit AI, grammar-based NLP parser, most forgiving            |
+| **Greenhouse**     | Greenhouse | Semantic (LLM-based)   | No auto-scoring by design, human review with scorecards          |
+| **Lever**          | Employ     | Stemming-based         | No ranking, search-dependent, abbreviation-blind                 |
+| **SuccessFactors** | SAP        | Taxonomy normalization | Textkernel parser, Joule AI skills matching                      |
 
 ## Tech Stack
 
-| Layer | Choice | Why |
-| --- | --- | --- |
-| **Framework** | SvelteKit 5 (Svelte 5 runes) | Compiled to vanilla JS, ~15KB runtime. No VDOM overhead. |
-| **Styling** | Scoped CSS + CSS custom properties | Dark glassmorphic design. No Tailwind. Component-scoped. |
-| **PDF Parsing** | pdfjs-dist (Web Worker) | Mozilla-maintained, fully client-side. |
-| **DOCX Parsing** | mammoth | Client-side Word to text extraction. |
-| **NLP** | Custom TF-IDF + tokenizer + skills taxonomy | Lightweight, browser-native, supports 8+ industries. |
-| **LLM** | Gemma 3 27B (primary), Gemini 2.5 Flash (fallback) | 14,400 RPD free tier via Google Generative Language API. Groq + Cerebras available for self-host. |
-| **Auth** | Firebase Authentication | Google + email/password sign-in. Free Spark plan. |
-| **Storage** | Cloud Firestore | Scan history per user. Free Spark plan. |
-| **Hosting** | Vercel | Free hobby tier. Edge functions for API. |
-| **Testing** | Vitest + Playwright + @testing-library/svelte | Unit, integration, and E2E coverage. |
+| Layer            | Choice                                             | Why                                                                                               |
+| ---------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| **Framework**    | SvelteKit 5 (Svelte 5 runes)                       | Compiled to vanilla JS, ~15KB runtime. No VDOM overhead.                                          |
+| **Styling**      | Scoped CSS + CSS custom properties                 | Dark glassmorphic design. No Tailwind. Component-scoped.                                          |
+| **PDF Parsing**  | pdfjs-dist (Web Worker)                            | Mozilla-maintained, fully client-side.                                                            |
+| **DOCX Parsing** | mammoth                                            | Client-side Word to text extraction.                                                              |
+| **NLP**          | Custom TF-IDF + tokenizer + skills taxonomy        | Lightweight, browser-native, supports 8+ industries.                                              |
+| **LLM**          | Gemma 3 27B (primary), Gemini 2.5 Flash (fallback) | 14,400 RPD free tier via Google Generative Language API. Groq + Cerebras available for self-host. |
+| **Auth**         | Firebase Authentication                            | Google + email/password sign-in. Free Spark plan.                                                 |
+| **Storage**      | Cloud Firestore                                    | Scan history per user. Free Spark plan.                                                           |
+| **Hosting**      | Vercel                                             | Free hobby tier. Edge functions for API.                                                          |
+| **Testing**      | Vitest + Playwright + @testing-library/svelte      | Unit, integration, and E2E coverage.                                                              |
 
 **Total infrastructure cost: $0.** Everything runs on free tiers.
 

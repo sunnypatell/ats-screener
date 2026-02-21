@@ -77,7 +77,15 @@
 	<div class="search-overlay" onclick={handleBackdropClick} onkeydown={handleKeydown}>
 		<div class="search-dialog" role="dialog" aria-label="Search documentation">
 			<div class="search-input-wrapper">
-				<svg class="search-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<svg
+					class="search-input-icon"
+					width="18"
+					height="18"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
 					<circle cx="11" cy="11" r="8" />
 					<path d="m21 21-4.35-4.35" />
 				</svg>
@@ -104,6 +112,7 @@
 						{#each results as result}
 							<a href={result.url} class="search-result" onclick={closeSearch}>
 								<span class="result-title">{result.title}</span>
+								<!-- eslint-disable-next-line svelte/no-at-html-tags -- pagefind excerpts are pre-sanitized -->
 								<span class="result-excerpt">{@html result.excerpt}</span>
 							</a>
 						{/each}
@@ -111,9 +120,7 @@
 				</div>
 			{:else}
 				<div class="search-results">
-					<div class="search-hint">
-						Type to search across all documentation pages
-					</div>
+					<div class="search-hint">Type to search across all documentation pages</div>
 				</div>
 			{/if}
 

@@ -119,9 +119,7 @@ class ScoresStore {
 			const entry: Omit<ScanHistoryEntry, 'id'> = {
 				timestamp: new Date().toISOString(),
 				mode: this.mode,
-				averageScore: Math.round(
-					results.reduce((s, r) => s + r.overallScore, 0) / results.length
-				),
+				averageScore: Math.round(results.reduce((s, r) => s + r.overallScore, 0) / results.length),
 				passingCount: results.filter((r) => r.passesFilter).length,
 				results,
 				...(fileName && { fileName }),

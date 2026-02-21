@@ -9,7 +9,7 @@ ATS Screener can be self-hosted for free. You'll need at least one LLM API key.
 
 - **Node.js** 18+ (20 recommended)
 - **pnpm** 8+ (package manager)
-- At least one free API key from: Google AI Studio, Groq, or Cerebras
+- A free API key from [Google AI Studio](https://aistudio.google.com/apikey) (required for Gemma/Gemini models)
 
 ## Installation
 
@@ -33,20 +33,20 @@ cp .env.example .env
 2. Click "Create API Key"
 3. Add to `.env`: `GEMINI_API_KEY=your_key_here`
 
-### Groq (Fallback)
+### Groq (Optional Fallback)
 
 1. Go to [Groq Console](https://console.groq.com/keys)
 2. Create a new API key
 3. Add to `.env`: `GROQ_API_KEY=your_key_here`
 
-### Cerebras (Fallback)
+### Cerebras (Optional Fallback)
 
 1. Go to [Cerebras Cloud](https://cloud.cerebras.ai/)
 2. Generate an API key
 3. Add to `.env`: `CEREBRAS_API_KEY=your_key_here`
 
 :::tip
-You only need ONE API key to run the app. Gemini is recommended as the primary. Add Groq and Cerebras as fallbacks for higher availability.
+You only need the **Google AI (Gemini) API key** to run the app. It powers Gemma 3 27B (14,400 RPD) as the primary model plus Gemini models as fallbacks. Groq and Cerebras are optional for additional availability.
 :::
 
 ## Run Locally

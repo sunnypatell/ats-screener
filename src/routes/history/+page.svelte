@@ -75,7 +75,14 @@
 		<!-- viewing a specific scan's results -->
 		<div class="content">
 			<button class="back-btn" onclick={clearSelection}>
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<svg
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
 					<polyline points="15,18 9,12 15,6" />
 				</svg>
 				Back to History
@@ -108,7 +115,14 @@
 				</div>
 			{:else if history.length === 0}
 				<div class="empty-state">
-					<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+					<svg
+						width="48"
+						height="48"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+					>
 						<circle cx="12" cy="12" r="10" />
 						<polyline points="12,6 12,12 16,14" />
 					</svg>
@@ -134,7 +148,15 @@
 								</div>
 								<span class="card-date">{formatDate(entry.timestamp)}</span>
 							</div>
-							<svg class="card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<svg
+								class="card-arrow"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
 								<polyline points="9,18 15,12 9,6" />
 							</svg>
 						</button>
@@ -142,9 +164,7 @@
 				</div>
 
 				<div class="history-footer">
-					<button class="clear-all-btn" onclick={handleClear}>
-						Clear All History
-					</button>
+					<button class="clear-all-btn" onclick={handleClear}> Clear All History </button>
 				</div>
 			{/if}
 		</div>
@@ -260,7 +280,9 @@
 	}
 
 	@keyframes spin {
-		to { transform: rotate(360deg); }
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	/* history card grid */
@@ -280,7 +302,9 @@
 		border-radius: var(--radius-md);
 		backdrop-filter: blur(var(--glass-blur));
 		cursor: pointer;
-		transition: border-color 0.2s ease, background 0.2s ease;
+		transition:
+			border-color 0.2s ease,
+			background 0.2s ease;
 		width: 100%;
 		text-align: left;
 		font-family: inherit;
@@ -418,7 +442,9 @@
 		font-size: 0.78rem;
 		font-weight: 500;
 		cursor: pointer;
-		transition: color 0.2s ease, border-color 0.2s ease;
+		transition:
+			color 0.2s ease,
+			border-color 0.2s ease;
 		font-family: inherit;
 	}
 

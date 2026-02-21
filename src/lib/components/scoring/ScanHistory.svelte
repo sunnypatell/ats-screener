@@ -73,7 +73,11 @@
 		{#if expanded}
 			<div class="history-list">
 				{#each history as entry (entry.id)}
-					<button class="history-entry" onclick={() => handleLoadEntry(entry)} title="Click to view these results">
+					<button
+						class="history-entry"
+						onclick={() => handleLoadEntry(entry)}
+						title="Click to view these results"
+					>
 						<div class="entry-score" style="color: {scoreColor(entry.averageScore)}">
 							{entry.averageScore}
 						</div>
@@ -90,7 +94,15 @@
 							</div>
 							<span class="entry-time">{formatDate(entry.timestamp)}</span>
 						</div>
-						<svg class="entry-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<svg
+							class="entry-arrow"
+							width="14"
+							height="14"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
 							<polyline points="9,18 15,12 9,6" />
 						</svg>
 					</button>

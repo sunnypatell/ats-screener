@@ -56,7 +56,7 @@ Built with performance and privacy in mind:
 - **SvelteKit 5** with Svelte 5 runes for the frontend
 - **pdfjs-dist** (Web Worker) for client-side PDF parsing
 - **mammoth** for client-side DOCX parsing
-- **Gemini 2.5 Flash Lite** for AI-powered analysis
+- **Gemma 3 27B** (primary) with Gemini fallbacks for AI-powered analysis
 - **Firebase** for authentication and scan history
 - **Vercel** for hosting (free tier)
 

@@ -41,7 +41,15 @@
 
 		{#if !isOnDocs}
 			<button class="search-bar" onclick={handleSearchClick} aria-label="Search documentation">
-				<svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<svg
+					class="search-icon"
+					width="14"
+					height="14"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
 					<circle cx="11" cy="11" r="8" />
 					<path d="m21 21-4.35-4.35" />
 				</svg>

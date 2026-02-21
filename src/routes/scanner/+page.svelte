@@ -76,7 +76,12 @@
 			const llmResult = await scoreLLM(resume.rawText, jd);
 
 			if (llmResult && llmResult.results.length > 0) {
-				console.log('[scan] LLM scoring complete:', llmResult.results.length, 'results from', llmResult.provider);
+				console.log(
+					'[scan] LLM scoring complete:',
+					llmResult.results.length,
+					'results from',
+					llmResult.provider
+				);
 				scoresStore.finishScoring(llmResult.results, resumeStore.file?.name);
 				scoresStore.finishAnalyzing(null, false);
 				return;
@@ -136,92 +141,121 @@
 	{:else if !authStore.isAuthenticated}
 		<div class="auth-gate">
 			<div class="auth-gate-card">
-				<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="1.5" style="margin-bottom: 1rem;">
+				<svg
+					width="48"
+					height="48"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="var(--accent-cyan)"
+					stroke-width="1.5"
+					style="margin-bottom: 1rem;"
+				>
 					<rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
 					<path d="M7 11V7a5 5 0 0 1 10 0v4" />
 				</svg>
 				<h2 class="auth-gate-title">Sign In to Scan</h2>
 				<p class="auth-gate-text">
-					Create a free account to scan your resume across 6 real ATS platforms.
-					Your scan history will be saved automatically.
+					Create a free account to scan your resume across 6 real ATS platforms. Your scan history
+					will be saved automatically.
 				</p>
-				<a href="/login" class="auth-gate-btn">
-					Sign In or Create Account
-				</a>
+				<a href="/login" class="auth-gate-btn"> Sign In or Create Account </a>
 			</div>
 		</div>
 	{:else}
-	<div class="container">
-		<div class="scanner-header">
-			<div class="page-badge">
-				<svg
-					width="14"
-					height="14"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-				>
-					<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-					<polyline points="14,2 14,8 20,8" />
-					<path d="M12 18v-6" />
-					<path d="M9 15l3 3 3-3" />
-				</svg>
-				<span>Resume Scanner</span>
-			</div>
-			<h1 class="page-title">
-				Scan Your Resume Against
-				<span class="gradient-text">Real ATS Systems</span>
-			</h1>
-			<p class="page-subtitle">
-				Upload your resume and optionally paste a job description for targeted scoring. Files
-				are parsed client-side. Only extracted text is sent for AI analysis.
-			</p>
+		<div class="container">
+			<div class="scanner-header">
+				<div class="page-badge">
+					<svg
+						width="14"
+						height="14"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
+						<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+						<polyline points="14,2 14,8 20,8" />
+						<path d="M12 18v-6" />
+						<path d="M9 15l3 3 3-3" />
+					</svg>
+					<span>Resume Scanner</span>
+				</div>
+				<h1 class="page-title">
+					Scan Your Resume Against
+					<span class="gradient-text">Real ATS Systems</span>
+				</h1>
+				<p class="page-subtitle">
+					Upload your resume and optionally paste a job description for targeted scoring. Files are
+					parsed client-side. Only extracted text is sent for AI analysis.
+				</p>
 
-			<!-- step progress -->
-			<div class="steps-progress">
-				<div class="step-dot" class:active={true} class:done={resumeStore.file !== null}>
-					<span class="step-num">1</span>
+				<!-- step progress -->
+				<div class="steps-progress">
+					<div class="step-dot" class:active={true} class:done={resumeStore.file !== null}>
+						<span class="step-num">1</span>
+					</div>
+					<div class="step-line" class:done={resumeStore.file !== null}></div>
+					<div
+						class="step-dot"
+						class:active={resumeStore.file !== null}
+						class:done={resumeStore.isReady}
+					>
+						<span class="step-num">2</span>
+					</div>
+					<div class="step-line" class:done={resumeStore.isReady && hasScanned}></div>
+					<div class="step-dot" class:active={hasScanned} class:done={scoresStore.hasResults}>
+						<span class="step-num">3</span>
+					</div>
+					<div class="step-line" class:done={scoresStore.hasResults}></div>
+					<div
+						class="step-dot"
+						class:active={scoresStore.hasResults}
+						class:done={scoresStore.hasResults}
+					>
+						<span class="step-num">4</span>
+					</div>
 				</div>
-				<div class="step-line" class:done={resumeStore.file !== null}></div>
-				<div
-					class="step-dot"
-					class:active={resumeStore.file !== null}
-					class:done={resumeStore.isReady}
-				>
-					<span class="step-num">2</span>
-				</div>
-				<div class="step-line" class:done={resumeStore.isReady && hasScanned}></div>
-				<div class="step-dot" class:active={hasScanned} class:done={scoresStore.hasResults}>
-					<span class="step-num">3</span>
-				</div>
-				<div class="step-line" class:done={scoresStore.hasResults}></div>
-				<div
-					class="step-dot"
-					class:active={scoresStore.hasResults}
-					class:done={scoresStore.hasResults}
-				>
-					<span class="step-num">4</span>
+				<div class="steps-labels">
+					<span class:active={true}>Upload</span>
+					<span class:active={resumeStore.file !== null}>Parse</span>
+					<span class:active={hasScanned}>Scan</span>
+					<span class:active={scoresStore.hasResults}>Results</span>
 				</div>
 			</div>
-			<div class="steps-labels">
-				<span class:active={true}>Upload</span>
-				<span class:active={resumeStore.file !== null}>Parse</span>
-				<span class:active={hasScanned}>Scan</span>
-				<span class:active={scoresStore.hasResults}>Results</span>
-			</div>
-		</div>
 
-		<div class="scanner-body">
-			<!-- upload section -->
-			<section class="upload-section">
-				<ResumeUploader />
-				<JobDescriptionInput />
+			<div class="scanner-body">
+				<!-- upload section -->
+				<section class="upload-section">
+					<ResumeUploader />
+					<JobDescriptionInput />
 
-				{#if resumeStore.warnings.length > 0}
-					<div class="warnings">
-						{#each resumeStore.warnings as warning}
-							<div class="warning-item">
+					{#if resumeStore.warnings.length > 0}
+						<div class="warnings">
+							{#each resumeStore.warnings as warning}
+								<div class="warning-item">
+									<svg
+										width="16"
+										height="16"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+									>
+										<path
+											d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+										/>
+										<line x1="12" y1="9" x2="12" y2="13" />
+										<line x1="12" y1="17" x2="12.01" y2="17" />
+									</svg>
+									<span>{warning}</span>
+								</div>
+							{/each}
+						</div>
+					{/if}
+
+					<div class="actions">
+						{#if scoresStore.hasResults}
+							<button class="btn-secondary" onclick={handleReset}>
 								<svg
 									width="16"
 									height="16"
@@ -230,21 +264,51 @@
 									stroke="currentColor"
 									stroke-width="2"
 								>
-									<path
-										d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
-									/>
-									<line x1="12" y1="9" x2="12" y2="13" />
-									<line x1="12" y1="17" x2="12.01" y2="17" />
+									<polyline points="1,4 1,10 7,10" />
+									<path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
 								</svg>
-								<span>{warning}</span>
-							</div>
-						{/each}
-					</div>
-				{/if}
+								Start Over
+							</button>
+						{/if}
 
-				<div class="actions">
-					{#if scoresStore.hasResults}
-						<button class="btn-secondary" onclick={handleReset}>
+						<button class="btn-scan" disabled={!canScan} onclick={handleScan}>
+							{#if scoresStore.isScoring}
+								<span class="spinner-inline"></span>
+								Scoring...
+							{:else if scoresStore.hasResults}
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+								>
+									<polyline points="23,4 23,10 17,10" />
+									<path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+								</svg>
+								Re-Scan
+							{:else}
+								<svg
+									width="18"
+									height="18"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+								>
+									<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+									<polyline points="14,2 14,8 20,8" />
+									<path d="M12 18v-6" />
+									<path d="M9 15l3 3 3-3" />
+								</svg>
+								Scan Resume
+							{/if}
+						</button>
+					</div>
+
+					{#if scoresStore.error}
+						<div class="error">
 							<svg
 								width="16"
 								height="16"
@@ -253,106 +317,53 @@
 								stroke="currentColor"
 								stroke-width="2"
 							>
-								<polyline points="1,4 1,10 7,10" />
-								<path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+								<circle cx="12" cy="12" r="10" />
+								<line x1="15" y1="9" x2="9" y2="15" />
+								<line x1="9" y1="9" x2="15" y2="15" />
 							</svg>
-							Start Over
-						</button>
+							<span>{scoresStore.error}</span>
+						</div>
 					{/if}
+				</section>
 
-					<button class="btn-scan" disabled={!canScan} onclick={handleScan}>
-						{#if scoresStore.isScoring}
-							<span class="spinner-inline"></span>
-							Scoring...
-						{:else if scoresStore.hasResults}
+				<!-- scan history: collapsible, shows past scans -->
+				<ScanHistory />
+
+				<!-- resume overview: shows immediately after parsing, before scanning -->
+				{#if resumeStore.isReady && !scoresStore.hasResults}
+					<section class="preview-section">
+						<div class="preview-header">
 							<svg
-								width="18"
-								height="18"
+								width="16"
+								height="16"
 								viewBox="0 0 24 24"
 								fill="none"
 								stroke="currentColor"
 								stroke-width="2"
 							>
-								<polyline points="23,4 23,10 17,10" />
-								<path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+								<polyline points="20,6 9,17 4,12" />
 							</svg>
-							Re-Scan
-						{:else}
-							<svg
-								width="18"
-								height="18"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-							>
-								<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-								<polyline points="14,2 14,8 20,8" />
-								<path d="M12 18v-6" />
-								<path d="M9 15l3 3 3-3" />
-							</svg>
-							Scan Resume
-						{/if}
-					</button>
-				</div>
-
-				{#if scoresStore.error}
-					<div class="error">
-						<svg
-							width="16"
-							height="16"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-						>
-							<circle cx="12" cy="12" r="10" />
-							<line x1="15" y1="9" x2="9" y2="15" />
-							<line x1="9" y1="9" x2="15" y2="15" />
-						</svg>
-						<span>{scoresStore.error}</span>
-					</div>
+							<span>Resume Parsed Successfully</span>
+						</div>
+						<ResumeStats />
+					</section>
 				{/if}
-			</section>
 
-			<!-- scan history: collapsible, shows past scans -->
-			<ScanHistory />
+				<!-- scanning animation: shown while LLM is processing -->
+				{#if scoresStore.isScoring}
+					<section class="results-section">
+						<ScanningAnimation />
+					</section>
+				{/if}
 
-			<!-- resume overview: shows immediately after parsing, before scanning -->
-			{#if resumeStore.isReady && !scoresStore.hasResults}
-				<section class="preview-section">
-					<div class="preview-header">
-						<svg
-							width="16"
-							height="16"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-						>
-							<polyline points="20,6 9,17 4,12" />
-						</svg>
-						<span>Resume Parsed Successfully</span>
-					</div>
-					<ResumeStats />
-				</section>
-			{/if}
-
-			<!-- scanning animation: shown while LLM is processing -->
-			{#if scoresStore.isScoring}
-				<section class="results-section">
-					<ScanningAnimation />
-				</section>
-			{/if}
-
-			<!-- results section: fades in smoothly after scanning -->
-			{#if hasScanned && scoresStore.hasResults}
-				<section class="results-section">
-					<ScoreDashboard />
-				</section>
-			{/if}
+				<!-- results section: fades in smoothly after scanning -->
+				{#if hasScanned && scoresStore.hasResults}
+					<section class="results-section">
+						<ScoreDashboard />
+					</section>
+				{/if}
+			</div>
 		</div>
-	</div>
 	{/if}
 </main>
 
@@ -715,7 +726,9 @@
 		background: var(--gradient-primary);
 		border-radius: var(--radius-full);
 		text-decoration: none;
-		transition: transform 0.2s ease, box-shadow 0.2s ease;
+		transition:
+			transform 0.2s ease,
+			box-shadow 0.2s ease;
 	}
 
 	.auth-gate-btn:hover {
@@ -734,7 +747,9 @@
 	}
 
 	@keyframes spin {
-		to { transform: rotate(360deg); }
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	@media (max-width: 640px) {

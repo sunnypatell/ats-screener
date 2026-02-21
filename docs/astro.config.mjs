@@ -14,36 +14,37 @@ export default defineConfig({
 			logo: {
 				light: './src/assets/logo-light.svg',
 				dark: './src/assets/logo-dark.svg',
-				replacesTitle: false,
+				replacesTitle: false
 			},
 			social: [
 				{
 					icon: 'github',
 					label: 'GitHub',
-					href: 'https://github.com/sunnypatell/ats-screener',
+					href: 'https://github.com/sunnypatell/ats-screener'
 				},
 				{
 					icon: 'external',
 					label: 'Launch Scanner',
-					href: 'https://ats-screener.vercel.app/scanner',
-				},
+					href: 'https://ats-screener.vercel.app/scanner'
+				}
 			],
 			customCss: ['./src/styles/custom.css'],
 			editLink: {
-				baseUrl: 'https://github.com/sunnypatell/ats-screener/edit/main/docs/',
+				baseUrl: 'https://github.com/sunnypatell/ats-screener/edit/main/docs/'
 			},
 			head: [
 				{
 					tag: 'meta',
 					attrs: {
 						property: 'og:image',
-						content: 'https://ats-screener.vercel.app/og-image.png',
-					},
+						content: 'https://ats-screener.vercel.app/og-image.png'
+					}
 				},
 				{
 					tag: 'script',
-					content: "document.addEventListener('DOMContentLoaded',function(){var a=document.querySelector('.site-title');if(a)a.href='/';});",
-				},
+					content:
+						"document.addEventListener('DOMContentLoaded',function(){var a=document.querySelector('.site-title');if(a)a.href='/';});"
+				}
 			],
 			sidebar: [
 				{
@@ -51,8 +52,8 @@ export default defineConfig({
 					items: [
 						{ label: 'Introduction', slug: 'getting-started/introduction' },
 						{ label: 'Quick Start', slug: 'getting-started/quick-start' },
-						{ label: 'How It Works', slug: 'getting-started/how-it-works' },
-					],
+						{ label: 'How It Works', slug: 'getting-started/how-it-works' }
+					]
 				},
 				{
 					label: 'ATS Platforms',
@@ -63,36 +64,36 @@ export default defineConfig({
 						{ label: 'iCIMS', slug: 'platforms/icims' },
 						{ label: 'Greenhouse', slug: 'platforms/greenhouse' },
 						{ label: 'Lever', slug: 'platforms/lever' },
-						{ label: 'SuccessFactors (SAP)', slug: 'platforms/successfactors' },
-					],
+						{ label: 'SuccessFactors (SAP)', slug: 'platforms/successfactors' }
+					]
 				},
 				{
 					label: 'Scoring',
 					items: [
 						{ label: 'Methodology', slug: 'scoring/methodology' },
 						{ label: 'Dimensions', slug: 'scoring/dimensions' },
-						{ label: 'Pass/Fail Thresholds', slug: 'scoring/thresholds' },
-					],
+						{ label: 'Pass/Fail Thresholds', slug: 'scoring/thresholds' }
+					]
 				},
 				{
 					label: 'API Reference',
 					items: [
 						{ label: 'Endpoints', slug: 'api/endpoints' },
 						{ label: 'Rate Limits', slug: 'api/rate-limits' },
-						{ label: 'Error Handling', slug: 'api/errors' },
-					],
+						{ label: 'Error Handling', slug: 'api/errors' }
+					]
 				},
 				{
 					label: 'Self-Hosting',
 					items: [
 						{ label: 'Setup Guide', slug: 'self-hosting/setup' },
 						{ label: 'Configuration', slug: 'self-hosting/configuration' },
-						{ label: 'Deployment', slug: 'self-hosting/deployment' },
-					],
-				},
+						{ label: 'Deployment', slug: 'self-hosting/deployment' }
+					]
+				}
 			],
 			lastUpdated: true,
-			pagination: true,
-		}),
-	],
+			pagination: true
+		})
+	]
 });

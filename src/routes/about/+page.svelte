@@ -149,9 +149,10 @@
 					<div class="approach-content">
 						<h3>LLM-Powered Analysis</h3>
 						<p>
-							Instead of hard-coded keyword matching, ATS Screener uses large language models to semantically
-							analyze your resume against each ATS system's known behavior. The LLM understands
-							context, transferable skills, and industry-specific terminology across any field.
+							Instead of hard-coded keyword matching, ATS Screener uses large language models to
+							semantically analyze your resume against each ATS system's known behavior. The LLM
+							understands context, transferable skills, and industry-specific terminology across any
+							field.
 						</p>
 					</div>
 				</div>
@@ -160,9 +161,10 @@
 					<div class="approach-content">
 						<h3>Six Real ATS Profiles</h3>
 						<p>
-							ATS Screener simulates Workday, Taleo (Oracle), iCIMS, Greenhouse, Lever, and SAP SuccessFactors.
-							Each profile reflects the parsing strictness, keyword strategy, and scoring
-							behavior of that platform based on research into publicly available documentation.
+							ATS Screener simulates Workday, Taleo (Oracle), iCIMS, Greenhouse, Lever, and SAP
+							SuccessFactors. Each profile reflects the parsing strictness, keyword strategy, and
+							scoring behavior of that platform based on research into publicly available
+							documentation.
 						</p>
 					</div>
 				</div>
@@ -171,9 +173,9 @@
 					<div class="approach-content">
 						<h3>Built-In Fallback</h3>
 						<p>
-							The primary scoring engine uses Google Gemini AI. If the AI provider is
-							unavailable, a deterministic rule-based engine automatically provides scoring as a
-							fallback. You always get results.
+							The primary scoring engine uses Google Gemini AI. If the AI provider is unavailable, a
+							deterministic rule-based engine automatically provides scoring as a fallback. You
+							always get results.
 						</p>
 					</div>
 				</div>
@@ -247,8 +249,8 @@
 				</div>
 				<h2>100% Open Source</h2>
 				<p>
-					Every line of code is public. No premium tiers, no paywalls.
-					MIT licensed. Fork it, improve it, self-host it.
+					Every line of code is public. No premium tiers, no paywalls. MIT licensed. Fork it,
+					improve it, self-host it.
 				</p>
 				<div class="os-links">
 					<a

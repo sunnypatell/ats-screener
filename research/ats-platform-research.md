@@ -25,12 +25,14 @@
 **parser engine:** Workday uses a **proprietary built-in parser**. the exact engine is not publicly disclosed, but it is not documented as using Sovren/Textkernel/DaXtra. third-party connectors (Parseur, HrFlow.ai) exist for organizations that want to supplement or replace the built-in parsing.
 
 **text extraction:**
+
 - reads text-based PDFs and DOCX files natively
 - **DOCX is preferred** over PDF for cleaner parsing. multiple sources confirm DOCX parses more reliably, especially with complex layouts
 - scanned/image-only PDFs are rejected outright or silently fail
 - file size should stay under 2MB
 
 **layout handling:**
+
 - **multi-column layouts:** content is read linearly left-to-right, top-to-bottom. two-column resumes cause content from both columns to merge on the same line, producing garbled output
 - **tables:** scramble job chronology and company associations. data gets interleaved incorrectly
 - **headers/footers:** content placed in document headers/footers is **skipped entirely**. if your name and contact info live there, Workday won't see it
@@ -39,6 +41,7 @@
 - **non-standard fonts/decorative bullets:** can render as gibberish in parsed output
 
 **field extraction:**
+
 - extracts contact info, work experience (company, title, dates), education, and some skills
 - **skills are NOT reliably parsed** from standalone skills sections. skills mentioned in experience bullet points are more reliably captured
 - date format preference: **MM/YYYY**. non-standard formats like "2022-Present" or "January 2022" can cause incorrect tenure calculation
@@ -72,6 +75,7 @@
 ### 1.4 Filtering Behavior
 
 **what causes filtering out:**
+
 - unparseable resume format (image PDF, complex graphics, broken encoding)
 - missing contact information (especially if in header/footer)
 - knockout questions: Workday supports configurable screening questions that can auto-disqualify
@@ -90,14 +94,15 @@
 
 ### 1.6 AI/ML Features
 
-| feature | technology | status |
-|---------|-----------|--------|
-| HiredScore AI for Recruiting | proprietary ML (no GenAI), semantic matching | available since 2024 acquisition |
-| candidate rediscovery | ML-based "fetch" feature scanning past applicant pools | active |
-| recruiter AI coach | AI-powered guidance for recruiters | active |
-| resume parsing | rule-based/proprietary (not ML-heavy) | built-in |
+| feature                      | technology                                             | status                           |
+| ---------------------------- | ------------------------------------------------------ | -------------------------------- |
+| HiredScore AI for Recruiting | proprietary ML (no GenAI), semantic matching           | available since 2024 acquisition |
+| candidate rediscovery        | ML-based "fetch" feature scanning past applicant pools | active                           |
+| recruiter AI coach           | AI-powered guidance for recruiters                     | active                           |
+| resume parsing               | rule-based/proprietary (not ML-heavy)                  | built-in                         |
 
 **sources:**
+
 - [Workday ATS Guide 2025](https://www.atshiring.com/en/learn/workday-ats-guide-2025)
 - [Workday Resume Parsing](https://ghostrez.com/blog/workday-resume-parsing/)
 - [Workday HiredScore](https://www.suretysystems.com/insights/workday-hiredscore-revolutionizing-talent-acquisition-and-management-with-ai/)
@@ -115,11 +120,13 @@
 **parser engine:** Taleo uses a **proprietary parsing algorithm**. it is not publicly documented as using Sovren or Textkernel natively. however, Oracle Recruiting Cloud (the successor to Taleo) can integrate with Textkernel and RChilli for enhanced parsing. Taleo's built-in parser uses **OCR** to convert uploaded files to text.
 
 **text extraction:**
+
 - accepts PDF and Word documents
 - uses OCR to convert documents, meaning it's attempting character recognition rather than direct text extraction
 - strips HTML tags, special characters, and certain fonts during processing
 
 **layout handling:**
+
 - graphics, charts, and images cannot be read at all
 - fancy fonts, colored text, and elaborate bullet points cause parsing errors
 - the parser is described as "notoriously picky" with formatting
@@ -127,6 +134,7 @@
 - known failure: multiple degrees were not parsed, making it appear the candidate had no education
 
 **field extraction:**
+
 - extracts job experience, education, skills, and contact information
 - pre-populates application fields from parsed data
 - can parse from email, uploaded files, and job board submissions
@@ -136,6 +144,7 @@
 **matching type:** **literal keyword matching** at the base level. Taleo's native search is not intelligent about variants.
 
 **critical limitation:** Taleo **cannot** natively recognize:
+
 - plural vs. singular ("project manager" vs. "project management" are different)
 - abbreviations vs. full terms ("CPA" vs. "Certified Public Accountant" are different)
 - tense variations ("managed" vs. "managing")
@@ -153,11 +162,11 @@ Taleo is **the most score-heavy ATS** among the six. it has a detailed, configur
 
 the system classifies candidates into three tiers:
 
-| tier | definition |
-|------|-----------|
-| **ACE candidates** | meet ALL required criteria + some/all asset criteria |
-| **minimally qualified** | meet ALL required criteria but NO asset criteria |
-| **other candidates** | do NOT meet all required criteria |
+| tier                    | definition                                           |
+| ----------------------- | ---------------------------------------------------- |
+| **ACE candidates**      | meet ALL required criteria + some/all asset criteria |
+| **minimally qualified** | meet ALL required criteria but NO asset criteria     |
+| **other candidates**    | do NOT meet all required criteria                    |
 
 **scoring components:**
 
@@ -175,17 +184,20 @@ the system classifies candidates into three tiers:
    - interest level (None / Low / Medium / High)
 
 **weight calculation:**
+
 - points are assigned to answers and converted to percentages
 - Result % = (points earned / total possible points) x 100
 - example: if a candidate earns 6 out of 8 possible weighted points = 75%
 - weights normalize to 100% automatically
 
 **ACE alert:** configurable threshold triggers. can be set by:
+
 - percentage threshold (e.g., "candidates achieving >= 75% result")
 - asset count (e.g., "candidates with >= 3 of 5 assets")
 - or both conditions combined (AND/OR logic)
 
 **Oracle Recruiting Cloud "Suggested Candidates":** the newer ORC platform scores candidates on four criteria with 0-3 stars each:
+
 - **Profile:** title and description match to requisition
 - **Education:** degree level match
 - **Experience:** relevant experience match
@@ -194,6 +206,7 @@ the system classifies candidates into three tiers:
 ### 2.4 Filtering Behavior
 
 **what causes filtering out:**
+
 - **disqualification questions:** wrong answer = instant, automatic exit from the process. this is the hardest filter in any ATS
 - **Required criteria not met:** if any Required prescreening question is failed, candidate drops below ACE and minimally qualified tiers
 - **keyword search misses:** literal matching means missing exact terms from the job description makes candidates invisible to recruiter searches
@@ -213,14 +226,15 @@ the system classifies candidates into three tiers:
 
 ### 2.6 AI/ML Features
 
-| feature | technology | status |
-|---------|-----------|--------|
-| ACE prescreening | rule-based scoring with configurable weights | legacy, active |
-| disqualification questions | rule-based auto-reject | legacy, active |
-| Suggested Candidates (ORC) | ML-based 4-criteria star scoring | newer ORC platform |
-| keyword search | literal matching with boolean operators | legacy |
+| feature                    | technology                                   | status             |
+| -------------------------- | -------------------------------------------- | ------------------ |
+| ACE prescreening           | rule-based scoring with configurable weights | legacy, active     |
+| disqualification questions | rule-based auto-reject                       | legacy, active     |
+| Suggested Candidates (ORC) | ML-based 4-criteria star scoring             | newer ORC platform |
+| keyword search             | literal matching with boolean operators      | legacy             |
 
 **sources:**
+
 - [Oracle Taleo Prescreening Documentation](https://docs.oracle.com/en/cloud/saas/taleo-enterprise/21b/otrec/candidate-prescreening.html)
 - [Oracle Taleo Disqualification Questions](https://docs.oracle.com/en/cloud/saas/taleo-enterprise/21c/otfru/t-createdusqualificationquestioninlibrary.html)
 - [Jobscan: Taleo Ranking](https://www.jobscan.co/blog/taleo-popular-ats-ranks-job-applications/)
@@ -238,23 +252,27 @@ the system classifies candidates into three tiers:
 **parser engine:** iCIMS uses **HireAbility's ALEX parser** (Automated Linguistic EXpert). iCIMS acquired HireAbility, and the parser is now integrated into the iCIMS Talent Cloud. additionally, iCIMS offers its own tool called **iResume**.
 
 **ALEX parser details:**
+
 - grammar-based parser that assigns meaning to terms based on **context**, not just pattern matching
 - uses NLP techniques and pattern recognition with proprietary semantic parsing algorithms
 - parses resumes in **50+ languages and dialects**, including multi-language resumes
 - outputs structured data in HR-XML and JSON formats
 
 **iResume capabilities:**
+
 - accepts resumes in virtually any format: Word, Text, Rich-Text, HTML, TIF, PDF
 - accepts from virtually any source: email, fax, job boards, direct upload
 - can accept and parse e-fax and scanned resumes (unlike most systems)
 
 **layout handling:**
+
 - reads left-to-right; columns can cause data loss (though newer versions may handle simple columns better)
 - text-based PDFs work, scanned images are generally ignored
 - headers/footers may not be read for contact information
 - handles Word documents better than PDFs overall
 
 **field extraction:**
+
 - contact information, skills, education, work history
 - can profile candidates by skill matching
 - auto-tags candidates to appropriate jobs
@@ -270,6 +288,7 @@ the system classifies candidates into three tiers:
 - covers job openings, applications, and hires for training data
 
 **candidate ranking:**
+
 - AI-based "Role Fit" algorithm matches applicant skills/experience to job requirements
 - automatically assigns a **compatibility score** to indicate candidate-job alignment
 - surfaces top candidates based on this score
@@ -277,6 +296,7 @@ the system classifies candidates into three tiers:
 ### 3.3 Scoring/Ranking Algorithm
 
 **AI candidate ranking:**
+
 - uses an ensemble ML approach (multiple models working together)
 - learns from employer and job-seeker activity across the iCIMS customer base
 - assigns compatibility scores per role
@@ -284,6 +304,7 @@ the system classifies candidates into three tiers:
 - analyzes past applicants within pools to find matches for new openings
 
 **factors considered:**
+
 - skills alignment to job requirements
 - experience relevance
 - education match
@@ -293,6 +314,7 @@ the system classifies candidates into three tiers:
 ### 3.4 Filtering Behavior
 
 **what causes filtering out:**
+
 - resume parsing failure (image-only files, heavily formatted documents)
 - missing contact information
 - recruiter keyword searches that return no matches
@@ -312,17 +334,18 @@ the system classifies candidates into three tiers:
 
 ### 3.6 AI/ML Features
 
-| feature | technology | status |
-|---------|-----------|--------|
-| ALEX resume parser | NLP + pattern recognition + semantic parsing | active (acquired HireAbility) |
-| candidate ranking | ensemble ML, Role Fit algorithm | active |
-| AI talent matching | semantic relationship analysis | active |
-| talent pool categorization | ML-based classification | active |
-| bias auditing | certified against TrustArc Responsible AI criteria | audited 2022, 2023 (NYC AEDT law compliant) |
+| feature                    | technology                                         | status                                      |
+| -------------------------- | -------------------------------------------------- | ------------------------------------------- |
+| ALEX resume parser         | NLP + pattern recognition + semantic parsing       | active (acquired HireAbility)               |
+| candidate ranking          | ensemble ML, Role Fit algorithm                    | active                                      |
+| AI talent matching         | semantic relationship analysis                     | active                                      |
+| talent pool categorization | ML-based classification                            | active                                      |
+| bias auditing              | certified against TrustArc Responsible AI criteria | audited 2022, 2023 (NYC AEDT law compliant) |
 
 **responsible AI note:** iCIMS identified its Candidate Ranking as an "Automated Employment Decision Tool" (AEDT) under NYC's bias-audit law and commissioned independent audits with favorable results.
 
 **sources:**
+
 - [iCIMS: CV/Resume Parsing](https://www.icims.com/blog/what-is-cv-resume-parsing/)
 - [iCIMS AI Talent Explorer](https://community.icims.com/s/article/Understanding-iCIMS-Talent-Cloud-AI)
 - [iCIMS AI Recruiting Software](https://www.icims.com/products/ai-recruiting-software/)
@@ -340,17 +363,20 @@ the system classifies candidates into three tiers:
 **parser engine:** Greenhouse uses **in-house ML models** for resume parsing, supplemented by **OpenAI** for certain extraction tasks. it does NOT use Sovren/Textkernel natively, though integration connectors exist.
 
 **technical architecture:**
+
 - uses "a series of fine-tuned LLM models, each one trained for a specific extraction task" (modular approach)
 - integrates with OpenAI (under a DPA that prohibits OpenAI from using the data for training)
 - internal ML and LLM models are trained on anonymized/aggregated customer data
 - generative AI has been added to the parsing process (launched 2024)
 
 **text extraction:**
+
 - parses both Word and PDF documents
 - cannot parse images at all (Jon Stross, co-founder, confirms this directly)
 - image uploads may cause application errors
 
 **field extraction:**
+
 - skills
 - job titles
 - years of experience
@@ -397,6 +423,7 @@ this is an opt-in AI feature, not automatic scoring:
    - AI categorization only visible during initial review (hidden later to prevent biasing interviewers)
 
 **interview scorecards (human scoring):**
+
 - Greenhouse's primary evaluation method is **structured scorecards**
 - hiring managers create skill/trait checklists for each role
 - each interviewer independently rates candidates on a 5-point scale
@@ -406,6 +433,7 @@ this is an opt-in AI feature, not automatic scoring:
 ### 4.4 Filtering Behavior
 
 **what causes filtering out:**
+
 - **NO automatic rejection based on AI score.** the system explicitly requires human intervention to advance, reject, or hire
 - optional knockout questions (e.g., relocation willingness) can be configured
 - recruiter keyword searches determine visibility
@@ -423,15 +451,16 @@ this is an opt-in AI feature, not automatic scoring:
 
 ### 4.6 AI/ML Features
 
-| feature | technology | status |
-|---------|-----------|--------|
-| resume parsing | fine-tuned LLMs (modular, task-specific) + OpenAI | active |
-| talent matching | semantic embedding, calibrated match categories | launched 2024-2025 |
-| resume anonymization | GenAI-enhanced | active |
-| interview scorecards | human-driven, structured evaluation | core product |
-| candidate search | semantic search with keyword support | active |
+| feature              | technology                                        | status             |
+| -------------------- | ------------------------------------------------- | ------------------ |
+| resume parsing       | fine-tuned LLMs (modular, task-specific) + OpenAI | active             |
+| talent matching      | semantic embedding, calibrated match categories   | launched 2024-2025 |
+| resume anonymization | GenAI-enhanced                                    | active             |
+| interview scorecards | human-driven, structured evaluation               | core product       |
+| candidate search     | semantic search with keyword support              | active             |
 
 **sources:**
+
 - [Greenhouse: Talent Matching Data Processing FAQ](https://support.greenhouse.io/hc/en-us/articles/41131616864283-Talent-Matching-Data-Processing-FAQ)
 - [Greenhouse: Talent Matching FAQ](https://support.greenhouse.io/hc/en-us/articles/41131886674075-Talent-Matching-FAQ)
 - [Greenhouse AI/ML Security & Privacy](https://support.greenhouse.io/hc/en-us/articles/24315491395227-AI-ML-Security-Privacy)
@@ -449,12 +478,14 @@ this is an opt-in AI feature, not automatic scoring:
 **parser engine:** Lever uses its own **built-in parser**. the specific engine is not publicly documented as Sovren/Textkernel, though Textkernel lists pre-built connectors for Lever. the parser appears to be proprietary.
 
 **text extraction:**
+
 - parses PDF and Word documents
 - extracts parseable information into corresponding database fields
 - cannot parse images in resumes
 - handles text-based content reasonably well
 
 **layout handling:**
+
 - **can parse columns and tables** (unlike many competitors), though formatting can be affected
 - works best with proper column formatting in Word/Google Docs
 - tables "might not be parsed correctly" in all cases
@@ -468,11 +499,13 @@ this is an opt-in AI feature, not automatic scoring:
 **matching type:** **keyword matching with word stemming** (a meaningful differentiator)
 
 **word stemming:**
+
 - Lever's search algorithm supports word stemming, meaning it recognizes word variants
 - searching for "collaborating" will also match "collaborate," "collaboration," "collaborated"
 - this gives Lever higher keyword search accuracy compared to systems like Taleo
 
 **limitations:**
+
 - **cannot identify abbreviations.** "CPA" and "Certified Public Accountant" are still different searches
 - pulls keywords from any parseable content in candidate profiles (not just specific sections)
 
@@ -481,12 +514,14 @@ this is an opt-in AI feature, not automatic scoring:
 **Lever does NOT score or rank candidates against job descriptions.**
 
 this is a fundamental architectural choice:
+
 - no automated match score
 - no percentage ranking
 - no candidate-to-job-description matching
 - candidates are not automatically sorted by relevance
 
 **how recruiters find candidates instead:**
+
 - manual keyword searches through the candidate database
 - filtering by job title, years of experience, skills, education, location
 - "fast resume review" feature for quickly scanning applications
@@ -495,6 +530,7 @@ this is a fundamental architectural choice:
 ### 5.4 Filtering Behavior
 
 **what causes filtering out:**
+
 - recruiter keyword searches that miss the candidate's resume (the primary filter)
 - unparseable resume content (images, complex formatting)
 - Lever does NOT auto-reject candidates based on algorithms
@@ -512,16 +548,17 @@ this is a fundamental architectural choice:
 
 ### 5.6 AI/ML Features
 
-| feature | technology | status |
-|---------|-----------|--------|
-| resume parsing | built-in parser (proprietary) | active |
-| keyword search | word stemming (not full NLP) | active |
-| fast resume review | UI feature for rapid scanning | active |
-| AI/ML scoring | **none** | not available |
+| feature            | technology                    | status        |
+| ------------------ | ----------------------------- | ------------- |
+| resume parsing     | built-in parser (proprietary) | active        |
+| keyword search     | word stemming (not full NLP)  | active        |
+| fast resume review | UI feature for rapid scanning | active        |
+| AI/ML scoring      | **none**                      | not available |
 
 **Lever is the least AI-heavy of the six systems studied.** it's primarily a well-designed CRM/ATS hybrid that relies on human judgment rather than algorithmic scoring.
 
 **sources:**
+
 - [Jobscan: Lever ATS](https://www.jobscan.co/blog/lever-ats/)
 - [Lever: Understanding Resume Parsing](https://help.lever.co/hc/en-us/articles/20087345054749-Understanding-Resume-Parsing)
 - [Resumly: Lever ATS](https://www.resumly.ai/blog/how-to-tailor-resumes-for-lever-ats-specifically)
@@ -535,17 +572,20 @@ this is a fundamental architectural choice:
 **parser engine:** **Textkernel** (confirmed in SAP documentation). this is the only system of the six where the third-party parser is explicitly documented.
 
 **Textkernel capabilities:**
+
 - processes 2+ billion resumes and job postings annually
 - supports 29 languages (SAP limits to 15: Dutch, English, German, French, Spanish, Swedish, Danish, Polish, Romanian, Italian, Slovak, Czech, Russian, Portuguese, Chinese)
 - over 95% accuracy for critical data points with standard parser; LLM parser reduces remaining errors by up to 30%
 
 **text extraction:**
+
 - text-based PDFs and Word documents
 - **scanned/image PDFs do NOT parse** (explicitly documented as a known limitation)
 - resumes submitted via API are NOT parsed
 - agency-submitted candidate resumes are NOT parsed
 
 **field extraction:**
+
 - previous work experience
 - current employer
 - contact address
@@ -553,6 +593,7 @@ this is a fundamental architectural choice:
 - skills, certifications, licenses, job titles, locations (with RChilli integration)
 
 **critical configuration requirements:**
+
 - parsing works best when the customer's configuration has the **profile before the application** in the flow
 - customers must complete a **standardization mapping** exercise to map parsed fields to their system fields
 - **picklist fields do NOT work** with resume parsing (system expects option ID, not label)
@@ -563,6 +604,7 @@ this is a fundamental architectural choice:
 **base SuccessFactors:** standard keyword-based search with recruiter-driven queries.
 
 **AI-powered matching (with AI Units license):**
+
 - AI Skills Matching shows applicant skills vs. job required skills
 - semantic understanding of skill relationships
 - can recommend roles to candidates by matching extracted skills to open jobs
@@ -570,22 +612,26 @@ this is a fundamental architectural choice:
 ### 6.3 Scoring/Ranking Algorithm
 
 **stack ranking (AI Units license required):**
+
 - applicants are automatically sorted from **best fit to least fit** based on job requirements and skills framework
 - Joule (SAP's AI assistant) powers: skills extraction, candidate-job matching, stack ranking, interview question generation
 
 **scoring factors:**
+
 - skills alignment with job description
 - experience relevance
 - education match
 - uses the organization's skills framework as the reference taxonomy
 
 **AI-generated interview insights:**
+
 - generates comprehensive candidate assessments from interview feedback
 - incorporates ratings, skill/competency remarks, interviewer notes, and recommendations
 
 ### 6.4 Filtering Behavior
 
 **what causes filtering out:**
+
 - resume parsing failure (scanned PDF, API submission, agency submission)
 - Mobile Apply parsing issues (does not work 100% when Mobile Apply is enabled)
 - picklist mapping failures (common configuration issue)
@@ -605,16 +651,17 @@ this is a fundamental architectural choice:
 
 ### 6.6 AI/ML Features
 
-| feature | technology | status |
-|---------|-----------|--------|
-| resume parsing | Textkernel (third-party) | active |
-| stack ranking | SAP Joule AI, skills-based | available with AI Units license |
-| skills matching | AI-powered semantic matching | available with AI Units license |
-| candidate-job matching | ML-based recommendation engine | available with AI Units license |
-| interview question generation | generative AI | available with AI Units license |
-| interview insight generation | generative AI summarization | available with AI Units license |
+| feature                       | technology                     | status                          |
+| ----------------------------- | ------------------------------ | ------------------------------- |
+| resume parsing                | Textkernel (third-party)       | active                          |
+| stack ranking                 | SAP Joule AI, skills-based     | available with AI Units license |
+| skills matching               | AI-powered semantic matching   | available with AI Units license |
+| candidate-job matching        | ML-based recommendation engine | available with AI Units license |
+| interview question generation | generative AI                  | available with AI Units license |
+| interview insight generation  | generative AI summarization    | available with AI Units license |
 
 **sources:**
+
 - [SAP: Configuring Resume Parsing](https://help.sap.com/docs/successfactors-recruiting/setting-up-and-maintaining-sap-successfactors-recruiting/configuring-resume-parsing)
 - [SAP: Working with Resume Parsing](https://help.sap.com/docs/SAP_SUCCESSFACTORS_RECRUITING/8477193265ea4172a1dda118505ca631/07b6d03076a149b78f4f7a615e3025fd.html)
 - [Diokles: SAP AI Features](https://diokles.de/en_us/sap-ai-fatures-for-successfactors-recruiting/)
@@ -631,17 +678,18 @@ this is a fundamental architectural choice:
 
 the major resume parsing engines used across the ATS industry:
 
-| parser | owner | notable clients | languages | annual volume |
-|--------|-------|----------------|-----------|--------------|
-| **Textkernel** (+ Sovren) | Textkernel (acquired Sovren 2022) | SAP SuccessFactors, Adecco, Manpower, Randstad | 29 languages | 2B+ resumes/year |
-| **HireAbility (ALEX)** | iCIMS (acquired) | iCIMS Talent Cloud, various independent apps | 50+ languages | not disclosed |
-| **DaXtra** | DaXtra Technologies | Bullhorn | 150+ data fields | not disclosed |
-| **RChilli** | RChilli | SAP SuccessFactors (add-on), Oracle Recruiting Cloud | 40+ languages | not disclosed |
-| **Sovren** | Textkernel (merged) | CareerBuilder, Monster | 29 languages | merged with Textkernel |
+| parser                    | owner                             | notable clients                                      | languages        | annual volume          |
+| ------------------------- | --------------------------------- | ---------------------------------------------------- | ---------------- | ---------------------- |
+| **Textkernel** (+ Sovren) | Textkernel (acquired Sovren 2022) | SAP SuccessFactors, Adecco, Manpower, Randstad       | 29 languages     | 2B+ resumes/year       |
+| **HireAbility (ALEX)**    | iCIMS (acquired)                  | iCIMS Talent Cloud, various independent apps         | 50+ languages    | not disclosed          |
+| **DaXtra**                | DaXtra Technologies               | Bullhorn                                             | 150+ data fields | not disclosed          |
+| **RChilli**               | RChilli                           | SAP SuccessFactors (add-on), Oracle Recruiting Cloud | 40+ languages    | not disclosed          |
+| **Sovren**                | Textkernel (merged)               | CareerBuilder, Monster                               | 29 languages     | merged with Textkernel |
 
 ### Key Technical Facts
 
 **Textkernel/Sovren:**
+
 - standard parser: 95%+ accuracy on critical data points
 - LLM parser (powered by GPT-3.5): reduces remaining errors by up to 30%
 - all parsing done in-memory (no data written to filesystem)
@@ -650,26 +698,28 @@ the major resume parsing engines used across the ATS industry:
 - pre-built connectors for Greenhouse, Lever, Workday, and many others
 
 **HireAbility ALEX:**
+
 - grammar-based parsing (assigns meaning via context)
 - NLP + pattern recognition + proprietary semantic algorithms
 - 50+ languages including multi-language documents
 - outputs HR-XML and JSON
 
 **DaXtra:**
+
 - 150+ data fields extracted
 - cloud-based with candidate management features
 - strong in staffing/recruitment agency market (Bullhorn integration)
 
 ### Which Systems Use Which Parsers
 
-| ATS | primary parser | confirmed source |
-|-----|---------------|-----------------|
-| **Workday** | proprietary (undisclosed) | not publicly documented |
-| **Taleo** | proprietary (undisclosed) | not publicly documented |
-| **iCIMS** | HireAbility ALEX (acquired) | publicly documented |
-| **Greenhouse** | in-house ML models + OpenAI | publicly documented |
-| **Lever** | proprietary (undisclosed) | not publicly documented |
-| **SuccessFactors** | Textkernel | officially documented by SAP |
+| ATS                | primary parser              | confirmed source             |
+| ------------------ | --------------------------- | ---------------------------- |
+| **Workday**        | proprietary (undisclosed)   | not publicly documented      |
+| **Taleo**          | proprietary (undisclosed)   | not publicly documented      |
+| **iCIMS**          | HireAbility ALEX (acquired) | publicly documented          |
+| **Greenhouse**     | in-house ML models + OpenAI | publicly documented          |
+| **Lever**          | proprietary (undisclosed)   | not publicly documented      |
+| **SuccessFactors** | Textkernel                  | officially documented by SAP |
 
 ---
 
@@ -699,7 +749,7 @@ most automated                                         least automated
   questions)
 ```
 
-*Workday only scores if HiredScore is enabled. without it, Workday sits closer to Lever on this spectrum.
+\*Workday only scores if HiredScore is enabled. without it, Workday sits closer to Lever on this spectrum.
 
 ### Keyword Matching Sophistication
 
@@ -716,25 +766,25 @@ most literal                                           most semantic
 
 ### Auto-Reject Capability
 
-| system | can it auto-reject candidates? | mechanism |
-|--------|-------------------------------|-----------|
-| Taleo | **YES** | disqualification questions = instant exit |
-| Workday | configurable | knockout questions (optional) |
-| SuccessFactors | configurable | screening questions (optional) |
-| iCIMS | no evidence of auto-reject | AI is advisory only |
-| Greenhouse | **NO** (by design) | human decision required at every step |
-| Lever | **NO** | no automated screening |
+| system         | can it auto-reject candidates? | mechanism                                 |
+| -------------- | ------------------------------ | ----------------------------------------- |
+| Taleo          | **YES**                        | disqualification questions = instant exit |
+| Workday        | configurable                   | knockout questions (optional)             |
+| SuccessFactors | configurable                   | screening questions (optional)            |
+| iCIMS          | no evidence of auto-reject     | AI is advisory only                       |
+| Greenhouse     | **NO** (by design)             | human decision required at every step     |
+| Lever          | **NO**                         | no automated screening                    |
 
 ### File Format Recommendations
 
-| system | best format | notes |
-|--------|------------|-------|
-| Workday | DOCX | DOCX preferred over PDF explicitly |
-| Taleo | DOCX or simple PDF | OCR-based, keep it simple |
-| iCIMS | Word | handles Word better than PDF |
-| Greenhouse | Word or PDF | both work, can't do images |
-| Lever | simple format | works with both, keep it clean |
-| SuccessFactors | text-based PDF or DOCX | scanned PDFs explicitly fail |
+| system         | best format            | notes                              |
+| -------------- | ---------------------- | ---------------------------------- |
+| Workday        | DOCX                   | DOCX preferred over PDF explicitly |
+| Taleo          | DOCX or simple PDF     | OCR-based, keep it simple          |
+| iCIMS          | Word                   | handles Word better than PDF       |
+| Greenhouse     | Word or PDF            | both work, can't do images         |
+| Lever          | simple format          | works with both, keep it clean     |
+| SuccessFactors | text-based PDF or DOCX | scanned PDFs explicitly fail       |
 
 ### Implications for ATS Scoring Prompts
 

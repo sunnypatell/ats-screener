@@ -289,8 +289,18 @@
 				<div class="suggestions-cards">
 					{#each allSuggestions as suggestion, i}
 						{@const structured = isStructured(suggestion)}
-						{@const impactColor = structured ? impactColorMap[suggestion.impact] ?? '#eab308' : impactColorMap[i === 0 ? 'critical' : i === 1 ? 'high' : i < 4 ? 'medium' : 'low']}
-						{@const impactLabel = structured ? suggestion.impact : (i === 0 ? 'critical' : i === 1 ? 'high' : i < 4 ? 'medium' : 'low')}
+						{@const impactColor = structured
+							? (impactColorMap[suggestion.impact] ?? '#eab308')
+							: impactColorMap[i === 0 ? 'critical' : i === 1 ? 'high' : i < 4 ? 'medium' : 'low']}
+						{@const impactLabel = structured
+							? suggestion.impact
+							: i === 0
+								? 'critical'
+								: i === 1
+									? 'high'
+									: i < 4
+										? 'medium'
+										: 'low'}
 						<button
 							class="suggestion-card"
 							class:expanded={expandedSuggestion === i}
@@ -302,7 +312,11 @@
 										{i + 1}
 									</span>
 									<span class="suggestion-summary">
-										{structured ? suggestion.summary : (typeof suggestion === 'string' ? suggestion : '')}
+										{structured
+											? suggestion.summary
+											: typeof suggestion === 'string'
+												? suggestion
+												: ''}
 									</span>
 								</div>
 								<div class="suggestion-card-right">

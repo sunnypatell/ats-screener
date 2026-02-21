@@ -30,33 +30,45 @@
 
 	function getScore(result: ScoreResult, dim: string): number {
 		switch (dim) {
-			case 'formatting': return result.breakdown.formatting.score;
-			case 'keywordMatch': return result.breakdown.keywordMatch.score;
-			case 'sections': return result.breakdown.sections.score;
-			case 'experience': return result.breakdown.experience.score;
-			case 'education': return result.breakdown.education.score;
-			default: return 0;
+			case 'formatting':
+				return result.breakdown.formatting.score;
+			case 'keywordMatch':
+				return result.breakdown.keywordMatch.score;
+			case 'sections':
+				return result.breakdown.sections.score;
+			case 'experience':
+				return result.breakdown.experience.score;
+			case 'education':
+				return result.breakdown.education.score;
+			default:
+				return 0;
 		}
 	}
 
 	function getIssues(result: ScoreResult, dim: string): string[] {
 		switch (dim) {
-			case 'formatting': return result.breakdown.formatting.issues;
-			case 'keywordMatch': return result.breakdown.keywordMatch.missing.slice(0, 3).map(k => `Missing: "${k}"`);
-			case 'sections': return result.breakdown.sections.missing.map(s => `Missing: ${s}`);
-			case 'experience': return result.breakdown.experience.highlights;
-			case 'education': return result.breakdown.education.notes;
-			default: return [];
+			case 'formatting':
+				return result.breakdown.formatting.issues;
+			case 'keywordMatch':
+				return result.breakdown.keywordMatch.missing.slice(0, 3).map((k) => `Missing: "${k}"`);
+			case 'sections':
+				return result.breakdown.sections.missing.map((s) => `Missing: ${s}`);
+			case 'experience':
+				return result.breakdown.experience.highlights;
+			case 'education':
+				return result.breakdown.education.notes;
+			default:
+				return [];
 		}
 	}
 
 	// find the weakest areas across all platforms
 	const insights = $derived.by(() => {
-		const areas: AreaInsight[] = dimensions.map(dim => {
-			const scores = results.map(r => ({ platform: r.system, score: getScore(r, dim) }));
+		const areas: AreaInsight[] = dimensions.map((dim) => {
+			const scores = results.map((r) => ({ platform: r.system, score: getScore(r, dim) }));
 			const avg = Math.round(scores.reduce((sum, s) => sum + s.score, 0) / scores.length);
-			const lowest = scores.reduce((min, s) => s.score < min.score ? s : min, scores[0]);
-			const allIssues = [...new Set(results.flatMap(r => getIssues(r, dim)))];
+			const lowest = scores.reduce((min, s) => (s.score < min.score ? s : min), scores[0]);
+			const allIssues = [...new Set(results.flatMap((r) => getIssues(r, dim)))];
 			return {
 				dimension: dim,
 				label: dimensionLabels[dim],
@@ -78,15 +90,22 @@
 	}
 
 	// platforms at risk of filtering out this resume
-	const atRiskPlatforms = $derived(
-		results.filter(r => !r.passesFilter).map(r => r.system)
-	);
+	const atRiskPlatforms = $derived(results.filter((r) => !r.passesFilter).map((r) => r.system));
 </script>
 
 <div class="weakest-areas">
 	<div class="wa-header">
-		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-			<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+		<svg
+			width="20"
+			height="20"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+		>
+			<path
+				d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+			/>
 			<line x1="12" y1="9" x2="12" y2="13" />
 			<line x1="12" y1="17" x2="12.01" y2="17" />
 		</svg>
@@ -107,12 +126,24 @@
 			{@const isWeak = area.avgScore < 70}
 			<div class="area-item" class:weak={isWeak} class:strong={area.avgScore >= 80}>
 				<div class="area-left">
-					<div class="area-rank" style="background: {getScoreColor(area.avgScore)}20; color: {getScoreColor(area.avgScore)};">
+					<div
+						class="area-rank"
+						style="background: {getScoreColor(area.avgScore)}20; color: {getScoreColor(
+							area.avgScore
+						)};"
+					>
 						{i + 1}
 					</div>
 					<div class="area-info">
 						<div class="area-name">
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<svg
+								width="14"
+								height="14"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
 								<path d={dimensionIcons[area.dimension]} />
 							</svg>
 							{area.label}
@@ -129,10 +160,15 @@
 				<div class="area-right">
 					<div class="area-score-bar">
 						<div class="area-bar-bg">
-							<div class="area-bar-fill" style="width: {area.avgScore}%; background: {getScoreColor(area.avgScore)}"></div>
+							<div
+								class="area-bar-fill"
+								style="width: {area.avgScore}%; background: {getScoreColor(area.avgScore)}"
+							></div>
 						</div>
 					</div>
-					<span class="area-score" style="color: {getScoreColor(area.avgScore)}">{area.avgScore}</span>
+					<span class="area-score" style="color: {getScoreColor(area.avgScore)}"
+						>{area.avgScore}</span
+					>
 					{#if area.lowestScore < area.avgScore - 5}
 						<span class="area-worst">
 							{area.lowestPlatform}: {area.lowestScore}
@@ -210,7 +246,9 @@
 		border-radius: var(--radius-md);
 		background: rgba(255, 255, 255, 0.015);
 		border: 1px solid transparent;
-		transition: background 0.15s ease, border-color 0.15s ease;
+		transition:
+			background 0.15s ease,
+			border-color 0.15s ease;
 	}
 
 	.area-item.weak {
