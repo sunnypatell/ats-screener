@@ -3,10 +3,6 @@ title: Taleo (Oracle)
 description: How Oracle's Taleo ATS evaluates resumes based on our research into its keyword matching behavior.
 ---
 
-:::note[Research Disclaimer]
-The information below is based on publicly available Oracle documentation, community reports, and third-party research. This simulation may not reflect current Oracle Taleo behavior. ATS Screener is not affiliated with or endorsed by Oracle.
-:::
-
 **Taleo** by Oracle is one of the oldest enterprise ATS platforms still in widespread use. Based on available documentation, it uses the strictest keyword matching configuration of the platforms simulated here.
 
 ## Key Facts
