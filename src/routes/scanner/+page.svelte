@@ -77,7 +77,7 @@
 
 			if (llmResult && llmResult.results.length > 0) {
 				console.log('[scan] LLM scoring complete:', llmResult.results.length, 'results from', llmResult.provider);
-				scoresStore.finishScoring(llmResult.results);
+				scoresStore.finishScoring(llmResult.results, resumeStore.file?.name);
 				scoresStore.finishAnalyzing(null, false);
 				return;
 			}
@@ -88,7 +88,7 @@
 			const input = buildScoringInput();
 			const results = scoreResume(input);
 			console.log('[scan] rule-based scoring complete:', results.length, 'results');
-			scoresStore.finishScoring(results);
+			scoresStore.finishScoring(results, resumeStore.file?.name);
 			scoresStore.finishAnalyzing(null, true);
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : 'scoring failed';

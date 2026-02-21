@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { scoresStore } from '$stores/scores.svelte';
+	import { scoresStore, type ScanHistoryEntry } from '$stores/scores.svelte';
 
 	let expanded = $state(false);
 
@@ -25,6 +25,12 @@
 		if (score >= 80) return '#22c55e';
 		if (score >= 60) return '#eab308';
 		return '#ef4444';
+	}
+
+	function handleLoadEntry(entry: ScanHistoryEntry) {
+		scoresStore.loadFromHistory(entry);
+		// scroll to top so user sees the dashboard
+		window.scrollTo({ top: 0, behavior: 'smooth' });
 	}
 
 	function handleClear() {
@@ -67,19 +73,27 @@
 		{#if expanded}
 			<div class="history-list">
 				{#each history as entry (entry.id)}
-					<div class="history-entry">
+					<button class="history-entry" onclick={() => handleLoadEntry(entry)} title="Click to view these results">
 						<div class="entry-score" style="color: {scoreColor(entry.averageScore)}">
 							{entry.averageScore}
 						</div>
 						<div class="entry-details">
-							<div class="entry-meta">
-								<span class="entry-mode">{entry.mode}</span>
-								<span class="entry-sep">&middot;</span>
-								<span class="entry-passing">{entry.passingCount}/6 passing</span>
+							<div class="entry-info">
+								{#if entry.fileName}
+									<span class="entry-filename">{entry.fileName}</span>
+								{/if}
+								<div class="entry-meta">
+									<span class="entry-mode">{entry.mode}</span>
+									<span class="entry-sep">&middot;</span>
+									<span class="entry-passing">{entry.passingCount}/6 passing</span>
+								</div>
 							</div>
 							<span class="entry-time">{formatDate(entry.timestamp)}</span>
 						</div>
-					</div>
+						<svg class="entry-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<polyline points="9,18 15,12 9,6" />
+						</svg>
+					</button>
 				{/each}
 
 				<button class="clear-btn" onclick={handleClear}>
@@ -196,10 +210,16 @@
 		padding: 0.6rem 0.75rem;
 		border-radius: var(--radius-sm);
 		transition: background 0.15s ease;
+		width: 100%;
+		background: none;
+		border: none;
+		cursor: pointer;
+		text-align: left;
+		font-family: inherit;
 	}
 
 	.history-entry:hover {
-		background: rgba(255, 255, 255, 0.02);
+		background: rgba(6, 182, 212, 0.04);
 	}
 
 	.entry-score {
@@ -216,13 +236,31 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.5rem;
+		min-width: 0;
+	}
+
+	.entry-info {
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+		min-width: 0;
+	}
+
+	.entry-filename {
+		font-size: 0.78rem;
+		font-weight: 500;
+		color: var(--text-secondary);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 180px;
 	}
 
 	.entry-meta {
 		display: flex;
 		align-items: center;
 		gap: 0.4rem;
-		font-size: 0.75rem;
+		font-size: 0.72rem;
 		color: var(--text-tertiary);
 	}
 
@@ -240,6 +278,17 @@
 		font-size: 0.7rem;
 		color: var(--text-tertiary);
 		white-space: nowrap;
+	}
+
+	.entry-arrow {
+		color: var(--text-tertiary);
+		opacity: 0;
+		transition: opacity 0.15s ease;
+		flex-shrink: 0;
+	}
+
+	.history-entry:hover .entry-arrow {
+		opacity: 0.6;
 	}
 
 	.clear-btn {

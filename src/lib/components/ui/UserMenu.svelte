@@ -43,6 +43,14 @@
 				</svg>
 				Scanner
 			</a>
+			<a href="/history" class="dropdown-item" onclick={() => (open = false)}>
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<circle cx="12" cy="12" r="10" />
+					<polyline points="12,6 12,12 16,14" />
+				</svg>
+				Scan History
+			</a>
+			<div class="dropdown-divider"></div>
 			<button class="dropdown-item" onclick={handleSignOut}>
 				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />

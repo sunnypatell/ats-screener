@@ -3,18 +3,36 @@ import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
 import { buildFullScoringPrompt, buildJDAnalysisPrompt } from '$engine/llm/prompts';
 
-// provider configuration: Gemini → Groq → Cerebras fallback chain
+// provider configuration: Gemma 3 27B (14,400 RPD) → Gemini fallbacks (20 RPD each) → Groq → Cerebras
 interface LLMProvider {
 	name: string;
+	apiKeyName: string;
 	buildRequest: (prompt: string, apiKey: string) => { url: string; init: RequestInit };
 	extractText: (response: unknown) => string;
 }
 
-const PROVIDERS: LLMProvider[] = [
-	{
-		name: 'gemini',
+// shared extractor for all Google Generative Language API models
+const googleExtractText = (data: unknown) => {
+	const d = data as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
+	return d.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+};
+
+// shared extractor for OpenAI-compatible APIs (Groq, Cerebras)
+const openaiExtractText = (data: unknown) => {
+	const d = data as { choices?: { message?: { content?: string } }[] };
+	return d.choices?.[0]?.message?.content ?? '';
+};
+
+function buildGoogleProvider(
+	name: string,
+	model: string,
+	opts?: { jsonMode?: boolean }
+): LLMProvider {
+	return {
+		name,
+		apiKeyName: 'GEMINI_API_KEY',
 		buildRequest: (prompt, apiKey) => ({
-			url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+			url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
 			init: {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -24,18 +42,26 @@ const PROVIDERS: LLMProvider[] = [
 						temperature: 0.3,
 						topP: 0.85,
 						maxOutputTokens: 16384,
-						responseMimeType: 'application/json'
+						...(opts?.jsonMode && { responseMimeType: 'application/json' })
 					}
 				})
 			}
 		}),
-		extractText: (data: unknown) => {
-			const d = data as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
-			return d.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-		}
-	},
+		extractText: googleExtractText
+	};
+}
+
+const PROVIDERS: LLMProvider[] = [
+	// primary: Gemma 3 27B - 14,400 RPD, 30 RPM (no JSON mode, relies on extractJSON)
+	buildGoogleProvider('gemma-3-27b', 'gemma-3-27b-it'),
+	// fallback 1: Gemini 2.5 Flash - 20 RPD, 5 RPM (supports JSON mode)
+	buildGoogleProvider('gemini-2.5-flash', 'gemini-2.5-flash', { jsonMode: true }),
+	// fallback 2: Gemini 2.5 Flash Lite - 20 RPD, 10 RPM (supports JSON mode)
+	buildGoogleProvider('gemini-2.5-flash-lite', 'gemini-2.5-flash-lite', { jsonMode: true }),
+	// fallback 3: Groq
 	{
 		name: 'groq',
+		apiKeyName: 'GROQ_API_KEY',
 		buildRequest: (prompt, apiKey) => ({
 			url: 'https://api.groq.com/openai/v1/chat/completions',
 			init: {
@@ -53,13 +79,12 @@ const PROVIDERS: LLMProvider[] = [
 				})
 			}
 		}),
-		extractText: (data: unknown) => {
-			const d = data as { choices?: { message?: { content?: string } }[] };
-			return d.choices?.[0]?.message?.content ?? '';
-		}
+		extractText: openaiExtractText
 	},
+	// fallback 4: Cerebras
 	{
 		name: 'cerebras',
+		apiKeyName: 'CEREBRAS_API_KEY',
 		buildRequest: (prompt, apiKey) => ({
 			url: 'https://api.cerebras.ai/v1/chat/completions',
 			init: {
@@ -77,10 +102,7 @@ const PROVIDERS: LLMProvider[] = [
 				})
 			}
 		}),
-		extractText: (data: unknown) => {
-			const d = data as { choices?: { message?: { content?: string } }[] };
-			return d.choices?.[0]?.message?.content ?? '';
-		}
+		extractText: openaiExtractText
 	}
 ];
 
@@ -131,14 +153,8 @@ async function callLLM(
 	prompt: string,
 	env: Record<string, string>
 ): Promise<{ text: string; provider: string } | null> {
-	const keyMap: Record<string, string> = {
-		gemini: env.GEMINI_API_KEY ?? '',
-		groq: env.GROQ_API_KEY ?? '',
-		cerebras: env.CEREBRAS_API_KEY ?? ''
-	};
-
 	for (const provider of PROVIDERS) {
-		const apiKey = keyMap[provider.name];
+		const apiKey = env[provider.apiKeyName] ?? '';
 		if (!apiKey) continue;
 
 		try {

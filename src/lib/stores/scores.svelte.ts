@@ -24,6 +24,8 @@ export interface ScanHistoryEntry {
 	averageScore: number;
 	passingCount: number;
 	results: ScoreResult[];
+	fileName?: string;
+	jobDescriptionSnippet?: string;
 }
 
 // tracks ATS scores, LLM analysis, and job description state
@@ -75,10 +77,10 @@ class ScoresStore {
 		this.error = null;
 	}
 
-	finishScoring(results: ScoreResult[]) {
+	finishScoring(results: ScoreResult[], fileName?: string) {
 		this.results = results;
 		this.isScoring = false;
-		this.saveToHistory(results);
+		this.saveToHistory(results, fileName);
 	}
 
 	// load scan history from Firestore for current user
@@ -104,7 +106,7 @@ class ScoresStore {
 	}
 
 	// save scan results to Firestore
-	private async saveToHistory(results: ScoreResult[]) {
+	private async saveToHistory(results: ScoreResult[], fileName?: string) {
 		if (!browser || results.length === 0 || !authStore.isAuthenticated || !authStore.user) return;
 
 		try {
@@ -116,7 +118,9 @@ class ScoresStore {
 					results.reduce((s, r) => s + r.overallScore, 0) / results.length
 				),
 				passingCount: results.filter((r) => r.passesFilter).length,
-				results
+				results,
+				...(fileName && { fileName }),
+				...(this.jobDescription && { jobDescriptionSnippet: this.jobDescription.slice(0, 200) })
 			};
 
 			await addDoc(scansRef, entry);
@@ -148,6 +152,13 @@ class ScoresStore {
 		} catch (err) {
 			console.warn('failed to clear history:', err);
 		}
+	}
+
+	// load a past scan's results into the active dashboard view
+	loadFromHistory(entry: ScanHistoryEntry) {
+		this.results = entry.results;
+		this.isScoring = false;
+		this.error = null;
 	}
 
 	startAnalyzing() {
