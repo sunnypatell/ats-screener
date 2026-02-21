@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
 	import Logo from './Logo.svelte';
 	import UserMenu from './UserMenu.svelte';
 	import AuthButton from './AuthButton.svelte';
@@ -10,11 +12,41 @@
 
 	// highlight the active route
 	const currentPath = $derived($page.url.pathname);
+	const isOnDocs = $derived(currentPath.startsWith('/docs'));
+	const isMac = $derived(browser ? navigator.platform.toUpperCase().includes('MAC') : true);
+
+	function handleSearchClick() {
+		goto('/docs');
+	}
+
+	// cmd+k / ctrl+k shortcut to jump to docs search
+	function handleKeydown(e: KeyboardEvent) {
+		if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+			// only intercept when NOT already on docs (Starlight handles its own cmd+k)
+			if (!isOnDocs) {
+				e.preventDefault();
+				goto('/docs');
+			}
+		}
+	}
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 <nav class="navbar">
 	<div class="nav-inner">
 		<Logo size="sm" />
+
+		{#if !isOnDocs}
+			<button class="search-bar" onclick={handleSearchClick} aria-label="Search documentation">
+				<svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<circle cx="11" cy="11" r="8" />
+					<path d="m21 21-4.35-4.35" />
+				</svg>
+				<span class="search-placeholder">Search Docs</span>
+				<kbd class="search-kbd">{isMac ? '⌘' : 'Ctrl'}K</kbd>
+			</button>
+		{/if}
 
 		<div class="nav-links" class:open={mobileOpen}>
 			<a href="/" class="nav-link" class:active={currentPath === '/'}>Home</a>
@@ -77,6 +109,51 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
+	}
+
+	/* search bar */
+	.search-bar {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.4rem 0.75rem;
+		background: rgba(255, 255, 255, 0.04);
+		border: 1px solid var(--glass-border);
+		border-radius: var(--radius-md);
+		cursor: pointer;
+		transition:
+			border-color 0.2s ease,
+			background 0.2s ease;
+		min-width: 200px;
+	}
+
+	.search-bar:hover {
+		border-color: rgba(255, 255, 255, 0.15);
+		background: rgba(255, 255, 255, 0.06);
+	}
+
+	.search-icon {
+		color: var(--text-tertiary);
+		flex-shrink: 0;
+	}
+
+	.search-placeholder {
+		font-size: 0.85rem;
+		color: var(--text-tertiary);
+		flex: 1;
+		text-align: left;
+	}
+
+	.search-kbd {
+		font-size: 0.65rem;
+		font-family: inherit;
+		color: var(--text-tertiary);
+		background: rgba(255, 255, 255, 0.06);
+		border: 1px solid var(--glass-border);
+		border-radius: 4px;
+		padding: 0.15rem 0.4rem;
+		line-height: 1;
+		white-space: nowrap;
 	}
 
 	.nav-links {
@@ -151,7 +228,21 @@
 		transform: rotate(-45deg) translate(4px, -4px);
 	}
 
+	@media (max-width: 900px) {
+		.search-bar {
+			min-width: 160px;
+		}
+
+		.search-placeholder {
+			display: none;
+		}
+	}
+
 	@media (max-width: 640px) {
+		.search-bar {
+			display: none;
+		}
+
 		.nav-toggle {
 			display: flex;
 		}
