@@ -135,8 +135,6 @@
 			<div class="scan-meta">
 				<span class="meta-dot"></span>
 				<span>{elapsed}s elapsed</span>
-				<span class="meta-sep">&middot;</span>
-				<span>Gemini 2.5 Flash Lite</span>
 			</div>
 		</div>
 	</div>
@@ -396,10 +394,6 @@
 		50% {
 			opacity: 0.3;
 		}
-	}
-
-	.meta-sep {
-		opacity: 0.4;
 	}
 
 	@media (max-width: 640px) {

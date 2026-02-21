@@ -107,10 +107,15 @@ class ScoresStore {
 
 	// save scan results to Firestore
 	private async saveToHistory(results: ScoreResult[], fileName?: string) {
-		if (!browser || results.length === 0 || !authStore.isAuthenticated || !authStore.user) return;
+		if (!browser || results.length === 0) return;
+		if (!authStore.isAuthenticated || !authStore.user) {
+			console.warn('[scores] skipping history save: user not authenticated');
+			return;
+		}
 
 		try {
-			const scansRef = collection(db, 'users', authStore.user.uid, 'scans');
+			const uid = authStore.user.uid;
+			const scansRef = collection(db, 'users', uid, 'scans');
 			const entry: Omit<ScanHistoryEntry, 'id'> = {
 				timestamp: new Date().toISOString(),
 				mode: this.mode,
@@ -123,19 +128,23 @@ class ScoresStore {
 				...(this.jobDescription && { jobDescriptionSnippet: this.jobDescription.slice(0, 200) })
 			};
 
-			await addDoc(scansRef, entry);
+			// strip undefined values (Firestore rejects them)
+			const sanitized = JSON.parse(JSON.stringify(entry));
+
+			const docRef = await addDoc(scansRef, sanitized);
+			console.warn('[scores] saved scan to history:', docRef.id);
 
 			// enforce max history cap
 			await this.loadHistory();
 			if (this.scanHistory.length > MAX_HISTORY) {
 				const toDelete = this.scanHistory.slice(MAX_HISTORY);
 				for (const scan of toDelete) {
-					await deleteDoc(doc(db, 'users', authStore.user.uid, 'scans', scan.id));
+					await deleteDoc(doc(db, 'users', uid, 'scans', scan.id));
 				}
 				this.scanHistory = this.scanHistory.slice(0, MAX_HISTORY);
 			}
 		} catch (err) {
-			console.warn('failed to save scan to history:', err);
+			console.error('[scores] failed to save scan to history:', err);
 		}
 	}
 
