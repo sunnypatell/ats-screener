@@ -61,20 +61,26 @@
 							/>
 						</svg>
 					</a>
+					<a
+						href="https://buymeacoffee.com/sunnypatell"
+						target="_blank"
+						rel="noopener"
+						class="sponsor-btn"
+					>
+						<svg
+							width="14"
+							height="14"
+							viewBox="0 0 24 24"
+							fill="currentColor"
+							class="sponsor-heart"
+						>
+							<path
+								d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+							/>
+						</svg>
+						Sponsor
+					</a>
 				</div>
-				<a
-					href="https://buymeacoffee.com/sunnypatell"
-					target="_blank"
-					rel="noopener"
-					class="sponsor-btn"
-				>
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="sponsor-heart">
-						<path
-							d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-						/>
-					</svg>
-					Sponsor
-				</a>
 			</div>
 
 			<!-- product links -->
@@ -156,7 +162,7 @@
 <style>
 	.footer {
 		position: relative;
-		padding: 5rem 2rem 2rem;
+		padding: 3rem 2rem 1.5rem;
 		border-top: 1px solid var(--glass-border);
 		background: linear-gradient(180deg, transparent, rgba(6, 182, 212, 0.02));
 	}
@@ -169,8 +175,8 @@
 	.footer-top {
 		display: grid;
 		grid-template-columns: 2fr 1fr 1fr 1fr;
-		gap: 3rem;
-		margin-bottom: 3rem;
+		gap: 2.5rem;
+		margin-bottom: 2rem;
 	}
 
 	.footer-brand {
@@ -188,6 +194,7 @@
 
 	.social-links {
 		display: flex;
+		align-items: center;
 		gap: 0.75rem;
 		margin-top: 0.5rem;
 	}
@@ -217,21 +224,20 @@
 	.sponsor-btn {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.5rem;
-		padding: 0.5rem 1rem;
+		gap: 0.35rem;
+		height: 36px;
+		padding: 0 0.75rem;
 		border-radius: var(--radius-md);
 		background: var(--glass-bg);
 		border: 1px solid rgba(219, 39, 119, 0.3);
 		color: var(--text-secondary);
-		font-size: 0.85rem;
+		font-size: 0.8rem;
 		font-weight: 500;
 		text-decoration: none;
 		transition:
 			color 0.2s ease,
 			border-color 0.2s ease,
 			background 0.2s ease;
-		margin-top: 0.25rem;
-		width: fit-content;
 	}
 
 	.sponsor-btn:hover {
@@ -271,8 +277,8 @@
 	}
 
 	.disclaimer {
-		margin-bottom: 2rem;
-		padding-top: 1.5rem;
+		margin-bottom: 1.25rem;
+		padding-top: 1.25rem;
 		border-top: 1px solid var(--glass-border);
 	}
 
@@ -293,7 +299,7 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding-top: 2rem;
+		padding-top: 1.25rem;
 		border-top: 1px solid var(--glass-border);
 	}
 
@@ -331,7 +337,7 @@
 		}
 
 		.footer {
-			padding: 3rem 1.5rem 2rem;
+			padding: 2rem 1.5rem 1.5rem;
 		}
 	}
 </style>
