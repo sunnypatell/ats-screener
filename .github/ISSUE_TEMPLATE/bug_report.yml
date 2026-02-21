@@ -1,23 +1,44 @@
 name: bug report
-description: something isn't working correctly
+description: report a bug with ATS Screener
 labels: ['bug']
 body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: what area is affected?
+      options:
+        - Resume scanning / scoring
+        - Resume upload / parsing (PDF or DOCX)
+        - Job description input / targeted mode
+        - Score dashboard / results display
+        - Scan history
+        - Login / signup / authentication
+        - Landing page / about page
+        - Documentation site
+        - API / server error (503, 502, 429, etc.)
+        - Other
+    validations:
+      required: true
   - type: textarea
     id: description
     attributes:
       label: what happened?
-      description: describe the bug clearly
+      description: describe the bug clearly. include any error messages from the browser console if possible.
+      placeholder: |
+        after uploading a PDF and clicking "Scan", the scores never appear and the
+        spinner keeps spinning. the console shows a 503 error from /api/analyze.
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
       label: steps to reproduce
-      description: how can we reproduce this?
+      description: what exact steps trigger this bug?
       placeholder: |
         1. go to /scanner
-        2. upload a PDF resume
-        3. ...
+        2. upload a 2-page PDF resume
+        3. click "Scan Resume"
+        4. observe the spinner never resolves
     validations:
       required: true
   - type: textarea
@@ -28,6 +49,27 @@ body:
     validations:
       required: true
   - type: dropdown
+    id: scan-mode
+    attributes:
+      label: scan mode (if applicable)
+      description: were you doing a general or targeted scan?
+      options:
+        - General (resume only)
+        - Targeted (resume + job description)
+        - N/A
+    validations:
+      required: false
+  - type: dropdown
+    id: file-type
+    attributes:
+      label: resume file type (if applicable)
+      options:
+        - PDF
+        - DOCX
+        - N/A
+    validations:
+      required: false
+  - type: dropdown
     id: browser
     attributes:
       label: browser
@@ -36,11 +78,28 @@ body:
         - Firefox
         - Safari
         - Edge
+        - Arc
         - Other
     validations:
       required: true
+  - type: dropdown
+    id: device
+    attributes:
+      label: device
+      options:
+        - Desktop
+        - Mobile
+        - Tablet
+    validations:
+      required: true
+  - type: checkboxes
+    id: auth
+    attributes:
+      label: were you logged in?
+      options:
+        - label: I was signed in when this happened
   - type: textarea
     id: context
     attributes:
       label: additional context
-      description: screenshots, error messages, console output, etc.
+      description: screenshots, console errors, network tab output, or anything else helpful.

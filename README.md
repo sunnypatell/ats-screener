@@ -46,7 +46,7 @@ So I built ATS Screener to give students and job seekers what those paid tools w
 ## How It Works
 
 ```
-Resume (PDF/DOCX)  -->  Client-Side Parser  -->  Extracted Text  -->  Gemini AI  -->  6 Platform Scores
+Resume (PDF/DOCX)  -->  Client-Side Parser  -->  Extracted Text  -->  Gemma/Gemini AI  -->  6 Platform Scores
                         (Web Worker)              (sections,          (server)        (formatting, keywords,
                         file never uploaded       skills, dates)                       experience, education)
 
@@ -80,7 +80,7 @@ Each profile is based on research into the platform's documented parsing and mat
 | **PDF Parsing** | pdfjs-dist (Web Worker) | Mozilla-maintained, fully client-side. |
 | **DOCX Parsing** | mammoth | Client-side Word to text extraction. |
 | **NLP** | Custom TF-IDF + tokenizer + skills taxonomy | Lightweight, browser-native, supports 8+ industries. |
-| **LLM** | Gemini 2.5 Flash Lite | Free tier. Groq + Cerebras available as fallbacks for self-host. |
+| **LLM** | Gemma 3 27B (primary), Gemini 2.5 Flash (fallback) | 14,400 RPD free tier via Google Generative Language API. Groq + Cerebras available for self-host. |
 | **Auth** | Firebase Authentication | Google + email/password sign-in. Free Spark plan. |
 | **Storage** | Cloud Firestore | Scan history per user. Free Spark plan. |
 | **Hosting** | Vercel | Free hobby tier. Edge functions for API. |
@@ -119,6 +119,7 @@ src/
 │   ├── +page.svelte              # Landing page
 │   ├── scanner/+page.svelte      # Scanner (upload, parse, score, results)
 │   ├── login/+page.svelte        # Auth (Google + email/password)
+│   ├── history/+page.svelte      # Scan history (past results)
 │   └── api/analyze/+server.ts    # LLM proxy endpoint
 ├── lib/
 │   ├── components/
