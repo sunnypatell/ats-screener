@@ -2,26 +2,46 @@ import type { ContactInfo } from './types';
 
 const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
 const PHONE_REGEX = /(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)?\d{3}[-.\s]?\d{4}/;
-const LINKEDIN_REGEX = /(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[\w-]+\/?/i;
+// matches linkedin.com/in/user, linkedin.com/user, and PDF-mangled variants with spaces
+const LINKEDIN_REGEX =
+	/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/(?:in\/)?[\w-]+\/?/i;
 const GITHUB_REGEX = /(?:https?:\/\/)?(?:www\.)?github\.com\/[\w-]+\/?/i;
 const WEBSITE_REGEX =
 	/https?:\/\/(?!.*(?:linkedin|github)\.com)[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/\S*)?/i;
 
-// extracts contact info from the top ~10 lines of the resume
+// extracts contact info from the top ~15 lines of the resume
 export function extractContact(lines: string[]): ContactInfo {
-	// contact info is almost always in the first 10 lines
 	const searchLines = lines.slice(0, Math.min(lines.length, 15));
-	const searchText = searchLines.join('\n');
+	// clean PDF artifacts: collapse multiple spaces, fix common ligature issues
+	const searchText = searchLines
+		.map((l) => l.replace(/\s{2,}/g, ' '))
+		.join('\n');
 
 	const email = extractFirst(searchText, EMAIL_REGEX);
 	const phone = extractFirst(searchText, PHONE_REGEX);
-	const linkedin = extractFirst(searchText, LINKEDIN_REGEX);
+	const linkedin = extractLinkedIn(searchText);
 	const github = extractFirst(searchText, GITHUB_REGEX);
 	const website = extractFirst(searchText, WEBSITE_REGEX);
 	const name = extractName(searchLines);
 	const location = extractLocation(searchLines);
 
 	return { name, email, phone, linkedin, github, website, location };
+}
+
+// linkedin needs special handling because PDF extraction often mangles URLs
+function extractLinkedIn(text: string): string | null {
+	// try standard regex first
+	const standard = extractFirst(text, LINKEDIN_REGEX);
+	if (standard) return standard;
+
+	// fallback: look for "linkedin" keyword near a path-like string
+	// handles cases like "LinkedIn: /in/sunnypatell" or "linkedin .com/in/sunny"
+	const fallback =
+		/linkedin\s*\.?\s*com\s*\/\s*(?:in\s*\/\s*)?([\w-]+)/i;
+	const match = text.match(fallback);
+	if (match) return `linkedin.com/in/${match[1]}`;
+
+	return null;
 }
 
 function extractFirst(text: string, regex: RegExp): string | null {
