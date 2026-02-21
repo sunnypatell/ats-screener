@@ -213,7 +213,7 @@
 							<span>{resume.contact.website}</span>
 						</a>
 					{/if}
-					</div>
+				</div>
 			</div>
 		{/if}
 

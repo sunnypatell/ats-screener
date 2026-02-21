@@ -3,8 +3,7 @@ import type { ContactInfo } from './types';
 const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
 const PHONE_REGEX = /(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)?\d{3}[-.\s]?\d{4}/;
 // matches linkedin.com/in/user, linkedin.com/user, and PDF-mangled variants with spaces
-const LINKEDIN_REGEX =
-	/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/(?:in\/)?[\w-]+\/?/i;
+const LINKEDIN_REGEX = /(?:https?:\/\/)?(?:www\.)?linkedin\.com\/(?:in\/)?[\w-]+\/?/i;
 const GITHUB_REGEX = /(?:https?:\/\/)?(?:www\.)?github\.com\/[\w-]+\/?/i;
 const WEBSITE_REGEX =
 	/https?:\/\/(?!.*(?:linkedin|github)\.com)[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/\S*)?/i;
@@ -13,9 +12,7 @@ const WEBSITE_REGEX =
 export function extractContact(lines: string[]): ContactInfo {
 	const searchLines = lines.slice(0, Math.min(lines.length, 15));
 	// clean PDF artifacts: collapse multiple spaces, fix common ligature issues
-	const searchText = searchLines
-		.map((l) => l.replace(/\s{2,}/g, ' '))
-		.join('\n');
+	const searchText = searchLines.map((l) => l.replace(/\s{2,}/g, ' ')).join('\n');
 
 	const email = extractFirst(searchText, EMAIL_REGEX);
 	const phone = extractFirst(searchText, PHONE_REGEX);
@@ -36,8 +33,7 @@ function extractLinkedIn(text: string): string | null {
 
 	// fallback: look for "linkedin" keyword near a path-like string
 	// handles cases like "LinkedIn: /in/sunnypatell" or "linkedin .com/in/sunny"
-	const fallback =
-		/linkedin\s*\.?\s*com\s*\/\s*(?:in\s*\/\s*)?([\w-]+)/i;
+	const fallback = /linkedin\s*\.?\s*com\s*\/\s*(?:in\s*\/\s*)?([\w-]+)/i;
 	const match = text.match(fallback);
 	if (match) return `linkedin.com/in/${match[1]}`;
 
