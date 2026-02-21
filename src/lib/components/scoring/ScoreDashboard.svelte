@@ -155,23 +155,81 @@
 			</div>
 
 			{#if scoresStore.llmFallback}
-				<div class="fallback-notice">
-					<svg
-						width="14"
-						height="14"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-					>
-						<circle cx="12" cy="12" r="10" />
-						<line x1="12" y1="8" x2="12" y2="12" />
-						<line x1="12" y1="16" x2="12.01" y2="16" />
-					</svg>
-					<span
-						>Using rule-based analysis (LLM unavailable). Results are still accurate but suggestions
-						may be less specific.</span
-					>
+				<div class="fallback-toast">
+					<div class="fallback-toast-left">
+						<svg
+							class="fallback-warn-icon"
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="#eab308"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+							<line x1="12" y1="9" x2="12" y2="13" />
+							<line x1="12" y1="17" x2="12.01" y2="17" />
+						</svg>
+						<p class="fallback-toast-msg">
+							<strong>AI scoring temporarily unavailable</strong> &mdash; looks like too many of you
+							want to check your resumes at the same time! i'm covering the API costs myself and
+							things are a little overwhelmed right now. your scores below are still accurate
+							(rule-based analysis), but the AI suggestions/accuracy won't be as specific. try again
+							later, or if you want to help keep this free for everyone
+							<span class="fallback-emoji">😅</span>
+						</p>
+					</div>
+					<div class="fallback-toast-actions">
+						<a
+							href="https://buymeacoffee.com/sunnypatell"
+							target="_blank"
+							rel="noopener"
+							class="fallback-pill coffee-pill"
+						>
+							<svg
+								width="15"
+								height="15"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<path d="M10 2v2" />
+								<path d="M14 2v2" />
+								<path
+									d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"
+								/>
+								<path d="M6 2v2" />
+							</svg>
+							Coffee
+						</a>
+						<a
+							href="https://github.com/sponsors/sunnypatell"
+							target="_blank"
+							rel="noopener"
+							class="fallback-pill sponsor-pill"
+						>
+							<svg
+								width="14"
+								height="14"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<path
+									d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
+								/>
+							</svg>
+							Sponsor
+						</a>
+					</div>
 				</div>
 			{/if}
 		</div>
@@ -495,22 +553,112 @@
 		color: var(--accent-cyan);
 	}
 
-	.fallback-notice {
+	/* compact toast-style fallback banner */
+	.fallback-toast {
 		display: flex;
 		align-items: center;
-		gap: 0.6rem;
+		justify-content: space-between;
+		gap: 1rem;
 		margin-top: 0.75rem;
-		font-size: 0.85rem;
-		color: var(--text-tertiary);
-		padding: 0.6rem 1rem;
-		background: rgba(234, 179, 8, 0.05);
-		border: 1px solid rgba(234, 179, 8, 0.15);
-		border-radius: var(--radius-md);
+		padding: 0.75rem 1.25rem;
+		background: rgba(234, 179, 8, 0.06);
+		border: 1px solid rgba(234, 179, 8, 0.2);
+		border-radius: var(--radius-lg);
+		backdrop-filter: blur(var(--glass-blur));
+		animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 	}
 
-	.fallback-notice svg {
+	@keyframes toastSlideIn {
+		from {
+			opacity: 0;
+			transform: translateY(-8px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	.fallback-toast-left {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.6rem;
+		flex: 1;
+		min-width: 0;
+	}
+
+	.fallback-warn-icon {
 		flex-shrink: 0;
+		margin-top: 2px;
+	}
+
+	.fallback-toast-msg {
+		font-size: 0.82rem;
+		color: var(--text-secondary);
+		line-height: 1.55;
+		margin: 0;
+	}
+
+	.fallback-toast-msg strong {
 		color: #eab308;
+		font-weight: 600;
+	}
+
+	.fallback-emoji {
+		font-size: 1rem;
+		vertical-align: middle;
+		line-height: 1;
+	}
+
+	.fallback-toast-actions {
+		display: flex;
+		gap: 0.5rem;
+		flex-shrink: 0;
+	}
+
+	.fallback-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.4rem 0.85rem;
+		font-size: 0.78rem;
+		font-weight: 600;
+		text-decoration: none;
+		border-radius: 999px;
+		white-space: nowrap;
+		transition:
+			transform 0.15s ease,
+			background 0.15s ease,
+			border-color 0.15s ease,
+			box-shadow 0.15s ease;
+	}
+
+	.fallback-pill:hover {
+		transform: translateY(-1px);
+	}
+
+	.coffee-pill {
+		background: rgba(255, 221, 0, 0.1);
+		border: 1px solid rgba(255, 221, 0, 0.3);
+		color: #ffdd00;
+	}
+
+	.coffee-pill:hover {
+		background: rgba(255, 221, 0, 0.18);
+		border-color: rgba(255, 221, 0, 0.5);
+		box-shadow: 0 0 14px rgba(255, 221, 0, 0.08);
+	}
+
+	.sponsor-pill {
+		background: rgba(219, 39, 119, 0.1);
+		border: 1px solid rgba(219, 39, 119, 0.3);
+		color: #ec4899;
+	}
+
+	.sponsor-pill:hover {
+		background: rgba(219, 39, 119, 0.18);
+		border-color: rgba(219, 39, 119, 0.5);
+		box-shadow: 0 0 14px rgba(219, 39, 119, 0.08);
 	}
 
 	/* toolbar: toggle + export */
@@ -831,6 +979,15 @@
 
 		.toggle-btn {
 			flex: 1;
+			justify-content: center;
+		}
+
+		.fallback-toast {
+			flex-direction: column;
+			align-items: stretch;
+		}
+
+		.fallback-toast-actions {
 			justify-content: center;
 		}
 	}

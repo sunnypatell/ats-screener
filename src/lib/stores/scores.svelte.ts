@@ -165,9 +165,12 @@ class ScoresStore {
 	}
 
 	// load a past scan's results into the active dashboard view
+	// resets fallback flag since the toast is only relevant for the active scan session
 	loadFromHistory(entry: ScanHistoryEntry) {
 		this.results = entry.results;
 		this.isScoring = false;
+		this.isAnalyzing = false;
+		this.llmFallback = false;
 		this.error = null;
 	}
 
