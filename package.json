@@ -5,9 +5,9 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"build": "vite build",
+		"build": "pnpm build:docs && vite build",
 		"build:docs": "cd docs && pnpm install && pnpm build && cd .. && rm -rf static/docs && cp -r docs/dist static/docs",
-		"build:all": "pnpm build:docs && pnpm build",
+		"build:app": "vite build",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
