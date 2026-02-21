@@ -38,3 +38,4 @@ blob-report/
 # misc
 *.log
 *.tsbuildinfo
+.env*.local

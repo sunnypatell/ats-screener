@@ -74,6 +74,7 @@ class ScoresStore {
 
 	startScoring() {
 		this.isScoring = true;
+		this.llmFallback = false;
 		this.error = null;
 	}
 
@@ -192,6 +193,7 @@ class ScoresStore {
 		this.error = message;
 		this.isScoring = false;
 		this.isAnalyzing = false;
+		this.llmFallback = false;
 	}
 
 	reset() {
