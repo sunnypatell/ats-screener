@@ -2,6 +2,8 @@ import { browser } from '$app/environment';
 import {
 	onAuthStateChanged,
 	signInWithPopup,
+	signInWithRedirect,
+	getRedirectResult,
 	signInWithEmailAndPassword,
 	createUserWithEmailAndPassword,
 	sendPasswordResetEmail,
@@ -11,8 +13,6 @@ import {
 	type User
 } from 'firebase/auth';
 import { auth } from '$lib/firebase';
-
-const googleProvider = new GoogleAuthProvider();
 
 class AuthStore {
 	user = $state<User | null>(null);
@@ -49,6 +49,8 @@ class AuthStore {
 				this.user = user;
 				this.loading = false;
 			});
+			// handle redirect result from signInWithRedirect fallback
+			getRedirectResult(auth).catch(() => {});
 		} else {
 			this.loading = false;
 		}
@@ -56,9 +58,23 @@ class AuthStore {
 
 	async signInWithGoogle() {
 		this.error = null;
+		const provider = new GoogleAuthProvider();
 		try {
-			await signInWithPopup(auth, googleProvider);
+			await signInWithPopup(auth, provider);
 		} catch (err) {
+			// if popup fails with an internal SDK error (not a Firebase auth error),
+			// fall back to redirect-based sign-in
+			const code = (err as { code?: string })?.code;
+			if (!code || err instanceof TypeError) {
+				console.warn('[auth] popup failed with internal error, trying redirect', err);
+				try {
+					await signInWithRedirect(auth, provider);
+					return; // redirect navigates away
+				} catch (redirectErr) {
+					this.error = this.getErrorMessage(redirectErr);
+					throw redirectErr;
+				}
+			}
 			this.error = this.getErrorMessage(err);
 			throw err;
 		}

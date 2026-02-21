@@ -40,6 +40,10 @@ export default defineConfig({
 						content: 'https://ats-screener.vercel.app/og-image.png',
 					},
 				},
+				{
+					tag: 'script',
+					content: "document.addEventListener('DOMContentLoaded',function(){var a=document.querySelector('.site-title');if(a)a.href='/';});",
+				},
 			],
 			sidebar: [
 				{

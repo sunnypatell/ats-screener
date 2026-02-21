@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import Logo from './Logo.svelte';
 	import UserMenu from './UserMenu.svelte';
 	import AuthButton from './AuthButton.svelte';
+	import SearchModal from './SearchModal.svelte';
 	import { authStore } from '$stores/auth.svelte';
 
 	// controls the mobile menu visibility
@@ -15,17 +15,19 @@
 	const isOnDocs = $derived(currentPath.startsWith('/docs'));
 	const isMac = $derived(browser ? navigator.platform.toUpperCase().includes('MAC') : true);
 
+	let searchModal: SearchModal | undefined = $state();
+
 	function handleSearchClick() {
-		goto('/docs');
+		searchModal?.openSearch();
 	}
 
-	// cmd+k / ctrl+k shortcut to jump to docs search
+	// cmd+k / ctrl+k shortcut to open search modal
 	function handleKeydown(e: KeyboardEvent) {
 		if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
 			// only intercept when NOT already on docs (Starlight handles its own cmd+k)
 			if (!isOnDocs) {
 				e.preventDefault();
-				goto('/docs');
+				searchModal?.openSearch();
 			}
 		}
 	}
@@ -89,6 +91,8 @@
 		</button>
 	</div>
 </nav>
+
+<SearchModal bind:this={searchModal} />
 
 <style>
 	.navbar {
