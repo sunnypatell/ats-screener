@@ -6,6 +6,7 @@ import {
 	getRedirectResult,
 	signInWithEmailAndPassword,
 	createUserWithEmailAndPassword,
+	sendEmailVerification,
 	sendPasswordResetEmail,
 	signOut as firebaseSignOut,
 	GoogleAuthProvider,
@@ -97,6 +98,10 @@ class AuthStore {
 			if (displayName) {
 				await updateProfile(credential.user, { displayName });
 			}
+			// send verification email (non-blocking, don't fail signup if this errors)
+			sendEmailVerification(credential.user).catch((err) => {
+				console.warn('[auth] failed to send verification email:', err);
+			});
 		} catch (err) {
 			this.error = this.getErrorMessage(err);
 			throw err;

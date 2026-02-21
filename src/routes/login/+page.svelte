@@ -9,6 +9,7 @@
 	let resetEmail = $state('');
 	let showReset = $state(false);
 	let resetSent = $state(false);
+	let signupDone = $state(false);
 	let submitting = $state(false);
 
 	// redirect if already logged in
@@ -26,10 +27,11 @@
 		try {
 			if (mode === 'signin') {
 				await authStore.signInWithEmail(email, password);
+				goto('/scanner');
 			} else {
 				await authStore.signUpWithEmail(email, password, displayName);
+				signupDone = true;
 			}
-			goto('/scanner');
 		} catch {
 			// error is set in authStore
 		} finally {
@@ -72,6 +74,8 @@
 			<h1 class="card-title">
 				{#if showReset}
 					Reset Password
+				{:else if signupDone}
+					You're In!
 				{:else if mode === 'signin'}
 					Welcome Back
 				{:else}
@@ -81,6 +85,8 @@
 			<p class="card-subtitle">
 				{#if showReset}
 					Enter your email to receive a password reset link.
+				{:else if signupDone}
+					Check your email to verify your account.
 				{:else if mode === 'signin'}
 					Sign in to scan your resume across 6 ATS platforms.
 				{:else}
@@ -100,6 +106,9 @@
 					<div class="success-banner">
 						Password reset email sent! Check your inbox.
 					</div>
+					<p class="spam-hint">
+						Don't see it? Check your spam or junk folder.
+					</p>
 					<button class="link-btn" onclick={() => { showReset = false; resetSent = false; authStore.clearError(); }}>
 						Back to sign in
 					</button>
@@ -117,6 +126,19 @@
 						Back to sign in
 					</button>
 				{/if}
+			</div>
+		{:else if signupDone}
+			<!-- signup success: verification email sent -->
+			<div class="form-body">
+				<div class="success-banner">
+					Account created! We sent a verification email to <strong>{email}</strong>.
+				</div>
+				<p class="spam-hint">
+					Don't see it? Check your spam or junk folder.
+				</p>
+				<button class="submit-btn" onclick={() => goto('/scanner')}>
+					Continue to Scanner
+				</button>
 			</div>
 		{:else}
 			<!-- mode tabs -->
@@ -427,7 +449,14 @@
 		border-radius: var(--radius-md);
 		font-size: 0.82rem;
 		color: #22c55e;
-		margin-bottom: 1rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.spam-hint {
+		font-size: 0.78rem;
+		color: var(--text-tertiary);
+		text-align: center;
+		margin: 0 0 0.75rem;
 	}
 
 	.link-btn {
