@@ -4,7 +4,7 @@
 			number: '01',
 			title: 'Upload Your Resume',
 			description:
-				'PDF or DOCX. Parsed client-side in a Web Worker. Your file never leaves your browser.',
+				'PDF or DOCX. Parsed entirely client-side in a Web Worker. The file itself is never uploaded.',
 			icon: 'upload',
 			accent: '#06b6d4'
 		},
@@ -145,7 +145,7 @@
 
 <style>
 	.how-it-works {
-		padding: 8rem 2rem;
+		padding: 4rem 2rem;
 		max-width: 1200px;
 		margin: 0 auto;
 	}
@@ -294,7 +294,7 @@
 		}
 
 		.how-it-works {
-			padding: 5rem 1.5rem;
+			padding: 3rem 1.5rem;
 		}
 	}
 </style>

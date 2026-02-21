@@ -37,7 +37,7 @@ I got tired of uploading my resume to "free ATS checkers" that would analyze it,
 
 The thing is, real ATS platforms don't all evaluate resumes the same way. Taleo does strict literal keyword matching. Greenhouse doesn't auto-score at all. iCIMS uses ML-based semantic matching. A single "ATS score" is meaningless if it doesn't tell you which system you're up against.
 
-So I built ATS Screener to give students and job seekers what those paid tools won't: **6 honest scores from 6 real platforms**, completely free, completely open source. No paywall, no upsell, no "premium tier" hiding your results. Your resume file never even leaves your browser.
+So I built ATS Screener to give students and job seekers what those paid tools won't: **6 honest scores from 6 real platforms**, completely free, completely open source. No paywall, no upsell, no "premium tier" hiding your results. Create a free account and start scanning. Your resume file is parsed entirely in your browser and never uploaded to any server.
 
 > Built by [Sunny Patel](https://sunnypatel.net), a student who got tired of paying for meaningless ATS scores.
 
@@ -53,7 +53,7 @@ Resume (PDF/DOCX)  -->  Client-Side Parser  -->  Extracted Text  -->  Gemini AI 
 Job Description (optional)  -->  Targeted Keyword Matching Against Each Platform's Strategy
 ```
 
-1. **Upload your resume** (PDF or DOCX). Parsed entirely client-side in a Web Worker. Your file never leaves your browser.
+1. **Upload your resume** (PDF or DOCX). Parsed entirely client-side in a Web Worker. The file itself is never uploaded.
 2. **Optionally paste a job description** for targeted scoring with keyword matching.
 3. **Get scored by 6 systems**, each with different weights for formatting, keywords, sections, experience, and education.
 4. **See what to fix** with platform-specific suggestions ranked by impact, telling you exactly what to change and why.

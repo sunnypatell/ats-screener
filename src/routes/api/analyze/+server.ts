@@ -211,6 +211,12 @@ function extractJSON(raw: string): unknown {
 	return null;
 }
 
+// vercel hobby plan defaults to 10s function timeout
+// gemini can take 12-15s so we need to extend this
+export const config = {
+	maxDuration: 60
+};
+
 interface RequestBody {
 	mode: 'full-score' | 'analyze-jd';
 	resumeText?: string;

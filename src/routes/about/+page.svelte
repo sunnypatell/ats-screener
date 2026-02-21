@@ -39,7 +39,7 @@
 			</h1>
 			<p class="hero-subtitle">
 				Every existing ATS checker uses the same generic algorithm and charges you for it. None of
-				them simulate how real enterprise platforms actually parse your resume. We built one that
+				them simulate how real enterprise platforms actually parse your resume. So I built one that
 				does. For free.
 			</p>
 		</section>
@@ -110,8 +110,8 @@
 					<h3>Data Privacy Concerns</h3>
 					<p>
 						You upload your resume (personal info, work history, contact details) to a random
-						website. Where does that data go? Who has access? Our tool parses everything
-						client-side. Your data never leaves your browser.
+						website. Where does that data go? Who has access? ATS Screener parses your files
+						entirely client-side. Only extracted text is sent to Google Gemini for AI scoring.
 					</p>
 				</div>
 				<div class="problem-card">
@@ -139,9 +139,9 @@
 			</div>
 		</section>
 
-		<!-- our approach -->
+		<!-- the approach -->
 		<section class="section">
-			<div class="section-badge">Our Approach</div>
+			<div class="section-badge">The Approach</div>
 			<h2>How ATS Screener Works Differently</h2>
 			<div class="approach-list">
 				<div class="approach-item">
@@ -149,7 +149,7 @@
 					<div class="approach-content">
 						<h3>LLM-Powered Analysis</h3>
 						<p>
-							Instead of hard-coded keyword matching, we use large language models to semantically
+							Instead of hard-coded keyword matching, ATS Screener uses large language models to semantically
 							analyze your resume against each ATS system's known behavior. The LLM understands
 							context, transferable skills, and industry-specific terminology across any field.
 						</p>
@@ -160,20 +160,20 @@
 					<div class="approach-content">
 						<h3>Six Real ATS Profiles</h3>
 						<p>
-							We simulate Workday, Taleo (Oracle), iCIMS, Greenhouse, Lever, and SAP SuccessFactors.
-							Each profile reflects the actual parsing strictness, keyword strategy, and scoring
-							behavior of that platform based on research into their documented capabilities.
+							ATS Screener simulates Workday, Taleo (Oracle), iCIMS, Greenhouse, Lever, and SAP SuccessFactors.
+							Each profile reflects the parsing strictness, keyword strategy, and scoring
+							behavior of that platform based on research into publicly available documentation.
 						</p>
 					</div>
 				</div>
 				<div class="approach-item">
 					<div class="approach-number">03</div>
 					<div class="approach-content">
-						<h3>Multi-Provider Fallback</h3>
+						<h3>Built-In Fallback</h3>
 						<p>
-							Our LLM scoring chains through Google Gemini, Groq, and Cerebras with automatic
-							failover. If all LLM providers are unavailable, a deterministic rule-based engine
-							provides scoring as a fallback. You always get results.
+							The primary scoring engine uses Google Gemini AI. If the AI provider is
+							unavailable, a deterministic rule-based engine automatically provides scoring as a
+							fallback. You always get results.
 						</p>
 					</div>
 				</div>
@@ -183,8 +183,8 @@
 						<h3>Client-Side First</h3>
 						<p>
 							Resume parsing (PDF/DOCX text extraction, section detection, entity extraction)
-							happens entirely in your browser. Only anonymized text snippets are sent to LLM
-							providers for scoring. Your files never touch our servers.
+							happens entirely in your browser via Web Workers. Only the extracted text is sent to
+							Google Gemini for scoring. Your resume files never touch any server.
 						</p>
 					</div>
 				</div>
@@ -218,9 +218,9 @@
 					<h4>AI</h4>
 					<ul>
 						<li>Google Gemini 2.5 Flash-Lite (primary)</li>
-						<li>Groq Llama 3.3 70B (fallback)</li>
-						<li>Cerebras Llama 3.3 70B (fallback)</li>
-						<li>Rule-based fallback (offline capable)</li>
+						<li>Rule-based fallback engine</li>
+						<li>TF-IDF keyword matching</li>
+						<li>Skills taxonomy (500+ terms)</li>
 					</ul>
 				</div>
 				<div class="tech-card">

@@ -76,15 +76,18 @@
 			const llmResult = await scoreLLM(resume.rawText, jd);
 
 			if (llmResult && llmResult.results.length > 0) {
+				console.log('[scan] LLM scoring complete:', llmResult.results.length, 'results from', llmResult.provider);
 				scoresStore.finishScoring(llmResult.results);
 				scoresStore.finishAnalyzing(null, false);
 				return;
 			}
 
 			// all LLM providers failed, fall back to deterministic rule-based scoring
+			console.log('[scan] LLM unavailable, using rule-based scoring');
 			const { scoreResume } = await import('$engine/scorer/engine');
 			const input = buildScoringInput();
 			const results = scoreResume(input);
+			console.log('[scan] rule-based scoring complete:', results.length, 'results');
 			scoresStore.finishScoring(results);
 			scoresStore.finishAnalyzing(null, true);
 		} catch (err) {
@@ -171,8 +174,8 @@
 				<span class="gradient-text">Real ATS Systems</span>
 			</h1>
 			<p class="page-subtitle">
-				Upload your resume and optionally paste a job description for targeted scoring. Everything
-				is parsed client-side. Your data never leaves your browser.
+				Upload your resume and optionally paste a job description for targeted scoring. Files
+				are parsed client-side. Only extracted text is sent for AI analysis.
 			</p>
 
 			<!-- step progress -->

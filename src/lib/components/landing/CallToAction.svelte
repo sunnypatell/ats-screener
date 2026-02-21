@@ -52,7 +52,7 @@
 <style>
 	.cta {
 		position: relative;
-		padding: 8rem 2rem;
+		padding: 5rem 2rem 8rem;
 		text-align: center;
 		overflow: hidden;
 	}

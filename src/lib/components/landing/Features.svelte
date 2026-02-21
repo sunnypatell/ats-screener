@@ -197,7 +197,7 @@
 
 <style>
 	.features {
-		padding: 8rem 2rem;
+		padding: 8rem 2rem 4rem;
 		max-width: 1400px;
 		margin: 0 auto;
 		position: relative;

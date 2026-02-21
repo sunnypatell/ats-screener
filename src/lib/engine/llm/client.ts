@@ -29,13 +29,14 @@ export async function scoreLLM(
 
 		if (!response.ok) {
 			const data = await response.json().catch(() => ({}));
-			if (data.fallback) return null;
+			console.warn('[scoreLLM] API returned', response.status, data.error ?? 'unknown error');
 			return null;
 		}
 
 		const data = await response.json();
 
 		if (data._fallback || !data.results || !Array.isArray(data.results)) {
+			console.warn('[scoreLLM] response missing results or is fallback, falling back to rule-based');
 			return null;
 		}
 
