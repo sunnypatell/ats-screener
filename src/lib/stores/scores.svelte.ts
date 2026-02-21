@@ -15,7 +15,7 @@ import {
 import { db } from '$lib/firebase';
 import { authStore } from './auth.svelte';
 
-const MAX_HISTORY = 20;
+const MAX_HISTORY = 5;
 
 export interface ScanHistoryEntry {
 	id: string;
