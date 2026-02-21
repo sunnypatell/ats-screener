@@ -41,7 +41,8 @@ So I built ATS Screener to give students and job seekers what those paid tools w
 
 > Built by [Sunny Patel](https://sunnypatel.net), a student who got tired of paying for meaningless ATS scores.
 
-**Disclaimer:** This is a student research project. All scoring simulations are based on publicly available documentation and community reports. ATS Screener is not affiliated with or endorsed by any ATS vendor.
+> [!CAUTION]
+> This is a student research project and is **not intended to defame, misrepresent, or make claims about any ATS platform or vendor**. All scoring simulations are approximations based on publicly available documentation, community reports, and general industry knowledge. They do not reflect the actual proprietary algorithms of any platform. ATS Screener is not affiliated with or endorsed by Workday, Oracle (Taleo), iCIMS, Greenhouse, Lever, SAP (SuccessFactors), or any other ATS vendor. The goal is to help students and job seekers get a general sense of how their resume might perform across different types of resume screening approaches used by leading HCM providers.
 
 ## How It Works
 
