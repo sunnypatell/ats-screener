@@ -186,9 +186,10 @@ CRITICAL RULES:
 - DO NOT give all systems similar scores. if you find yourself giving 70-80 to all six, you're doing it wrong. aim for realistic variety
 - ${jdSlice ? 'For targeted scoring: extract actual keywords from the JD. matched/missing keywords must be REAL terms from the JD, not made up. scores MUST change significantly for different JDs. a sysadmin resume scored against a DBA role should differ substantially from the same resume scored against a junior IT analyst role' : "For general scoring: keywords should reflect industry-standard terminology for the candidate's apparent field"}
 - ${jdSlice ? 'keyword match scores should be the MOST sensitive dimension to JD changes. if the JD requires skills the candidate lacks, keyword match must drop dramatically regardless of platform' : ''}
-- suggestions must be specific and actionable, structured as objects with a summary line and 2-3 detail bullet points
-- suggestions must reference the actual platform behavior. e.g., for Taleo: "include both 'PM' and 'Project Manager' because Taleo uses literal keyword matching"
+- suggestions MUST quote or reference SPECIFIC text, skills, bullet points, or sections from THIS resume. never give generic advice like "add more keywords" or "quantify achievements." instead say exactly WHICH bullet point to fix, WHICH skill to add, or WHICH section is missing specific content
+- suggestions must reference the actual platform behavior AND the resume's actual content. e.g., if the resume lists "React" but the JD says "React.js": "Your resume says 'React' but Taleo's literal matching won't equate it with 'React.js' from the JD. Add both forms."
 - each platform gets MAXIMUM 2 suggestions. total across all 6 should not exceed 8-10 unique structured suggestions. deduplicate similar advice across platforms
+- the detail bullets should tell the user EXACTLY what to change: quote the current text and suggest the improved version. think "change X to Y" not "consider improving X"
 - IMPORTANT: the resume text may contain LaTeX rendering artifacts like #, ï, §, Æ, €, fi, fl ligatures, or unicode combining characters. these are font rendering artifacts from PDF extraction, NOT actual special characters in the resume. do NOT flag these as formatting issues or "special characters detected." treat them as normal text
 
 **passesFilter thresholds** (reflects each platform's filtering philosophy):
@@ -219,14 +220,14 @@ Respond ONLY with valid JSON matching this exact structure. no markdown fences, 
       },
       "suggestions": [
         {
-          "summary": "Include both abbreviated and full-form certifications",
+          "summary": "Your 'Developed microservices architecture' bullet lacks quantified impact",
           "details": [
-            "Add 'CPA' alongside 'Certified Public Accountant' in your skills section",
-            "Taleo uses literal matching and won't connect abbreviations to full forms",
-            "This alone could improve your Taleo keyword match by 10-15 points"
+            "Change 'Developed microservices architecture for payment processing' to 'Designed and deployed 12 microservices handling 50K+ daily transactions, reducing payment processing latency by 40%'",
+            "Workday's HiredScore AI weights quantified achievements significantly higher than unquantified descriptions",
+            "Adding metrics to your 3 unquantified experience bullets would strengthen your experience score across all 6 platforms"
           ],
           "impact": "critical",
-          "platforms": ["Taleo", "Workday"]
+          "platforms": ["Workday", "iCIMS", "SuccessFactors"]
         }
       ]
     }
@@ -234,10 +235,11 @@ Respond ONLY with valid JSON matching this exact structure. no markdown fences, 
 }
 
 SUGGESTION FORMAT RULES:
-- "summary": one clear sentence describing the action (always visible to user)
-- "details": 2-3 bullet points with specific implementation guidance
+- "summary": one clear sentence that references SPECIFIC content from this resume (a skill, bullet point, section, or gap). the user should read this and immediately know which part of their resume you're talking about
+- "details": 2-3 bullet points with concrete before/after text, or exact additions to make. quote the resume's actual text when suggesting changes
 - "impact": "critical" | "high" | "medium" | "low" based on score improvement potential
 - "platforms": which ATS platforms benefit most from this change
+- NEVER give generic suggestions like "add more action verbs" or "quantify your achievements." always say WHICH bullet, WHICH skill, WHICH section
 
 Return exactly 6 results in order: Workday, Taleo, iCIMS, Greenhouse, Lever, SuccessFactors.`;
 }
