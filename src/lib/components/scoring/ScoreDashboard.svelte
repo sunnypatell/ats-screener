@@ -46,7 +46,7 @@
 				}
 			}
 		}
-		return suggestions.slice(0, 8);
+		return suggestions.slice(0, 5);
 	});
 
 	// exports results as a JSON file download

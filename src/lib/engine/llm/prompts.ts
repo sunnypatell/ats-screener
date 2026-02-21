@@ -188,7 +188,7 @@ CRITICAL RULES:
 - ${jdSlice ? 'keyword match scores should be the MOST sensitive dimension to JD changes. if the JD requires skills the candidate lacks, keyword match must drop dramatically regardless of platform' : ''}
 - suggestions MUST quote or reference SPECIFIC text, skills, bullet points, or sections from THIS resume. never give generic advice like "add more keywords" or "quantify achievements." instead say exactly WHICH bullet point to fix, WHICH skill to add, or WHICH section is missing specific content
 - suggestions must reference the actual platform behavior AND the resume's actual content. e.g., if the resume lists "React" but the JD says "React.js": "Your resume says 'React' but Taleo's literal matching won't equate it with 'React.js' from the JD. Add both forms."
-- each platform gets MAXIMUM 2 suggestions. total across all 6 should not exceed 8-10 unique structured suggestions. deduplicate similar advice across platforms
+- each platform gets MAXIMUM 1 suggestion. total across all 6 must not exceed 5 unique structured suggestions. deduplicate aggressively and only keep the highest-impact ones
 - the detail bullets should tell the user EXACTLY what to change: quote the current text and suggest the improved version. think "change X to Y" not "consider improving X"
 - IMPORTANT: the resume text may contain LaTeX rendering artifacts like #, ï, §, Æ, €, fi, fl ligatures, or unicode combining characters. these are font rendering artifacts from PDF extraction, NOT actual special characters in the resume. do NOT flag these as formatting issues or "special characters detected." treat them as normal text
 
