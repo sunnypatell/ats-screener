@@ -10,7 +10,8 @@ import {
 	doc,
 	query,
 	orderBy,
-	limit
+	limit,
+	serverTimestamp
 } from 'firebase/firestore';
 import { db } from '$lib/firebase';
 import { authStore } from './auth.svelte';
@@ -133,6 +134,9 @@ class ScoresStore {
 			const docRef = await addDoc(scansRef, sanitized);
 			console.warn('[scores] saved scan to history:', docRef.id);
 
+			// write to top-level scan_logs for admin visibility
+			this.writeScanLog(sanitized, uid);
+
 			// prune old scans beyond the cap
 			const allScansQuery = query(scansRef, orderBy('timestamp', 'desc'));
 			const allSnap = await getDocs(allScansQuery);
@@ -147,6 +151,25 @@ class ScoresStore {
 			await this.loadHistory();
 		} catch (err) {
 			console.error('[scores] failed to save scan to history:', err);
+		}
+	}
+
+	/** log scan to top-level scan_logs collection for admin browsing */
+	private async writeScanLog(entry: Omit<ScanHistoryEntry, 'id'>, uid: string) {
+		try {
+			const user = authStore.user;
+			await addDoc(collection(db, 'scan_logs'), {
+				uid,
+				email: user?.email ?? null,
+				displayName: user?.displayName ?? null,
+				fileName: entry.fileName ?? null,
+				mode: entry.mode,
+				averageScore: entry.averageScore,
+				passingCount: entry.passingCount,
+				createdAt: serverTimestamp()
+			});
+		} catch {
+			// non-critical, don't break the scan flow
 		}
 	}
 

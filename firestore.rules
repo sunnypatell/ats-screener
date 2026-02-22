@@ -5,5 +5,10 @@ service cloud.firestore {
     match /users/{userId}/scans/{scanId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+
+    // any authenticated user can create a scan log entry (write-only, no reads from client)
+    match /scan_logs/{logId} {
+      allow create: if request.auth != null;
+    }
   }
 }
