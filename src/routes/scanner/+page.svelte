@@ -17,8 +17,13 @@
 		}
 	});
 
-	// tracks whether the scan button has been clicked at least once
+	// tracks whether results should be visible (scan clicked or loaded from history)
 	let hasScanned = $state(false);
+
+	// if results are loaded from history, show the dashboard
+	$effect(() => {
+		if (scoresStore.hasResults) hasScanned = true;
+	});
 
 	// re-derive readiness from stores so the scan button reacts to changes
 	const canScan = $derived(resumeStore.isReady && !scoresStore.isScoring);
