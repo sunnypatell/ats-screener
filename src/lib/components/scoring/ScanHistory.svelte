@@ -29,8 +29,12 @@
 
 	function handleLoadEntry(entry: ScanHistoryEntry) {
 		scoresStore.loadFromHistory(entry);
-		// scroll to top so user sees the dashboard
-		window.scrollTo({ top: 0, behavior: 'smooth' });
+		// wait for the results section to render, then scroll to it
+		requestAnimationFrame(() => {
+			document
+				.querySelector('.results-section')
+				?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		});
 	}
 
 	function handleClear() {
