@@ -1,0 +1,26 @@
+---
+title: Self-Hosting
+description: Run your own instance of ATS Screener with your own API keys.
+---
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+ATS Screener can be self-hosted for free. Bring your own Gemini API key and deploy anywhere that supports SvelteKit.
+
+<CardGrid>
+	<LinkCard
+		title="Setup Guide"
+		description="Prerequisites, installation, and getting your first local instance running."
+		href="/docs/self-hosting/setup/"
+	/>
+	<LinkCard
+		title="Configuration"
+		description="Environment variables and configuration options for self-hosted instances."
+		href="/docs/self-hosting/configuration/"
+	/>
+	<LinkCard
+		title="Deployment"
+		description="Deploy to Vercel, Netlify, or other platforms."
+		href="/docs/self-hosting/deployment/"
+	/>
+</CardGrid>

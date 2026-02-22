@@ -1,0 +1,26 @@
+---
+title: API Reference
+description: REST API reference for integrating ATS Screener scoring into your tools.
+---
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+ATS Screener exposes a single REST endpoint for all scoring operations. These docs cover the API surface, rate limits, and error handling.
+
+<CardGrid>
+	<LinkCard
+		title="Endpoints"
+		description="REST API reference for resume scoring and job description analysis."
+		href="/docs/api/endpoints/"
+	/>
+	<LinkCard
+		title="Rate Limits"
+		description="API rate limiting policies and how to handle limit errors."
+		href="/docs/api/rate-limits/"
+	/>
+	<LinkCard
+		title="Error Handling"
+		description="API error codes, meanings, and how to handle them."
+		href="/docs/api/errors/"
+	/>
+</CardGrid>

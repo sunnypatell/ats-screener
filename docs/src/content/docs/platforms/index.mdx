@@ -1,0 +1,46 @@
+---
+title: ATS Platforms
+description: The 6 enterprise ATS platforms simulated by ATS Screener and how they differ.
+---
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+Deep dives into how each of the 6 enterprise ATS platforms parse, filter, and score resumes. Each platform has fundamentally different approaches to evaluating candidates.
+
+<CardGrid>
+	<LinkCard
+		title="Platform Overview"
+		description="Side-by-side comparison of all 6 platforms and their key differences."
+		href="/docs/platforms/overview/"
+	/>
+	<LinkCard
+		title="Workday"
+		description="37.1% of Fortune 500. Strict parsing, HiredScore semantic matching."
+		href="/docs/platforms/workday/"
+	/>
+	<LinkCard
+		title="Taleo (Oracle)"
+		description="Strictest keyword matching. Literal exact-match scoring with auto-reject."
+		href="/docs/platforms/taleo/"
+	/>
+	<LinkCard
+		title="iCIMS"
+		description="#1 ATS by market share. Role Fit AI with HireAbility ALEX parser."
+		href="/docs/platforms/icims/"
+	/>
+	<LinkCard
+		title="Greenhouse"
+		description="Human-first approach. LLM-based parser, no auto-reject by design."
+		href="/docs/platforms/greenhouse/"
+	/>
+	<LinkCard
+		title="Lever"
+		description="Search-driven with word stemming. No automated scoring or ranking."
+		href="/docs/platforms/lever/"
+	/>
+	<LinkCard
+		title="SuccessFactors (SAP)"
+		description="Textkernel parsing with Joule AI for skills matching and stack ranking."
+		href="/docs/platforms/successfactors/"
+	/>
+</CardGrid>
