@@ -5,6 +5,7 @@ import type { ParsedJobDescription } from '$engine/job-parser/types';
 import {
 	collection,
 	addDoc,
+	setDoc,
 	getDocs,
 	deleteDoc,
 	doc,
@@ -158,7 +159,9 @@ class ScoresStore {
 	private async writeScanLog(entry: Omit<ScanHistoryEntry, 'id'>, uid: string) {
 		try {
 			const user = authStore.user;
-			await addDoc(collection(db, 'scan_logs'), {
+			const now = new Date();
+			const docId = `${now.toISOString().replace(/[:.]/g, '-')}_${uid.slice(0, 6)}`;
+			await setDoc(doc(db, 'scan_logs', docId), {
 				uid,
 				email: user?.email ?? null,
 				displayName: user?.displayName ?? null,
