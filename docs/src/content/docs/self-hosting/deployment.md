@@ -77,3 +77,9 @@ After deploying to Vercel:
 2. Add your domain
 3. Follow the DNS instructions
 4. SSL is automatic
+
+---
+
+## Attribution
+
+ATS Screener is MIT licensed. You're free to self-host, fork, and modify it. The only requirement is that you keep the original copyright notice and license file intact in your copy. If you build something on top of it, a visible credit linking back to the [original project](https://github.com/sunnypatell/ats-screener) is appreciated. Removing attribution and passing it off as your own work isn't cool.

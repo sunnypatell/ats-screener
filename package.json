@@ -2,6 +2,7 @@
 	"name": "ats-screener",
 	"version": "0.1.0",
 	"private": true,
+	"license": "MIT",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
