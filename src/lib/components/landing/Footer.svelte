@@ -127,12 +127,7 @@
 			<!-- resources links -->
 			<div class="footer-col">
 				<h4 class="col-title">Resources</h4>
-				<a
-					href="https://github.com/sunnypatell/ats-screener#readme"
-					target="_blank"
-					rel="noopener"
-					class="footer-link">Documentation</a
-				>
+				<a href="/docs" class="footer-link">Documentation</a>
 				<a
 					href="https://github.com/sunnypatell/ats-screener/issues"
 					target="_blank"

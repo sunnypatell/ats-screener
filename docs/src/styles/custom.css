@@ -90,10 +90,13 @@ header.header {
 	border-radius: 8px;
 }
 
-/* better table styling */
+/* better table styling - display:block so overflow-x actually works */
+/* (overflow is ignored on display:table per CSS spec) */
 table {
 	border-radius: 8px;
-	overflow: hidden;
+	display: block;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
 }
 
 table th {
@@ -135,4 +138,18 @@ table th {
 .sl-badge.note {
 	--sl-color-bg-badge: rgba(6, 182, 212, 0.15);
 	--sl-color-text-badge: #06b6d4;
+}
+
+/* KaTeX math rendering fixes for Starlight's SVG rules */
+.katex-html svg {
+	height: inherit;
+}
+
+.katex .base {
+	display: inline;
+}
+
+/* make math blocks visually distinct */
+.katex-display {
+	padding: 1rem 0;
 }
