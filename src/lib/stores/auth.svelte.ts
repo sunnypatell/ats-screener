@@ -4,6 +4,7 @@ import {
 	signInWithPopup,
 	signInWithRedirect,
 	getRedirectResult,
+	getAdditionalUserInfo,
 	signInWithEmailAndPassword,
 	createUserWithEmailAndPassword,
 	sendEmailVerification,
@@ -13,7 +14,8 @@ import {
 	updateProfile,
 	type User
 } from 'firebase/auth';
-import { auth } from '$lib/firebase';
+import { doc, updateDoc, increment } from 'firebase/firestore';
+import { auth, db } from '$lib/firebase';
 
 class AuthStore {
 	user = $state<User | null>(null);
@@ -51,7 +53,13 @@ class AuthStore {
 				this.loading = false;
 			});
 			// handle redirect result from signInWithRedirect fallback
-			getRedirectResult(auth).catch(() => {});
+			getRedirectResult(auth)
+				.then((result) => {
+					if (result && getAdditionalUserInfo(result)?.isNewUser) {
+						this.incrementUserCount();
+					}
+				})
+				.catch(() => {});
 		} else {
 			this.loading = false;
 		}
@@ -61,7 +69,10 @@ class AuthStore {
 		this.error = null;
 		const provider = new GoogleAuthProvider();
 		try {
-			await signInWithPopup(auth, provider);
+			const result = await signInWithPopup(auth, provider);
+			if (getAdditionalUserInfo(result)?.isNewUser) {
+				this.incrementUserCount();
+			}
 		} catch (err) {
 			// if popup fails with an internal SDK error (not a Firebase auth error),
 			// fall back to redirect-based sign-in
@@ -102,6 +113,8 @@ class AuthStore {
 			sendEmailVerification(credential.user).catch((err) => {
 				console.warn('[auth] failed to send verification email:', err);
 			});
+			// new email sign-up is always a new user
+			this.incrementUserCount();
 		} catch (err) {
 			this.error = this.getErrorMessage(err);
 			throw err;
@@ -129,6 +142,14 @@ class AuthStore {
 
 	clearError() {
 		this.error = null;
+	}
+
+	private incrementUserCount() {
+		updateDoc(doc(db, 'stats', 'public'), {
+			userCount: increment(1)
+		}).catch(() => {
+			// non-critical, don't break auth flow
+		});
 	}
 
 	private getErrorMessage(err: unknown): string {

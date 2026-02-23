@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { doc, getDoc } from 'firebase/firestore';
+	import { db } from '$lib/firebase';
 	import FlipWords from '$components/ui/FlipWords.svelte';
 	import SparklesText from '$components/ui/SparklesText.svelte';
 	import NumberFlow from '@number-flow/svelte';
@@ -13,8 +15,61 @@
 	let mouseX = $state(50);
 	let mouseY = $state(50);
 
+	// live user count from Firestore
+	let userCount = $state(0);
+	let displayCount = $state(0);
+	let isVisible = $state(false);
+	let hasAnimated = false;
+	let statsEl = $state<HTMLElement | null>(null);
+
+	// observe stats strip for scroll-triggered animation
+	// must be a $effect (not onMount) because bind:this resolves after onMount in svelte 5
+	$effect(() => {
+		if (!statsEl) return;
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (entries[0].isIntersecting) isVisible = true;
+			},
+			{ threshold: 0.5 }
+		);
+		observer.observe(statsEl);
+		return () => observer.disconnect();
+	});
+
+	// trigger count-up animation when both visible and count is loaded
+	$effect(() => {
+		if (isVisible && userCount > 0 && !hasAnimated) {
+			hasAnimated = true;
+			animateCount(userCount);
+		}
+	});
+
+	function animateCount(target: number) {
+		const duration = 2500;
+		const start = performance.now();
+
+		function tick(now: number) {
+			const elapsed = now - start;
+			const progress = Math.min(elapsed / duration, 1);
+			// easeOutExpo for smooth deceleration
+			const eased = progress === 1 ? 1 : 1 - Math.pow(2, -12 * progress);
+			displayCount = Math.floor(eased * target);
+			if (progress < 1) requestAnimationFrame(tick);
+		}
+		requestAnimationFrame(tick);
+	}
+
 	onMount(() => {
 		mounted = true;
+
+		// fetch live user count
+		getDoc(doc(db, 'stats', 'public'))
+			.then((snap) => {
+				if (snap.exists()) {
+					userCount = snap.data().userCount ?? 0;
+				}
+			})
+			.catch(() => {});
 	});
 
 	// converts pixel coords to percentage of hero bounds for the glow
@@ -159,7 +214,15 @@
 		</div>
 
 		<!-- stats strip -->
-		<div class="hero-stats">
+		<div class="hero-stats" bind:this={statsEl}>
+			<div class="stat">
+				<span class="stat-number">{displayCount.toLocaleString()}</span>
+				<span class="stat-label stat-live">
+					<span class="live-dot"></span>
+					Users Served
+				</span>
+			</div>
+			<div class="stat-divider"></div>
 			<div class="stat">
 				<span class="stat-number">6</span>
 				<span class="stat-label">ATS Platforms</span>
@@ -173,11 +236,6 @@
 			<div class="stat">
 				<span class="stat-number">Any</span>
 				<span class="stat-label">Industry or Role</span>
-			</div>
-			<div class="stat-divider"></div>
-			<div class="stat">
-				<span class="stat-number">0</span>
-				<span class="stat-label">Data Stored</span>
 			</div>
 		</div>
 	</div>
@@ -563,6 +621,22 @@
 		text-transform: uppercase;
 		letter-spacing: 0.06em;
 		font-weight: 500;
+	}
+
+	.stat-live {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+	}
+
+	.live-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: var(--accent-green);
+		box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+		animation: pulse 2s ease-in-out infinite;
+		flex-shrink: 0;
 	}
 
 	.stat-divider {
