@@ -219,7 +219,8 @@
 				<div class="tech-card">
 					<h4>AI</h4>
 					<ul>
-						<li>Google Gemini 2.5 Flash-Lite (primary)</li>
+						<li>Gemma 3 27B via Google (primary)</li>
+						<li>Llama 3.3 70B via Groq (fallback)</li>
 						<li>Rule-based fallback engine</li>
 						<li>TF-IDF keyword matching</li>
 						<li>Skills taxonomy (500+ terms)</li>

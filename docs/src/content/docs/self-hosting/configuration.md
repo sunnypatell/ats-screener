@@ -7,11 +7,10 @@ description: Environment variables and configuration options for self-hosted ins
 
 All configuration is done through environment variables in the `.env` file.
 
-| Variable           | Required | Description                                          |
-| ------------------ | -------- | ---------------------------------------------------- |
-| `GEMINI_API_KEY`   | Yes      | Google AI API key (used for Gemma 3 + Gemini models) |
-| `GROQ_API_KEY`     | Optional | Groq API key (optional fallback)                     |
-| `CEREBRAS_API_KEY` | Optional | Cerebras API key (optional fallback)                 |
+| Variable         | Required    | Description                                    |
+| ---------------- | ----------- | ---------------------------------------------- |
+| `GEMINI_API_KEY` | Yes         | Google AI API key (powers Gemma 3 27B primary) |
+| `GROQ_API_KEY`   | Recommended | Groq API key (Llama 3.3 70B fallback)          |
 
 :::caution
 Never commit your `.env` file to version control. It's already in `.gitignore`, but double-check before pushing.
@@ -19,27 +18,26 @@ Never commit your `.env` file to version control. It's already in `.gitignore`, 
 
 ## Provider Priority
 
-The LLM fallback chain follows this order:
+The LLM fallback chain uses cross-provider redundancy so quota limits on one provider don't cascade:
 
-1. **Gemma 3 27B** (primary, 14,400 RPD via `GEMINI_API_KEY`)
-2. **Gemini 2.5 Flash** (fallback, 20 RPD via `GEMINI_API_KEY`)
-3. **Gemini 2.5 Flash Lite** (fallback, 20 RPD via `GEMINI_API_KEY`)
-4. **Groq Llama 3.3 70B** (if `GROQ_API_KEY` is set)
-5. **Cerebras Llama 3.3 70B** (if `CEREBRAS_API_KEY` is set)
+1. **Gemma 3 27B** via Google (primary, `GEMINI_API_KEY`)
+2. **Llama 3.3 70B** via Groq (fallback, `GROQ_API_KEY`)
 
-If a provider fails (timeout, rate limit, malformed response), the system automatically tries the next one. All Google models (Gemma + Gemini) use the same API key.
+If a provider fails (timeout, rate limit, malformed response), the system automatically tries the next one. Because each provider uses a separate API key, their quotas are completely independent.
 
 ## Free Tier Limits
 
-| Provider | Model           | RPM | RPD    | Cost                   |
-| -------- | --------------- | --- | ------ | ---------------------- |
-| Gemma    | 3 27B (primary) | 30  | 14,400 | Free (blocks at limit) |
-| Gemini   | 2.5 Flash       | 5   | 20     | Free (blocks at limit) |
-| Gemini   | 2.5 Flash Lite  | 10  | 20     | Free (blocks at limit) |
-| Groq     | Llama 3.3 70B   | 30  | 14,400 | Free                   |
-| Cerebras | Llama 3.3 70B   | 30  | 1,000  | Free                   |
+| Provider | Model         | RPM  | RPD    | TPM | Cost |
+| -------- | ------------- | ---- | ------ | --- | ---- |
+| Google   | Gemma 3 27B   | 30   | 14,400 | 15K | Free |
+| Groq     | Llama 3.3 70B | 1000 | 14,400 | 12K | Free |
 
-**Key detail about Google AI:** The free tier will **block** requests at the limit, never auto-charge. You cannot accidentally incur costs.
+Both providers block at their limits and never auto-charge. You cannot accidentally incur costs.
+
+For the latest limits, see the official documentation:
+
+- [Google AI rate limits](https://ai.google.dev/gemini-api/docs/rate-limits)
+- [Groq rate limits](https://console.groq.com/docs/rate-limits)
 
 ## Rate Limiting
 
@@ -56,10 +54,11 @@ Adjust these values based on your expected traffic and API key limits.
 
 ## Timeouts
 
-The default timeout for LLM requests is 60 seconds:
+Each provider has its own timeout. [Vercel Fluid Compute](https://vercel.com/docs/fluid-compute) is enabled by default and allows up to 300 seconds on the Hobby plan:
 
 ```typescript
-const PROVIDER_TIMEOUT_MS = 60_000;
+// Gemma: 90s, Groq: 30s → worst case total: 120s
+const PROVIDER_TIMEOUTS_MS = [90_000, 30_000];
 ```
 
-Increase this if you're experiencing timeouts with longer resumes.
+Gemma 3 27B typically takes 30-45 seconds for the full scoring prompt but can spike under load. The 90s timeout gives generous headroom. Groq responds in under 1 second but gets 30s for safety. If both providers fail, the system falls back to rule-based scoring on the client side.

@@ -41,7 +41,8 @@ export default ts.config(
 			'playwright-report/',
 			'test-results/',
 			'docs/',
-			'static/docs/'
+			'static/docs/',
+			'scripts/'
 		]
 	}
 );

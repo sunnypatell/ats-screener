@@ -50,14 +50,16 @@ When you receive a `429` response:
 
 When self-hosting, rate limits are configurable. The actual bottleneck becomes your LLM provider's free tier:
 
-| Provider | Model           | RPM | RPD    |
-| -------- | --------------- | --- | ------ |
-| Gemma    | 3 27B (primary) | 30  | 14,400 |
-| Gemini   | 2.5 Flash       | 5   | 20     |
-| Gemini   | 2.5 Flash Lite  | 10  | 20     |
-| Groq     | Llama 3.3 70B   | 30  | 14,400 |
-| Cerebras | Llama 3.3 70B   | 30  | 1,000  |
+| Provider | Model         | RPM  | RPD    | TPM |
+| -------- | ------------- | ---- | ------ | --- |
+| Google   | Gemma 3 27B   | 30   | 14,400 | 15K |
+| Groq     | Llama 3.3 70B | 1000 | 14,400 | 12K |
+
+For the latest limits, see the official documentation:
+
+- [Google AI rate limits](https://ai.google.dev/gemini-api/docs/rate-limits)
+- [Groq rate limits](https://console.groq.com/docs/rate-limits)
 
 :::tip
-The hosted version uses Gemma 3 27B as the primary model (14,400 RPD), giving roughly 14,000+ scans per day on the free tier. Groq and Cerebras are available as optional fallbacks for self-hosted instances.
+The hosted version uses Gemma 3 27B as the primary model with Llama 3.3 70B via Groq as fallback. Both run on independent free tiers. The binding constraint is TPM (tokens per minute), not RPD. Each scan uses ~8,000 tokens total (prompt + response), giving a realistic combined throughput of roughly 4,500 scans per day under sustained load.
 :::

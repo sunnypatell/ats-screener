@@ -74,18 +74,18 @@ Each profile is based on research into the platform's documented parsing and mat
 
 ## Tech Stack
 
-| Layer            | Choice                                             | Why                                                                                               |
-| ---------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| **Framework**    | SvelteKit 5 (Svelte 5 runes)                       | Compiled to vanilla JS, ~15KB runtime. No VDOM overhead.                                          |
-| **Styling**      | Scoped CSS + CSS custom properties                 | Dark glassmorphic design. No Tailwind. Component-scoped.                                          |
-| **PDF Parsing**  | pdfjs-dist (Web Worker)                            | Mozilla-maintained, fully client-side.                                                            |
-| **DOCX Parsing** | mammoth                                            | Client-side Word to text extraction.                                                              |
-| **NLP**          | Custom TF-IDF + tokenizer + skills taxonomy        | Lightweight, browser-native, supports 8+ industries.                                              |
-| **LLM**          | Gemma 3 27B (primary), Gemini 2.5 Flash (fallback) | 14,400 RPD free tier via Google Generative Language API. Groq + Cerebras available for self-host. |
-| **Auth**         | Firebase Authentication                            | Google + email/password sign-in. Free Spark plan.                                                 |
-| **Storage**      | Cloud Firestore                                    | Scan history per user. Free Spark plan.                                                           |
-| **Hosting**      | Vercel                                             | Free hobby tier. Edge functions for API.                                                          |
-| **Testing**      | Vitest + Playwright + @testing-library/svelte      | Unit, integration, and E2E coverage.                                                              |
+| Layer            | Choice                                                   | Why                                                                                         |
+| ---------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| **Framework**    | SvelteKit 5 (Svelte 5 runes)                             | Compiled to vanilla JS, ~15KB runtime. No VDOM overhead.                                    |
+| **Styling**      | Scoped CSS + CSS custom properties                       | Dark glassmorphic design. No Tailwind. Component-scoped.                                    |
+| **PDF Parsing**  | pdfjs-dist (Web Worker)                                  | Mozilla-maintained, fully client-side.                                                      |
+| **DOCX Parsing** | mammoth                                                  | Client-side Word to text extraction.                                                        |
+| **NLP**          | Custom TF-IDF + tokenizer + skills taxonomy              | Lightweight, browser-native, supports 8+ industries.                                        |
+| **LLM**          | Gemma 3 27B (primary), Llama 3.3 70B via Groq (fallback) | Cross-provider fallback: Google (14,400 RPD) + Groq (14,400 RPD) on independent free tiers. |
+| **Auth**         | Firebase Authentication                                  | Google + email/password sign-in. Free Spark plan.                                           |
+| **Storage**      | Cloud Firestore                                          | Scan history per user. Free Spark plan.                                                     |
+| **Hosting**      | Vercel                                                   | Free hobby tier. Edge functions for API.                                                    |
+| **Testing**      | Vitest + Playwright + @testing-library/svelte            | Unit, integration, and E2E coverage.                                                        |
 
 **Total infrastructure cost: $0.** Everything runs on free tiers.
 

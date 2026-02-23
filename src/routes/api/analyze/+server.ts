@@ -3,7 +3,8 @@ import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
 import { buildFullScoringPrompt, buildJDAnalysisPrompt } from '$engine/llm/prompts';
 
-// provider configuration: Gemma 3 27B (14,400 RPD) → Gemini Flash (20 RPD) → Flash Lite (20 RPD)
+// provider configuration: Gemma 3 27B (Google) → Llama 3.3 70B (Groq)
+// cross-provider fallback ensures independent quotas so one provider's limits don't cascade
 interface LLMProvider {
 	name: string;
 	apiKeyName: string;
@@ -45,13 +46,40 @@ function buildGoogleProvider(
 	};
 }
 
+function buildGroqProvider(name: string, model: string): LLMProvider {
+	return {
+		name,
+		apiKeyName: 'GROQ_API_KEY',
+		buildRequest: (prompt, apiKey) => ({
+			url: 'https://api.groq.com/openai/v1/chat/completions',
+			init: {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${apiKey}`
+				},
+				body: JSON.stringify({
+					model,
+					messages: [{ role: 'user', content: prompt }],
+					temperature: 0.3,
+					top_p: 0.85,
+					max_tokens: 16384,
+					response_format: { type: 'json_object' }
+				})
+			}
+		}),
+		extractText: (data: unknown) => {
+			const d = data as { choices?: { message?: { content?: string } }[] };
+			return d.choices?.[0]?.message?.content ?? '';
+		}
+	};
+}
+
 const PROVIDERS: LLMProvider[] = [
-	// primary: Gemma 3 27B - 14,400 RPD, 30 RPM (no JSON mode, relies on extractJSON)
+	// primary: Gemma 3 27B via Google - 14,400 RPD, 30 RPM, 15K TPM
 	buildGoogleProvider('gemma-3-27b', 'gemma-3-27b-it'),
-	// fallback 1: Gemini 2.5 Flash - 20 RPD, 5 RPM (supports JSON mode)
-	buildGoogleProvider('gemini-2.5-flash', 'gemini-2.5-flash', { jsonMode: true }),
-	// fallback 2: Gemini 2.5 Flash Lite - 20 RPD, 10 RPM (supports JSON mode)
-	buildGoogleProvider('gemini-2.5-flash-lite', 'gemini-2.5-flash-lite', { jsonMode: true })
+	// fallback: Llama 3.3 70B via Groq - 100-600ms, native JSON mode, 14,400 RPD
+	buildGroqProvider('groq-llama-3.3-70b', 'llama-3.3-70b-versatile')
 ];
 
 // simple in-memory rate limiter per IP
@@ -60,9 +88,10 @@ const dailyLimits = new Map<string, { count: number; resetAt: number }>();
 const MAX_RPM = 10;
 const MAX_RPD = 200;
 const MAX_MAP_SIZE = 10_000;
-// per-provider timeouts: primary gets the most time, fallbacks get less
-// total worst case: 30 + 15 + 10 = 55s (fits within Vercel's 60s maxDuration)
-const PROVIDER_TIMEOUTS_MS = [30_000, 15_000, 10_000];
+// per-provider timeouts: Gemma (90s) + Groq (30s) = 120s worst case
+// Gemma typically responds in 30-45s but can spike under load; Groq is <1s but gets headroom
+// Fluid Compute on Vercel Hobby gives 300s max, so 120s worst case fits comfortably
+const PROVIDER_TIMEOUTS_MS = [90_000, 30_000];
 
 function checkRateLimit(ip: string): boolean {
 	const now = Date.now();
@@ -200,7 +229,8 @@ interface RequestBody {
 export const POST: RequestHandler = async ({ request }) => {
 	// collect all API keys from SvelteKit $env
 	const keys: Record<string, string> = {
-		GEMINI_API_KEY: env.GEMINI_API_KEY ?? ''
+		GEMINI_API_KEY: env.GEMINI_API_KEY ?? '',
+		GROQ_API_KEY: env.GROQ_API_KEY ?? ''
 	};
 
 	const hasAnyKey = Object.values(keys).some((v) => v.length > 0);

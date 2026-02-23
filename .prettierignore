@@ -6,3 +6,5 @@ coverage/
 playwright-report/
 test-results/
 pnpm-lock.yaml
+docs/.astro/
+docs/pnpm-lock.yaml

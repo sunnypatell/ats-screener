@@ -24,8 +24,7 @@ In the Vercel dashboard:
 1. Go to your project > **Settings** > **Environment Variables**
 2. Add your API keys:
    - `GEMINI_API_KEY` (required)
-   - `GROQ_API_KEY` (optional fallback)
-   - `CEREBRAS_API_KEY` (optional fallback)
+   - `GROQ_API_KEY` (recommended fallback)
 3. Add your Firebase config (all `PUBLIC_FIREBASE_*` variables from `.env.example`)
 
 :::tip
