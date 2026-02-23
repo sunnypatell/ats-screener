@@ -160,7 +160,9 @@ class ScoresStore {
 		try {
 			const user = authStore.user;
 			const now = new Date();
-			const docId = `${now.toISOString().replace(/[:.]/g, '-')}_${uid.slice(0, 6)}`;
+			// inverted timestamp so newest logs sort first in Firebase Console
+			const inverted = (9999999999999 - now.getTime()).toString().padStart(13, '0');
+			const docId = `0_${inverted}_${now.toISOString().slice(0, 10)}_${uid.slice(0, 6)}`;
 			await setDoc(doc(db, 'scan_logs', docId), {
 				uid,
 				email: user?.email ?? null,
