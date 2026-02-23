@@ -60,7 +60,9 @@ const dailyLimits = new Map<string, { count: number; resetAt: number }>();
 const MAX_RPM = 10;
 const MAX_RPD = 200;
 const MAX_MAP_SIZE = 10_000;
-const PROVIDER_TIMEOUT_MS = 45_000;
+// per-provider timeouts: primary gets the most time, fallbacks get less
+// total worst case: 30 + 15 + 10 = 55s (fits within Vercel's 60s maxDuration)
+const PROVIDER_TIMEOUTS_MS = [30_000, 15_000, 10_000];
 
 function checkRateLimit(ip: string): boolean {
 	const now = Date.now();
@@ -96,21 +98,22 @@ function checkRateLimit(ip: string): boolean {
 	return true;
 }
 
-// tries each provider in sequence until one succeeds
+// tries each provider in sequence until one succeeds and returns valid JSON
 async function callLLM(
 	prompt: string,
 	env: Record<string, string>
-): Promise<{ text: string; provider: string } | null> {
-	for (const provider of PROVIDERS) {
+): Promise<{ parsed: Record<string, unknown>; provider: string } | null> {
+	for (let i = 0; i < PROVIDERS.length; i++) {
+		const provider = PROVIDERS[i];
+		const timeoutMs = PROVIDER_TIMEOUTS_MS[i] ?? 10_000;
 		const apiKey = env[provider.apiKeyName] ?? '';
 		if (!apiKey) continue;
 
 		try {
 			const { url, init } = provider.buildRequest(prompt, apiKey);
 
-			// abort if provider takes too long (30s default)
 			const controller = new AbortController();
-			const timeout = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
+			const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
 			const response = await fetch(url, { ...init, signal: controller.signal });
 			clearTimeout(timeout);
@@ -129,12 +132,19 @@ async function callLLM(
 				continue;
 			}
 
-			return { text, provider: provider.name };
+			// validate JSON before accepting this provider's response
+			const parsed = extractJSON(text);
+			if (!parsed || typeof parsed !== 'object') {
+				console.warn(`${provider.name} returned unparseable JSON, trying next provider`);
+				continue;
+			}
+
+			return { parsed: parsed as Record<string, unknown>, provider: provider.name };
 		} catch (err) {
 			const isTimeout = err instanceof DOMException && err.name === 'AbortError';
 			console.warn(
 				`${provider.name} ${isTimeout ? 'timed out' : 'failed'}:`,
-				isTimeout ? `exceeded ${PROVIDER_TIMEOUT_MS}ms` : err
+				isTimeout ? `exceeded ${timeoutMs}ms` : err
 			);
 			continue;
 		}
@@ -259,16 +269,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		return json({ error: 'all LLM providers failed', fallback: true }, { status: 503 });
 	}
 
-	const parsed = extractJSON(result.text);
-
-	if (!parsed || typeof parsed !== 'object') {
-		console.error(`failed to parse ${result.provider} response as JSON`);
-		return json({ error: 'failed to parse LLM response', fallback: true }, { status: 502 });
-	}
-
 	return json(
 		{
-			...(parsed as Record<string, unknown>),
+			...result.parsed,
 			_provider: result.provider,
 			_fallback: false
 		},
