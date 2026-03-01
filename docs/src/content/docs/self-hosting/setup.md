@@ -40,7 +40,7 @@ cp .env.example .env
 3. Add to `.env`: `GROQ_API_KEY=your_key_here`
 
 :::tip
-You need the **Google AI API key** to run the app (Gemma 3 27B primary, 14,400 RPD). Adding a **Groq API key** is strongly recommended as it provides a completely independent fallback (Llama 3.3 70B, 14,400 RPD) so users never see failures during peak traffic.
+You need the **Google AI API key** to run the app (Gemma 3 27B primary, 14,400 RPD). Adding a **Groq API key** is strongly recommended as it provides a completely independent fallback (Llama 3.3 70B, 1,000 RPD) so users never see failures during peak traffic.
 :::
 
 ## Run Locally

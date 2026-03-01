@@ -49,5 +49,5 @@ Your scan history is saved automatically so you can track improvements over time
 | Below 40    | Major issues. Formatting or content problems across platforms. |
 
 :::caution
-Scores are approximations based on publicly documented platform behavior and community reports. They do not guarantee any specific outcome in actual application processes. This is a independent research project, not an official tool from any ATS vendor.
+Scores are approximations based on publicly documented platform behavior and community reports. They do not guarantee any specific outcome in actual application processes. This is an independent research project, not an official tool from any ATS vendor.
 :::

@@ -78,7 +78,7 @@ function buildGroqProvider(name: string, model: string): LLMProvider {
 const PROVIDERS: LLMProvider[] = [
 	// primary: Gemma 3 27B via Google - 14,400 RPD, 30 RPM, 15K TPM
 	buildGoogleProvider('gemma-3-27b', 'gemma-3-27b-it'),
-	// fallback: Llama 3.3 70B via Groq - 100-600ms, native JSON mode, 14,400 RPD
+	// fallback: Llama 3.3 70B via Groq - 100-600ms, native JSON mode, 1K RPD, 100K TPD
 	buildGroqProvider('groq-llama-3.3-70b', 'llama-3.3-70b-versatile')
 ];
 
