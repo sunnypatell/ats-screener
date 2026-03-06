@@ -6,6 +6,8 @@
 	import WeakestAreas from './WeakestAreas.svelte';
 	import ResumeStats from './ResumeStats.svelte';
 	import ShareBadge from './ShareBadge.svelte';
+	import ReportExport from './ReportExport.svelte';
+	import { authStore } from '$stores/auth.svelte';
 	import type { Suggestion, StructuredSuggestion } from '$engine/scorer/types';
 
 	// derived stats for the summary card header
@@ -16,6 +18,9 @@
 	// toggle between grid cards and detailed breakdown view
 	let activeView = $state<'cards' | 'detailed'>('cards');
 	let showShareBadge = $state(false);
+
+	// pdf export state
+	let isExporting = $state(false);
 
 	// collapsible suggestion cards
 	let expandedSuggestion = $state<number | null>(null);
@@ -50,6 +55,43 @@
 		}
 		return suggestions.slice(0, 5);
 	});
+
+	// generates a PDF report from the off-screen report layout
+	async function exportResults() {
+		if (isExporting) return;
+		isExporting = true;
+
+		try {
+			const html2pdf = (await import('html2pdf.js')).default;
+			const element = document.getElementById('pdf-report');
+			if (!element) {
+				console.error('[export] pdf-report element not found');
+				return;
+			}
+
+			const opt = {
+				margin: 0,
+				filename: `${authStore.displayName || 'Resume'} - ATS Screening Report - ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).replace(',', '')}.pdf`,
+				image: { type: 'jpeg' as const, quality: 0.98 },
+				html2canvas: {
+					scale: 2,
+					useCORS: true,
+					backgroundColor: '#0a0a1a'
+				},
+				jsPDF: {
+					unit: 'mm' as const,
+					format: 'a4' as const,
+					orientation: 'portrait' as const
+				}
+			};
+
+			await html2pdf().set(opt).from(element).save();
+		} catch (err) {
+			console.error('[export] pdf generation failed:', err);
+		} finally {
+			isExporting = false;
+		}
+	}
 
 	// color based on average score
 	function getAvgColor(score: number): string {
@@ -286,6 +328,41 @@
 					</svg>
 					Share
 				</button>
+				<button
+					class="toolbar-btn"
+					onclick={exportResults}
+					disabled={isExporting}
+					title="Export results as PDF"
+				>
+					{#if isExporting}
+						<svg
+							class="export-spinner"
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<path d="M21 12a9 9 0 1 1-6.219-8.56" />
+						</svg>
+						Generating...
+					{:else}
+						<svg
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+							<polyline points="7,10 12,15 17,10" />
+							<line x1="12" y1="15" x2="12" y2="3" />
+						</svg>
+						Export PDF
+					{/if}
+				</button>
 			</div>
 		</div>
 
@@ -412,6 +489,8 @@
 			</div>
 		{/if}
 	</div>
+
+	<ReportExport />
 {/if}
 
 <ShareBadge bind:open={showShareBadge} />
@@ -686,10 +765,28 @@
 			background 0.2s ease;
 	}
 
-	.toolbar-btn:hover {
+	.toolbar-btn:hover:not(:disabled) {
 		border-color: rgba(6, 182, 212, 0.3);
 		color: var(--accent-cyan);
 		background: rgba(6, 182, 212, 0.05);
+	}
+
+	.toolbar-btn:disabled {
+		opacity: 0.7;
+		cursor: not-allowed;
+	}
+
+	.export-spinner {
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	/* view toggle tabs */
