@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { scoresStore } from '$stores/scores.svelte';
 	import { authStore } from '$stores/auth.svelte';
+	import { getScoreColor, getScoreLabel } from '$engine/scorer/classification';
 
 	let { open = $bindable(false) }: { open: boolean } = $props();
 
@@ -16,20 +17,6 @@
 		new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 	);
 	const modeLabel = $derived(mode === 'targeted' ? 'Targeted Scoring' : 'General Readiness');
-
-	function getScoreColor(score: number): string {
-		if (score >= 80) return '#22c55e';
-		if (score >= 60) return '#eab308';
-		if (score >= 40) return '#f97316';
-		return '#ef4444';
-	}
-
-	function getScoreLabel(score: number): string {
-		if (score >= 80) return 'Excellent';
-		if (score >= 60) return 'Good';
-		if (score >= 40) return 'Needs Work';
-		return 'Poor';
-	}
 
 	const scoreColor = $derived(getScoreColor(avgScore));
 	const scoreLabel = $derived(getScoreLabel(avgScore));

@@ -1,24 +1,11 @@
 <script lang="ts">
 	import type { ScoreResult } from '$engine/scorer/types';
+	import { getScoreColor, getScoreLabel } from '$engine/scorer/classification';
 
 	let { result }: { result: ScoreResult } = $props();
 
 	// toggles the expanded state for this breakdown
 	let expanded = $state(false);
-
-	function getScoreColor(score: number): string {
-		if (score >= 80) return '#22c55e';
-		if (score >= 60) return '#eab308';
-		if (score >= 40) return '#f97316';
-		return '#ef4444';
-	}
-
-	function getScoreLabel(score: number): string {
-		if (score >= 80) return 'Excellent';
-		if (score >= 60) return 'Good';
-		if (score >= 40) return 'Needs Work';
-		return 'Poor';
-	}
 </script>
 
 <div class="breakdown" class:expanded>

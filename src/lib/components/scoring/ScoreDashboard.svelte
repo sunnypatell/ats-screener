@@ -6,8 +6,8 @@
 	import WeakestAreas from './WeakestAreas.svelte';
 	import ResumeStats from './ResumeStats.svelte';
 	import ShareBadge from './ShareBadge.svelte';
-	import ReportExport from './ReportExport.svelte';
-	import { authStore } from '$stores/auth.svelte';
+	import { generatePDF } from '$engine/scorer/report';
+	import { getScoreColor, getScoreLabel } from '$engine/scorer/classification';
 	import type { Suggestion, StructuredSuggestion } from '$engine/scorer/types';
 
 	// derived stats for the summary card header
@@ -56,36 +56,12 @@
 		return suggestions.slice(0, 5);
 	});
 
-	// generates a PDF report from the off-screen report layout
+	// generates a PDF report using jsPDF
 	async function exportResults() {
 		if (isExporting) return;
 		isExporting = true;
-
 		try {
-			const html2pdf = (await import('html2pdf.js')).default;
-			const element = document.getElementById('pdf-report');
-			if (!element) {
-				console.error('[export] pdf-report element not found');
-				return;
-			}
-
-			const opt = {
-				margin: 0,
-				filename: `${authStore.displayName || 'Resume'} - ATS Screening Report - ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).replace(',', '')}.pdf`,
-				image: { type: 'jpeg' as const, quality: 0.98 },
-				html2canvas: {
-					scale: 2,
-					useCORS: true,
-					backgroundColor: '#0a0a1a'
-				},
-				jsPDF: {
-					unit: 'mm' as const,
-					format: 'a4' as const,
-					orientation: 'portrait' as const
-				}
-			};
-
-			await html2pdf().set(opt).from(element).save();
+			await generatePDF();
 		} catch (err) {
 			console.error('[export] pdf generation failed:', err);
 		} finally {
@@ -93,20 +69,8 @@
 		}
 	}
 
-	// color based on average score
-	function getAvgColor(score: number): string {
-		if (score >= 80) return '#22c55e';
-		if (score >= 60) return '#eab308';
-		if (score >= 40) return '#f97316';
-		return '#ef4444';
-	}
-
-	function getScoreLabel(score: number): string {
-		if (score >= 80) return 'Excellent';
-		if (score >= 60) return 'Good';
-		if (score >= 40) return 'Needs Work';
-		return 'Poor';
-	}
+	// alias for backward compat in template
+	const getAvgColor = getScoreColor;
 </script>
 
 {#if scoresStore.hasResults}
@@ -489,8 +453,6 @@
 			</div>
 		{/if}
 	</div>
-
-	<ReportExport />
 {/if}
 
 <ShareBadge bind:open={showShareBadge} />
