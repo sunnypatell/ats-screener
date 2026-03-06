@@ -79,7 +79,9 @@
 				const a = document.createElement('a');
 				a.href = URL.createObjectURL(blob);
 				const d = new Date();
-				const dateStr = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).replace(',', '');
+				const dateStr = d
+					.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+					.replace(',', '');
 				a.download = `${displayName} - ATS Screener Badge - ${dateStr}.png`;
 				a.click();
 				URL.revokeObjectURL(a.href);
@@ -102,15 +104,27 @@
 		const url = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent('ATS Screening Report')}&organizationName=${encodeURIComponent('ATS Screener')}&issueYear=${year}&issueMonth=${month}&certUrl=${encodeURIComponent('https://ats-screener.vercel.app')}`;
 		window.open(url, '_blank', 'noopener,noreferrer');
 	}
-
 </script>
 
 {#if open}
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="badge-overlay" onclick={handleBackdropClick} onkeydown={handleKeydown} tabindex="-1" use:autoFocus>
+	<div
+		class="badge-overlay"
+		onclick={handleBackdropClick}
+		onkeydown={handleKeydown}
+		tabindex="-1"
+		use:autoFocus
+	>
 		<div class="badge-dialog" role="dialog" aria-label="Share badge">
 			<button class="close-btn" onclick={close} aria-label="Close">
-				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<svg
+					width="18"
+					height="18"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
 					<line x1="18" y1="6" x2="6" y2="18" />
 					<line x1="6" y1="6" x2="18" y2="18" />
 				</svg>
@@ -177,12 +191,26 @@
 						<g opacity="0.025" clip-path="url(#badge-cardClip)">
 							{#each Array(18) as _, i}
 								<line x1="4" y1={i * 42} x2="516" y2={i * 42} stroke="white" stroke-width="0.5" />
-								<line x1={i * 30 + 4} y1="4" x2={i * 30 + 4} y2="716" stroke="white" stroke-width="0.5" />
+								<line
+									x1={i * 30 + 4}
+									y1="4"
+									x2={i * 30 + 4}
+									y2="716"
+									stroke="white"
+									stroke-width="0.5"
+								/>
 							{/each}
 						</g>
 
 						<!-- top accent bar gradient -->
-						<rect x="4" y="4" width="512" height="3" fill="url(#badge-accentGrad)" clip-path="url(#badge-cardClip)" />
+						<rect
+							x="4"
+							y="4"
+							width="512"
+							height="3"
+							fill="url(#badge-accentGrad)"
+							clip-path="url(#badge-cardClip)"
+						/>
 
 						<!-- decorative corner glows -->
 						<circle cx="480" cy="50" r="100" fill="#06b6d4" opacity="0.025" />
@@ -215,12 +243,19 @@
 								font-weight="700"
 								fill="rgba(255,255,255,0.9)"
 								text-anchor="start"
-								letter-spacing="0.1em"
-							>ATS SCREENER</text>
+								letter-spacing="0.1em">ATS SCREENER</text
+							>
 						</g>
 
 						<!-- thin divider -->
-						<line x1="80" y1="84" x2="440" y2="84" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+						<line
+							x1="80"
+							y1="84"
+							x2="440"
+							y2="84"
+							stroke="rgba(255,255,255,0.06)"
+							stroke-width="1"
+						/>
 
 						<!-- verification seal watermark (top right) -->
 						<g transform="translate(430, 130)" opacity="0.06">
@@ -237,14 +272,41 @@
 									stroke-width="1"
 								/>
 							{/each}
-							<text x="0" y="2" font-family="system-ui, sans-serif" font-size="7" fill="white" text-anchor="middle" dominant-baseline="central" font-weight="700" letter-spacing="0.1em">VERIFIED</text>
+							<text
+								x="0"
+								y="2"
+								font-family="system-ui, sans-serif"
+								font-size="7"
+								fill="white"
+								text-anchor="middle"
+								dominant-baseline="central"
+								font-weight="700"
+								letter-spacing="0.1em">VERIFIED</text
+							>
 						</g>
 
 						<!-- score ring section -->
 						<g transform="translate(260, 210)">
 							<!-- outer decorative ring -->
-							<circle cx="0" cy="0" r="82" fill="none" stroke={scoreColor} stroke-width="0.5" opacity="0.15" />
-							<circle cx="0" cy="0" r="86" fill="none" stroke={scoreColor} stroke-width="0.5" opacity="0.08" stroke-dasharray="4 8" />
+							<circle
+								cx="0"
+								cy="0"
+								r="82"
+								fill="none"
+								stroke={scoreColor}
+								stroke-width="0.5"
+								opacity="0.15"
+							/>
+							<circle
+								cx="0"
+								cy="0"
+								r="86"
+								fill="none"
+								stroke={scoreColor}
+								stroke-width="0.5"
+								opacity="0.08"
+								stroke-dasharray="4 8"
+							/>
 
 							<!-- background track -->
 							<circle
@@ -280,8 +342,8 @@
 								font-weight="800"
 								fill={scoreColor}
 								text-anchor="middle"
-								dominant-baseline="central"
-							>{avgScore}</text>
+								dominant-baseline="central">{avgScore}</text
+							>
 
 							<!-- /100 label -->
 							<text
@@ -291,8 +353,8 @@
 								font-size="13"
 								font-weight="500"
 								fill="rgba(255,255,255,0.35)"
-								text-anchor="middle"
-							>/ 100</text>
+								text-anchor="middle">/ 100</text
+							>
 						</g>
 
 						<!-- verdict -->
@@ -304,12 +366,21 @@
 							font-weight="700"
 							fill={scoreColor}
 							text-anchor="middle"
-							letter-spacing="0.08em"
-						>{scoreLabel.toUpperCase()}</text>
+							letter-spacing="0.08em">{scoreLabel.toUpperCase()}</text
+						>
 
 						<!-- systems passed pill -->
 						<g transform="translate(260, 365)">
-							<rect x="-72" y="-14" width="144" height="28" rx="14" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+							<rect
+								x="-72"
+								y="-14"
+								width="144"
+								height="28"
+								rx="14"
+								fill="rgba(255,255,255,0.04)"
+								stroke="rgba(255,255,255,0.08)"
+								stroke-width="1"
+							/>
 							<text
 								x="0"
 								y="1"
@@ -318,12 +389,19 @@
 								font-weight="600"
 								fill="rgba(255,255,255,0.7)"
 								text-anchor="middle"
-								dominant-baseline="central"
-							>{passCount}/{totalCount} Systems Passed</text>
+								dominant-baseline="central">{passCount}/{totalCount} Systems Passed</text
+							>
 						</g>
 
 						<!-- divider -->
-						<line x1="80" y1="405" x2="440" y2="405" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+						<line
+							x1="80"
+							y1="405"
+							x2="440"
+							y2="405"
+							stroke="rgba(255,255,255,0.06)"
+							stroke-width="1"
+						/>
 
 						<!-- candidate name -->
 						<g transform="translate(260, 444)">
@@ -335,8 +413,8 @@
 								font-weight="600"
 								fill="rgba(255,255,255,0.3)"
 								text-anchor="middle"
-								letter-spacing="0.14em"
-							>CANDIDATE</text>
+								letter-spacing="0.14em">CANDIDATE</text
+							>
 							<text
 								x="0"
 								y="24"
@@ -344,25 +422,73 @@
 								font-size="19"
 								font-weight="600"
 								fill="rgba(255,255,255,0.9)"
-								text-anchor="middle"
-							>{displayName}</text>
+								text-anchor="middle">{displayName}</text
+							>
 						</g>
 
 						<!-- mode + date row -->
 						<g transform="translate(260, 510)">
 							<g transform="translate(-90, 0)">
-								<text x="0" y="0" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="rgba(255,255,255,0.3)" text-anchor="middle" letter-spacing="0.12em">MODE</text>
-								<text x="0" y="20" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="500" fill="#06b6d4" text-anchor="middle">{modeLabel}</text>
+								<text
+									x="0"
+									y="0"
+									font-family="system-ui, -apple-system, sans-serif"
+									font-size="9"
+									font-weight="600"
+									fill="rgba(255,255,255,0.3)"
+									text-anchor="middle"
+									letter-spacing="0.12em">MODE</text
+								>
+								<text
+									x="0"
+									y="20"
+									font-family="system-ui, -apple-system, sans-serif"
+									font-size="13"
+									font-weight="500"
+									fill="#06b6d4"
+									text-anchor="middle">{modeLabel}</text
+								>
 							</g>
-							<line x1="0" y1="-8" x2="0" y2="24" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+							<line
+								x1="0"
+								y1="-8"
+								x2="0"
+								y2="24"
+								stroke="rgba(255,255,255,0.06)"
+								stroke-width="1"
+							/>
 							<g transform="translate(90, 0)">
-								<text x="0" y="0" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="rgba(255,255,255,0.3)" text-anchor="middle" letter-spacing="0.12em">SCAN DATE</text>
-								<text x="0" y="20" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="500" fill="rgba(255,255,255,0.7)" text-anchor="middle">{scanDate}</text>
+								<text
+									x="0"
+									y="0"
+									font-family="system-ui, -apple-system, sans-serif"
+									font-size="9"
+									font-weight="600"
+									fill="rgba(255,255,255,0.3)"
+									text-anchor="middle"
+									letter-spacing="0.12em">SCAN DATE</text
+								>
+								<text
+									x="0"
+									y="20"
+									font-family="system-ui, -apple-system, sans-serif"
+									font-size="13"
+									font-weight="500"
+									fill="rgba(255,255,255,0.7)"
+									text-anchor="middle">{scanDate}</text
+								>
 							</g>
 						</g>
 
 						<!-- divider before scores -->
-						<line x1="80" y1="550" x2="440" y2="550" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+						<line
+							x1="80"
+							y1="550"
+							x2="440"
+							y2="550"
+							stroke="rgba(255,255,255,0.06)"
+							stroke-width="1"
+						/>
 
 						<!-- individual system scores -->
 						<g transform="translate(260, 582)">
@@ -389,8 +515,8 @@
 										font-size="9.5"
 										font-weight="500"
 										fill="rgba(255,255,255,0.5)"
-										dominant-baseline="central"
-									>{result.system}</text>
+										dominant-baseline="central">{result.system}</text
+									>
 									<text
 										x="54"
 										y="1"
@@ -399,14 +525,21 @@
 										font-weight="700"
 										fill={getScoreColor(result.overallScore)}
 										text-anchor="end"
-										dominant-baseline="central"
-									>{result.overallScore}</text>
+										dominant-baseline="central">{result.overallScore}</text
+									>
 								</g>
 							{/each}
 						</g>
 
 						<!-- footer divider -->
-						<line x1="60" y1="656" x2="460" y2="656" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+						<line
+							x1="60"
+							y1="656"
+							x2="460"
+							y2="656"
+							stroke="rgba(255,255,255,0.06)"
+							stroke-width="1"
+						/>
 
 						<!-- footer -->
 						<text
@@ -417,8 +550,8 @@
 							font-weight="500"
 							fill="#06b6d4"
 							text-anchor="middle"
-							opacity="0.6"
-						>ats-screener.vercel.app</text>
+							opacity="0.6">ats-screener.vercel.app</text
+						>
 
 						<text
 							x="260"
@@ -427,15 +560,22 @@
 							font-size="8"
 							font-weight="400"
 							fill="rgba(255,255,255,0.18)"
-							text-anchor="middle"
-						>Not an official ATS certification</text>
+							text-anchor="middle">Not an official ATS certification</text
+						>
 					</svg>
 				</div>
 
 				<!-- action buttons -->
 				<div class="badge-actions">
 					<button class="action-btn primary" onclick={downloadBadge}>
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<svg
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
 							<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
 							<polyline points="7,10 12,15 17,10" />
 							<line x1="12" y1="15" x2="12" y2="3" />
@@ -445,20 +585,28 @@
 
 					<button class="action-btn linkedin" onclick={shareToLinkedIn}>
 						<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-							<path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+							<path
+								d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"
+							/>
 						</svg>
 						Share to LinkedIn
 					</button>
 
 					<button class="action-btn secondary" onclick={addToLinkedInProfile}>
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<svg
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
 							<circle cx="12" cy="12" r="10" />
 							<line x1="12" y1="8" x2="12" y2="16" />
 							<line x1="8" y1="12" x2="16" y2="12" />
 						</svg>
 						Add to LinkedIn Profile
 					</button>
-
 				</div>
 			</div>
 		</div>
@@ -480,8 +628,12 @@
 	}
 
 	@keyframes overlayIn {
-		from { opacity: 0; }
-		to { opacity: 1; }
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
 	}
 
 	.badge-dialog {
@@ -523,7 +675,9 @@
 		justify-content: center;
 		color: var(--text-tertiary);
 		cursor: pointer;
-		transition: color 0.2s ease, background 0.2s ease;
+		transition:
+			color 0.2s ease,
+			background 0.2s ease;
 		z-index: 1;
 	}
 

@@ -265,7 +265,11 @@
 			</div>
 
 			<div class="toolbar-actions">
-				<button class="toolbar-btn" onclick={() => (showShareBadge = true)} title="Share score badge">
+				<button
+					class="toolbar-btn"
+					onclick={() => (showShareBadge = true)}
+					title="Share score badge"
+				>
 					<svg
 						width="16"
 						height="16"
