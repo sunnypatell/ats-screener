@@ -5,6 +5,7 @@
 	import KeywordAnalysis from './KeywordAnalysis.svelte';
 	import WeakestAreas from './WeakestAreas.svelte';
 	import ResumeStats from './ResumeStats.svelte';
+	import ShareBadge from './ShareBadge.svelte';
 	import type { Suggestion, StructuredSuggestion } from '$engine/scorer/types';
 
 	// derived stats for the summary card header
@@ -14,6 +15,7 @@
 
 	// toggle between grid cards and detailed breakdown view
 	let activeView = $state<'cards' | 'detailed'>('cards');
+	let showShareBadge = $state(false);
 
 	// collapsible suggestion cards
 	let expandedSuggestion = $state<number | null>(null);
@@ -281,21 +283,40 @@
 				</button>
 			</div>
 
-			<button class="export-btn" onclick={exportResults} title="Export results as JSON">
-				<svg
-					width="16"
-					height="16"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-				>
-					<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-					<polyline points="7,10 12,15 17,10" />
-					<line x1="12" y1="15" x2="12" y2="3" />
-				</svg>
-				Export
-			</button>
+			<div class="toolbar-actions">
+				<button class="toolbar-btn" onclick={() => (showShareBadge = true)} title="Share score badge">
+					<svg
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
+						<circle cx="18" cy="5" r="3" />
+						<circle cx="6" cy="12" r="3" />
+						<circle cx="18" cy="19" r="3" />
+						<line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+						<line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+					</svg>
+					Share
+				</button>
+				<button class="toolbar-btn" onclick={exportResults} title="Export results as JSON">
+					<svg
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
+						<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+						<polyline points="7,10 12,15 17,10" />
+						<line x1="12" y1="15" x2="12" y2="3" />
+					</svg>
+					Export
+				</button>
+			</div>
 		</div>
 
 		<!-- card view: 6 ATS score cards in a grid -->
@@ -422,6 +443,8 @@
 		{/if}
 	</div>
 {/if}
+
+<ShareBadge bind:open={showShareBadge} />
 
 <style>
 	.dashboard {
@@ -669,7 +692,12 @@
 		gap: 1rem;
 	}
 
-	.export-btn {
+	.toolbar-actions {
+		display: flex;
+		gap: 0.5rem;
+	}
+
+	.toolbar-btn {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.4rem;
@@ -688,7 +716,7 @@
 			background 0.2s ease;
 	}
 
-	.export-btn:hover {
+	.toolbar-btn:hover {
 		border-color: rgba(6, 182, 212, 0.3);
 		color: var(--accent-cyan);
 		background: rgba(6, 182, 212, 0.05);
