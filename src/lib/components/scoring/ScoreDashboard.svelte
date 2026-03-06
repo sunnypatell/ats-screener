@@ -51,25 +51,6 @@
 		return suggestions.slice(0, 5);
 	});
 
-	// exports results as a JSON file download
-	function exportResults() {
-		const data = {
-			exportedAt: new Date().toISOString(),
-			mode: scoresStore.mode,
-			averageScore: avgScore,
-			passingCount: passCount,
-			totalSystems: totalCount,
-			results: scoresStore.results
-		};
-		const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = `ats-scores-${new Date().toISOString().slice(0, 10)}.json`;
-		a.click();
-		URL.revokeObjectURL(url);
-	}
-
 	// color based on average score
 	function getAvgColor(score: number): string {
 		if (score >= 80) return '#22c55e';
@@ -300,21 +281,6 @@
 						<line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
 					</svg>
 					Share
-				</button>
-				<button class="toolbar-btn" onclick={exportResults} title="Export results as JSON">
-					<svg
-						width="16"
-						height="16"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-					>
-						<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-						<polyline points="7,10 12,15 17,10" />
-						<line x1="12" y1="15" x2="12" y2="3" />
-					</svg>
-					Export
 				</button>
 			</div>
 		</div>

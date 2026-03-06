@@ -4,7 +4,6 @@
 
 	let { open = $bindable(false) }: { open: boolean } = $props();
 
-	let copied = $state(false);
 	let badgeSvgEl: SVGSVGElement | undefined = $state();
 
 	const avgScore = $derived(scoresStore.averageScore);
@@ -40,12 +39,11 @@
 	const dashOffset = $derived(circumference - (avgScore / 100) * circumference);
 
 	const shareText = $derived(
-		`Just scored ${avgScore}/100 on ATS Screener, a free open-source tool that simulates how real ATS platforms like Workday, Taleo, and Greenhouse parse your resume.\n\n${passCount}/${totalCount} systems passed. Check yours at ats-screener.vercel.app`
+		`Just scored ${avgScore}/100 on ATS Screener, a free open-source resume tool by linkedin.com/in/sunny-patel-30b460204 that simulates how real ATS platforms (Workday, Taleo, iCIMS, Greenhouse, Lever, and SuccessFactors) parse your resume.\n\n${passCount}/${totalCount} systems passed. Try it free at ats-screener.vercel.app\n\n#ATSScreener #Resume #JobSearch #OpenSource #CareerTips`
 	);
 
 	function close() {
 		open = false;
-		copied = false;
 	}
 
 	function handleBackdropClick(e: MouseEvent) {
@@ -80,7 +78,9 @@
 				if (!blob) return;
 				const a = document.createElement('a');
 				a.href = URL.createObjectURL(blob);
-				a.download = `ats-badge-${avgScore}-${new Date().toISOString().slice(0, 10)}.png`;
+				const d = new Date();
+				const dateStr = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).replace(',', '');
+				a.download = `${displayName} - ATS Screener Badge - ${dateStr}.png`;
 				a.click();
 				URL.revokeObjectURL(a.href);
 			}, 'image/png');
@@ -91,7 +91,7 @@
 	}
 
 	function shareToLinkedIn() {
-		const url = `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent('https://ats-screener.vercel.app')}`;
+		const url = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(shareText)}`;
 		window.open(url, '_blank', 'noopener,noreferrer');
 	}
 
@@ -103,25 +103,6 @@
 		window.open(url, '_blank', 'noopener,noreferrer');
 	}
 
-	async function copyShareText() {
-		try {
-			await navigator.clipboard.writeText(shareText);
-			copied = true;
-			setTimeout(() => (copied = false), 2000);
-		} catch {
-			// fallback
-			const ta = document.createElement('textarea');
-			ta.value = shareText;
-			ta.style.position = 'fixed';
-			ta.style.opacity = '0';
-			document.body.appendChild(ta);
-			ta.select();
-			document.execCommand('copy');
-			document.body.removeChild(ta);
-			copied = true;
-			setTimeout(() => (copied = false), 2000);
-		}
-	}
 </script>
 
 {#if open}
@@ -144,29 +125,29 @@
 					<svg
 						bind:this={badgeSvgEl}
 						xmlns="http://www.w3.org/2000/svg"
-						width="600"
-						height="820"
-						viewBox="0 0 600 820"
+						width="520"
+						height="720"
+						viewBox="0 0 520 720"
 						class="badge-svg"
 					>
 						<defs>
-							<linearGradient id="badge-bgGrad" x1="0" y1="0" x2="1" y2="1">
-								<stop offset="0%" stop-color="#0a0a1a" />
-								<stop offset="50%" stop-color="#0d0d28" />
-								<stop offset="100%" stop-color="#0a0a1a" />
+							<linearGradient id="badge-bgGrad" x1="0" y1="0" x2="0.5" y2="1">
+								<stop offset="0%" stop-color="#0c0c20" />
+								<stop offset="50%" stop-color="#0a0a1a" />
+								<stop offset="100%" stop-color="#0e0b1e" />
 							</linearGradient>
 							<linearGradient id="badge-accentGrad" x1="0" y1="0" x2="1" y2="1">
 								<stop offset="0%" stop-color="#06b6d4" />
 								<stop offset="50%" stop-color="#3b82f6" />
 								<stop offset="100%" stop-color="#8b5cf6" />
 							</linearGradient>
-							<linearGradient id="badge-scoreGlow" x1="0" y1="0" x2="0" y2="1">
-								<stop offset="0%" stop-color={scoreColor} stop-opacity="0.4" />
-								<stop offset="100%" stop-color={scoreColor} stop-opacity="0" />
+							<linearGradient id="badge-borderGrad" x1="0" y1="0" x2="1" y2="1">
+								<stop offset="0%" stop-color="#06b6d4" stop-opacity="0.6" />
+								<stop offset="25%" stop-color="#3b82f6" stop-opacity="0.2" />
+								<stop offset="50%" stop-color="#8b5cf6" stop-opacity="0.6" />
+								<stop offset="75%" stop-color="#3b82f6" stop-opacity="0.2" />
+								<stop offset="100%" stop-color="#06b6d4" stop-opacity="0.6" />
 							</linearGradient>
-							<filter id="badge-glassBlur">
-								<feGaussianBlur in="SourceGraphic" stdDeviation="2" />
-							</filter>
 							<filter id="badge-glow">
 								<feGaussianBlur stdDeviation="6" result="blur" />
 								<feMerge>
@@ -174,42 +155,51 @@
 									<feMergeNode in="SourceGraphic" />
 								</feMerge>
 							</filter>
+							<filter id="badge-sealGlow">
+								<feGaussianBlur stdDeviation="3" result="blur" />
+								<feMerge>
+									<feMergeNode in="blur" />
+									<feMergeNode in="SourceGraphic" />
+								</feMerge>
+							</filter>
 							<clipPath id="badge-cardClip">
-								<rect x="0" y="0" width="600" height="820" rx="32" ry="32" />
+								<rect x="4" y="4" width="512" height="712" rx="28" ry="28" />
 							</clipPath>
 						</defs>
 
-						<!-- card background -->
-						<rect width="600" height="820" rx="32" ry="32" fill="url(#badge-bgGrad)" />
+						<!-- gradient border frame -->
+						<rect width="520" height="720" rx="30" ry="30" fill="url(#badge-borderGrad)" />
+
+						<!-- inner card background -->
+						<rect x="4" y="4" width="512" height="712" rx="28" ry="28" fill="url(#badge-bgGrad)" />
 
 						<!-- subtle grid pattern -->
-						<g opacity="0.03" clip-path="url(#badge-cardClip)">
-							{#each Array(20) as _, i}
-								<line x1="0" y1={i * 42} x2="600" y2={i * 42} stroke="white" stroke-width="0.5" />
-								<line x1={i * 32} y1="0" x2={i * 32} y2="820" stroke="white" stroke-width="0.5" />
+						<g opacity="0.025" clip-path="url(#badge-cardClip)">
+							{#each Array(18) as _, i}
+								<line x1="4" y1={i * 42} x2="516" y2={i * 42} stroke="white" stroke-width="0.5" />
+								<line x1={i * 30 + 4} y1="4" x2={i * 30 + 4} y2="716" stroke="white" stroke-width="0.5" />
 							{/each}
 						</g>
 
 						<!-- top accent bar gradient -->
-						<rect x="0" y="0" width="600" height="4" rx="0" fill="url(#badge-accentGrad)" clip-path="url(#badge-cardClip)" />
+						<rect x="4" y="4" width="512" height="3" fill="url(#badge-accentGrad)" clip-path="url(#badge-cardClip)" />
 
-						<!-- decorative corner accents -->
-						<circle cx="540" cy="60" r="120" fill="#06b6d4" opacity="0.03" />
-						<circle cx="60" cy="760" r="100" fill="#8b5cf6" opacity="0.03" />
+						<!-- decorative corner glows -->
+						<circle cx="480" cy="50" r="100" fill="#06b6d4" opacity="0.025" />
+						<circle cx="40" cy="670" r="80" fill="#8b5cf6" opacity="0.025" />
 
 						<!-- branding header -->
-						<g transform="translate(300, 60)">
+						<g transform="translate(260, 52)">
 							<!-- shield icon -->
-							<g transform="translate(-10, 0)">
+							<g transform="translate(-72, 0)">
 								<path
-									d="M0-16 L-10-10 L-10 2 C-10 10 0 16 0 16 C0 16 10 10 10 2 L10-10 Z"
-									fill="none"
+									d="M0-14 L-9-9 L-9 2 C-9 9 0 14 0 14 C0 14 9 9 9 2 L9-9 Z"
+									fill="rgba(6,182,212,0.08)"
 									stroke="url(#badge-accentGrad)"
 									stroke-width="1.5"
-									opacity="0.8"
 								/>
 								<path
-									d="M-4 0 L-1 3 L5 -3"
+									d="M-3.5 0.5 L-1 3 L4.5 -2.5"
 									fill="none"
 									stroke="#06b6d4"
 									stroke-width="1.5"
@@ -218,24 +208,43 @@
 								/>
 							</g>
 							<text
-								x="16"
+								x="-52"
 								y="5"
 								font-family="system-ui, -apple-system, sans-serif"
-								font-size="16"
+								font-size="15"
 								font-weight="700"
 								fill="rgba(255,255,255,0.9)"
 								text-anchor="start"
-								letter-spacing="0.08em"
+								letter-spacing="0.1em"
 							>ATS SCREENER</text>
 						</g>
 
-						<!-- divider -->
-						<line x1="100" y1="95" x2="500" y2="95" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+						<!-- thin divider -->
+						<line x1="80" y1="84" x2="440" y2="84" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+
+						<!-- verification seal watermark (top right) -->
+						<g transform="translate(430, 130)" opacity="0.06">
+							<circle cx="0" cy="0" r="36" fill="none" stroke="white" stroke-width="1" />
+							<circle cx="0" cy="0" r="28" fill="none" stroke="white" stroke-width="0.5" />
+							{#each Array(12) as _, i}
+								{@const angle = (i * 30 * Math.PI) / 180}
+								<line
+									x1={Math.cos(angle) * 28}
+									y1={Math.sin(angle) * 28}
+									x2={Math.cos(angle) * 36}
+									y2={Math.sin(angle) * 36}
+									stroke="white"
+									stroke-width="1"
+								/>
+							{/each}
+							<text x="0" y="2" font-family="system-ui, sans-serif" font-size="7" fill="white" text-anchor="middle" dominant-baseline="central" font-weight="700" letter-spacing="0.1em">VERIFIED</text>
+						</g>
 
 						<!-- score ring section -->
-						<g transform="translate(300, 250)">
-							<!-- outer glow ring -->
-							<circle cx="0" cy="0" r="80" fill="none" stroke={scoreColor} stroke-width="1" opacity="0.1" />
+						<g transform="translate(260, 210)">
+							<!-- outer decorative ring -->
+							<circle cx="0" cy="0" r="82" fill="none" stroke={scoreColor} stroke-width="0.5" opacity="0.15" />
+							<circle cx="0" cy="0" r="86" fill="none" stroke={scoreColor} stroke-width="0.5" opacity="0.08" stroke-dasharray="4 8" />
 
 							<!-- background track -->
 							<circle
@@ -244,7 +253,7 @@
 								r="58"
 								fill="none"
 								stroke="rgba(255,255,255,0.05)"
-								stroke-width="8"
+								stroke-width="10"
 							/>
 
 							<!-- score progress arc -->
@@ -254,7 +263,7 @@
 								r="58"
 								fill="none"
 								stroke={scoreColor}
-								stroke-width="8"
+								stroke-width="10"
 								stroke-dasharray={circumference}
 								stroke-dashoffset={dashOffset}
 								stroke-linecap="round"
@@ -267,7 +276,7 @@
 								x="0"
 								y="-8"
 								font-family="system-ui, -apple-system, sans-serif"
-								font-size="56"
+								font-size="52"
 								font-weight="800"
 								fill={scoreColor}
 								text-anchor="middle"
@@ -277,9 +286,9 @@
 							<!-- /100 label -->
 							<text
 								x="0"
-								y="28"
+								y="26"
 								font-family="system-ui, -apple-system, sans-serif"
-								font-size="14"
+								font-size="13"
 								font-weight="500"
 								fill="rgba(255,255,255,0.35)"
 								text-anchor="middle"
@@ -288,24 +297,24 @@
 
 						<!-- verdict -->
 						<text
-							x="300"
-							y="365"
+							x="260"
+							y="328"
 							font-family="system-ui, -apple-system, sans-serif"
-							font-size="22"
+							font-size="20"
 							font-weight="700"
 							fill={scoreColor}
 							text-anchor="middle"
-							letter-spacing="0.06em"
+							letter-spacing="0.08em"
 						>{scoreLabel.toUpperCase()}</text>
 
 						<!-- systems passed pill -->
-						<g transform="translate(300, 405)">
-							<rect x="-70" y="-16" width="140" height="32" rx="16" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+						<g transform="translate(260, 365)">
+							<rect x="-72" y="-14" width="144" height="28" rx="14" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
 							<text
 								x="0"
 								y="1"
 								font-family="system-ui, -apple-system, sans-serif"
-								font-size="13"
+								font-size="12"
 								font-weight="600"
 								fill="rgba(255,255,255,0.7)"
 								text-anchor="middle"
@@ -314,26 +323,25 @@
 						</g>
 
 						<!-- divider -->
-						<line x1="120" y1="455" x2="480" y2="455" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+						<line x1="80" y1="405" x2="440" y2="405" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
 
-						<!-- details section -->
-						<!-- name -->
-						<g transform="translate(300, 500)">
+						<!-- candidate name -->
+						<g transform="translate(260, 444)">
 							<text
 								x="0"
 								y="0"
 								font-family="system-ui, -apple-system, sans-serif"
-								font-size="11"
+								font-size="10"
 								font-weight="600"
 								fill="rgba(255,255,255,0.3)"
 								text-anchor="middle"
-								letter-spacing="0.12em"
+								letter-spacing="0.14em"
 							>CANDIDATE</text>
 							<text
 								x="0"
-								y="26"
+								y="24"
 								font-family="system-ui, -apple-system, sans-serif"
-								font-size="20"
+								font-size="19"
 								font-weight="600"
 								fill="rgba(255,255,255,0.9)"
 								text-anchor="middle"
@@ -341,80 +349,50 @@
 						</g>
 
 						<!-- mode + date row -->
-						<g transform="translate(300, 575)">
-							<!-- mode -->
-							<g transform="translate(-100, 0)">
-								<text
-									x="0"
-									y="0"
-									font-family="system-ui, -apple-system, sans-serif"
-									font-size="10"
-									font-weight="600"
-									fill="rgba(255,255,255,0.3)"
-									text-anchor="middle"
-									letter-spacing="0.1em"
-								>MODE</text>
-								<text
-									x="0"
-									y="22"
-									font-family="system-ui, -apple-system, sans-serif"
-									font-size="14"
-									font-weight="500"
-									fill="#06b6d4"
-									text-anchor="middle"
-								>{modeLabel}</text>
+						<g transform="translate(260, 510)">
+							<g transform="translate(-90, 0)">
+								<text x="0" y="0" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="rgba(255,255,255,0.3)" text-anchor="middle" letter-spacing="0.12em">MODE</text>
+								<text x="0" y="20" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="500" fill="#06b6d4" text-anchor="middle">{modeLabel}</text>
 							</g>
-							<!-- date -->
-							<g transform="translate(100, 0)">
-								<text
-									x="0"
-									y="0"
-									font-family="system-ui, -apple-system, sans-serif"
-									font-size="10"
-									font-weight="600"
-									fill="rgba(255,255,255,0.3)"
-									text-anchor="middle"
-									letter-spacing="0.1em"
-								>SCAN DATE</text>
-								<text
-									x="0"
-									y="22"
-									font-family="system-ui, -apple-system, sans-serif"
-									font-size="14"
-									font-weight="500"
-									fill="rgba(255,255,255,0.7)"
-									text-anchor="middle"
-								>{scanDate}</text>
+							<line x1="0" y1="-8" x2="0" y2="24" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+							<g transform="translate(90, 0)">
+								<text x="0" y="0" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="rgba(255,255,255,0.3)" text-anchor="middle" letter-spacing="0.12em">SCAN DATE</text>
+								<text x="0" y="20" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="500" fill="rgba(255,255,255,0.7)" text-anchor="middle">{scanDate}</text>
 							</g>
 						</g>
 
+						<!-- divider before scores -->
+						<line x1="80" y1="550" x2="440" y2="550" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+
 						<!-- individual system scores -->
-						<g transform="translate(300, 640)">
+						<g transform="translate(260, 582)">
 							{#each scoresStore.results as result, i}
 								{@const col = i % 3}
 								{@const row = Math.floor(i / 3)}
-								{@const x = (col - 1) * 160}
-								{@const y = row * 36}
+								{@const x = (col - 1) * 148}
+								{@const y = row * 34}
 								<g transform="translate({x}, {y})">
 									<rect
-										x="-68"
-										y="-12"
-										width="136"
-										height="24"
+										x="-64"
+										y="-11"
+										width="128"
+										height="22"
 										rx="6"
 										fill="rgba(255,255,255,0.02)"
+										stroke="rgba(255,255,255,0.03)"
+										stroke-width="0.5"
 									/>
 									<text
-										x="-58"
+										x="-54"
 										y="1"
 										font-family="system-ui, -apple-system, sans-serif"
-										font-size="10"
+										font-size="9.5"
 										font-weight="500"
 										fill="rgba(255,255,255,0.5)"
 										dominant-baseline="central"
 									>{result.system}</text>
 									<text
-										x="58"
+										x="54"
 										y="1"
 										font-family="system-ui, -apple-system, sans-serif"
 										font-size="11"
@@ -427,27 +405,28 @@
 							{/each}
 						</g>
 
-						<!-- footer -->
-						<line x1="80" y1="730" x2="520" y2="730" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+						<!-- footer divider -->
+						<line x1="60" y1="656" x2="460" y2="656" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
 
+						<!-- footer -->
 						<text
-							x="300"
-							y="760"
+							x="260"
+							y="682"
 							font-family="system-ui, -apple-system, sans-serif"
-							font-size="12"
+							font-size="11"
 							font-weight="500"
 							fill="#06b6d4"
 							text-anchor="middle"
-							opacity="0.7"
+							opacity="0.6"
 						>ats-screener.vercel.app</text>
 
 						<text
-							x="300"
-							y="785"
+							x="260"
+							y="702"
 							font-family="system-ui, -apple-system, sans-serif"
-							font-size="9"
+							font-size="8"
 							font-weight="400"
-							fill="rgba(255,255,255,0.2)"
+							fill="rgba(255,255,255,0.18)"
 							text-anchor="middle"
 						>Not an official ATS certification</text>
 					</svg>
@@ -480,20 +459,6 @@
 						Add to LinkedIn Profile
 					</button>
 
-					<button class="action-btn secondary" onclick={copyShareText}>
-						{#if copied}
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
-								<polyline points="20,6 9,17 4,12" />
-							</svg>
-							<span class="copied-text">Copied!</span>
-						{:else}
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-								<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-							</svg>
-							Copy Share Text
-						{/if}
-					</button>
 				</div>
 			</div>
 		</div>
@@ -654,10 +619,6 @@
 	.action-btn.secondary:hover {
 		background: rgba(255, 255, 255, 0.08);
 		border-color: rgba(255, 255, 255, 0.15);
-	}
-
-	.copied-text {
-		color: #22c55e;
 	}
 
 	/* scrollbar styling for the dialog */
