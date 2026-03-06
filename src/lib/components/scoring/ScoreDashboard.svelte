@@ -6,6 +6,8 @@
 	import WeakestAreas from './WeakestAreas.svelte';
 	import ResumeStats from './ResumeStats.svelte';
 	import ShareBadge from './ShareBadge.svelte';
+	import { generatePDF } from '$engine/scorer/report';
+	import { getScoreColor, getScoreLabel } from '$engine/scorer/classification';
 	import type { Suggestion, StructuredSuggestion } from '$engine/scorer/types';
 
 	// derived stats for the summary card header
@@ -16,6 +18,9 @@
 	// toggle between grid cards and detailed breakdown view
 	let activeView = $state<'cards' | 'detailed'>('cards');
 	let showShareBadge = $state(false);
+
+	// pdf export state
+	let isExporting = $state(false);
 
 	// collapsible suggestion cards
 	let expandedSuggestion = $state<number | null>(null);
@@ -51,20 +56,21 @@
 		return suggestions.slice(0, 5);
 	});
 
-	// color based on average score
-	function getAvgColor(score: number): string {
-		if (score >= 80) return '#22c55e';
-		if (score >= 60) return '#eab308';
-		if (score >= 40) return '#f97316';
-		return '#ef4444';
+	// generates a PDF report using jsPDF
+	async function exportResults() {
+		if (isExporting) return;
+		isExporting = true;
+		try {
+			await generatePDF();
+		} catch (err) {
+			console.error('[export] pdf generation failed:', err);
+		} finally {
+			isExporting = false;
+		}
 	}
 
-	function getScoreLabel(score: number): string {
-		if (score >= 80) return 'Excellent';
-		if (score >= 60) return 'Good';
-		if (score >= 40) return 'Needs Work';
-		return 'Poor';
-	}
+	// alias for backward compat in template
+	const getAvgColor = getScoreColor;
 </script>
 
 {#if scoresStore.hasResults}
@@ -285,6 +291,41 @@
 						<line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
 					</svg>
 					Share
+				</button>
+				<button
+					class="toolbar-btn"
+					onclick={exportResults}
+					disabled={isExporting}
+					title="Export results as PDF"
+				>
+					{#if isExporting}
+						<svg
+							class="export-spinner"
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<path d="M21 12a9 9 0 1 1-6.219-8.56" />
+						</svg>
+						Generating...
+					{:else}
+						<svg
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+							<polyline points="7,10 12,15 17,10" />
+							<line x1="12" y1="15" x2="12" y2="3" />
+						</svg>
+						Export PDF
+					{/if}
 				</button>
 			</div>
 		</div>
@@ -686,10 +727,28 @@
 			background 0.2s ease;
 	}
 
-	.toolbar-btn:hover {
+	.toolbar-btn:hover:not(:disabled) {
 		border-color: rgba(6, 182, 212, 0.3);
 		color: var(--accent-cyan);
 		background: rgba(6, 182, 212, 0.05);
+	}
+
+	.toolbar-btn:disabled {
+		opacity: 0.7;
+		cursor: not-allowed;
+	}
+
+	.export-spinner {
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	/* view toggle tabs */

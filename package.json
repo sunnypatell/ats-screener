@@ -28,6 +28,7 @@
 		"bits-ui": "^2.16.0",
 		"compromise": "^14.14.3",
 		"firebase": "^12.9.0",
+		"jspdf": "^4.2.0",
 		"mammoth": "^1.8.0",
 		"motion": "^12.0.0",
 		"motion-sv": "^0.1.10",

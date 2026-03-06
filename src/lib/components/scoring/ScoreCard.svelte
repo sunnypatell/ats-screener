@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ScoreResult } from '$engine/scorer/types';
+	import { getScoreColor, getScoreLabel } from '$engine/scorer/classification';
 
 	let { result }: { result: ScoreResult } = $props();
 
@@ -11,22 +12,6 @@
 		const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
 		mouseX = e.clientX - rect.left;
 		mouseY = e.clientY - rect.top;
-	}
-
-	// maps score ranges to colors: green/yellow/orange/red
-	function getScoreColor(score: number): string {
-		if (score >= 80) return '#22c55e';
-		if (score >= 60) return '#eab308';
-		if (score >= 40) return '#f97316';
-		return '#ef4444';
-	}
-
-	// maps score to a label for accessibility
-	function getScoreLabel(score: number): string {
-		if (score >= 80) return 'Excellent';
-		if (score >= 60) return 'Good';
-		if (score >= 40) return 'Needs Work';
-		return 'Poor';
 	}
 
 	const scoreColor = $derived(getScoreColor(result.overallScore));
