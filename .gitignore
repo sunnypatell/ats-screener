@@ -15,6 +15,7 @@ static/docs/
 # IDE
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 *~
