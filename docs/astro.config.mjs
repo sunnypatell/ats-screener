@@ -104,6 +104,10 @@ export default defineConfig({
 						{ label: 'Configuration', slug: 'self-hosting/configuration' },
 						{ label: 'Deployment', slug: 'self-hosting/deployment' }
 					]
+				},
+				{
+					label: 'Legal',
+					items: [{ label: 'Privacy and Data Handling', slug: 'legal/privacy' }]
 				}
 			],
 			lastUpdated: true,
