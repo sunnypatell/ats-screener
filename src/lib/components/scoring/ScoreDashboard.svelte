@@ -74,6 +74,39 @@
 	// alias for backward compat in template
 	const getAvgColor = getScoreColor;
 
+	// per-block copy state for the example blocks - keyed by `${suggestionIndex}-${'before'|'after'}`
+	// so multiple copies can show their "copied" state without trampling each other
+	let copiedKey = $state<string | null>(null);
+	let copiedTimer: ReturnType<typeof setTimeout> | null = null;
+
+	async function copyExample(text: string, key: string, e: MouseEvent) {
+		// the example block is inside a <button class="suggestion-card">, so without
+		// stopping propagation the click bubbles up and toggles the suggestion's
+		// expanded state - which collapses the block the user just copied from
+		e.stopPropagation();
+		try {
+			await navigator.clipboard.writeText(text);
+		} catch {
+			const ta = document.createElement('textarea');
+			ta.value = text;
+			ta.style.position = 'fixed';
+			ta.style.opacity = '0';
+			document.body.appendChild(ta);
+			ta.select();
+			try {
+				document.execCommand('copy');
+			} finally {
+				document.body.removeChild(ta);
+			}
+		}
+		copiedKey = key;
+		if (copiedTimer) clearTimeout(copiedTimer);
+		copiedTimer = setTimeout(() => {
+			copiedKey = null;
+			copiedTimer = null;
+		}, 1600);
+	}
+
 	// live countdown for the rate-limit retry hint inside the fallback toast
 	// only ticks while the toast is visible and a retry timestamp is set
 	let now = $state(Date.now());
@@ -614,11 +647,109 @@
 											<p class="example-tip">{example.tip}</p>
 											<div class="example-pair">
 												<div class="example-block before">
-													<span class="example-label">Before</span>
+													<div class="example-block-header">
+														<span class="example-label">Before</span>
+														<span
+															class="copy-btn"
+															class:copied={copiedKey === `${i}-before`}
+															role="button"
+															tabindex="0"
+															onclick={(e) => copyExample(example.before, `${i}-before`, e)}
+															onkeydown={(e) => {
+																if (e.key === 'Enter' || e.key === ' ') {
+																	e.preventDefault();
+																	copyExample(
+																		example.before,
+																		`${i}-before`,
+																		e as unknown as MouseEvent
+																	);
+																}
+															}}
+															aria-label="Copy before text"
+														>
+															{#if copiedKey === `${i}-before`}
+																<svg
+																	width="11"
+																	height="11"
+																	viewBox="0 0 24 24"
+																	fill="none"
+																	stroke="currentColor"
+																	stroke-width="3"
+																>
+																	<polyline points="20,6 9,17 4,12" />
+																</svg>
+																Copied
+															{:else}
+																<svg
+																	width="11"
+																	height="11"
+																	viewBox="0 0 24 24"
+																	fill="none"
+																	stroke="currentColor"
+																	stroke-width="2"
+																>
+																	<rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+																	<path
+																		d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+																	/>
+																</svg>
+																Copy
+															{/if}
+														</span>
+													</div>
 													<pre>{example.before}</pre>
 												</div>
 												<div class="example-block after">
-													<span class="example-label">After</span>
+													<div class="example-block-header">
+														<span class="example-label">After</span>
+														<span
+															class="copy-btn"
+															class:copied={copiedKey === `${i}-after`}
+															role="button"
+															tabindex="0"
+															onclick={(e) => copyExample(example.after, `${i}-after`, e)}
+															onkeydown={(e) => {
+																if (e.key === 'Enter' || e.key === ' ') {
+																	e.preventDefault();
+																	copyExample(
+																		example.after,
+																		`${i}-after`,
+																		e as unknown as MouseEvent
+																	);
+																}
+															}}
+															aria-label="Copy after text"
+														>
+															{#if copiedKey === `${i}-after`}
+																<svg
+																	width="11"
+																	height="11"
+																	viewBox="0 0 24 24"
+																	fill="none"
+																	stroke="currentColor"
+																	stroke-width="3"
+																>
+																	<polyline points="20,6 9,17 4,12" />
+																</svg>
+																Copied
+															{:else}
+																<svg
+																	width="11"
+																	height="11"
+																	viewBox="0 0 24 24"
+																	fill="none"
+																	stroke="currentColor"
+																	stroke-width="2"
+																>
+																	<rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+																	<path
+																		d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+																	/>
+																</svg>
+																Copy
+															{/if}
+														</span>
+													</div>
 													<pre>{example.after}</pre>
 												</div>
 											</div>
@@ -1352,14 +1483,57 @@
 		border-color: rgba(34, 197, 94, 0.2);
 	}
 
+	.example-block-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		margin-bottom: 0.35rem;
+	}
+
 	.example-label {
 		display: block;
 		font-size: 0.62rem;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		margin-bottom: 0.35rem;
 		opacity: 0.8;
+	}
+
+	.copy-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		padding: 0.1rem 0.45rem;
+		font-size: 0.66rem;
+		font-weight: 600;
+		color: var(--text-tertiary);
+		background: rgba(255, 255, 255, 0.04);
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		border-radius: var(--radius-full);
+		cursor: pointer;
+		transition:
+			background 0.15s ease,
+			border-color 0.15s ease,
+			color 0.15s ease;
+		user-select: none;
+	}
+
+	.copy-btn:hover {
+		background: rgba(255, 255, 255, 0.08);
+		border-color: rgba(255, 255, 255, 0.16);
+		color: var(--text-secondary);
+	}
+
+	.copy-btn:focus-visible {
+		outline: 2px solid var(--accent-cyan);
+		outline-offset: 2px;
+	}
+
+	.copy-btn.copied {
+		color: #22c55e;
+		background: rgba(34, 197, 94, 0.1);
+		border-color: rgba(34, 197, 94, 0.28);
 	}
 
 	.example-block.before .example-label {

@@ -5,6 +5,7 @@
 	import ScoreDashboard from '$components/scoring/ScoreDashboard.svelte';
 	import ScoreTimeline from '$components/scoring/ScoreTimeline.svelte';
 	import SeoHead from '$components/seo/SeoHead.svelte';
+	import { computeJourneyStats } from '$engine/scorer/journey';
 
 	let selectedEntry = $state<ScanHistoryEntry | null>(null);
 
@@ -23,6 +24,7 @@
 	});
 
 	const history = $derived(scoresStore.history);
+	const journey = $derived(computeJourneyStats(history));
 
 	function formatDate(iso: string): string {
 		const d = new Date(iso);
@@ -135,6 +137,46 @@
 					<a href="/scanner" class="cta-btn">Scan a Resume</a>
 				</div>
 			{:else}
+				{#if journey && journey.totalScans >= 2}
+					<div class="journey-card">
+						<div class="journey-stat">
+							<span class="journey-label">Total improvement</span>
+							<span
+								class="journey-value"
+								class:positive={journey.totalDelta > 0}
+								class:negative={journey.totalDelta < 0}
+							>
+								{journey.totalDelta > 0 ? '+' : ''}{journey.totalDelta}
+							</span>
+						</div>
+						<div class="journey-stat">
+							<span class="journey-label">Best score</span>
+							<span class="journey-value">{journey.bestScore}</span>
+						</div>
+						<div class="journey-stat">
+							<span class="journey-label">Scans</span>
+							<span class="journey-value">{journey.totalScans}</span>
+						</div>
+						{#if journey.bestPlatformDelta && journey.bestPlatformDelta.delta > 0}
+							<div class="journey-stat">
+								<span class="journey-label">Strongest gain</span>
+								<span class="journey-value-text">
+									{journey.bestPlatformDelta.system}
+									<span class="journey-pill">+{journey.bestPlatformDelta.delta}</span>
+								</span>
+							</div>
+						{/if}
+						{#if journey.daysSpan > 0}
+							<div class="journey-stat">
+								<span class="journey-label">Over</span>
+								<span class="journey-value-text">
+									{journey.daysSpan} {journey.daysSpan === 1 ? 'day' : 'days'}
+								</span>
+							</div>
+						{/if}
+					</div>
+				{/if}
+
 				{#if history.length >= 2}
 					<div class="timeline-section">
 						<ScoreTimeline entries={history} />
@@ -296,6 +338,67 @@
 	}
 
 	/* history card grid */
+	.journey-card {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1.75rem 2.25rem;
+		padding: 1.1rem 1.4rem;
+		margin-bottom: 1.4rem;
+		background: var(--glass-bg);
+		border: 1px solid var(--glass-border);
+		border-radius: var(--radius-lg);
+		backdrop-filter: blur(12px);
+	}
+
+	.journey-stat {
+		display: flex;
+		flex-direction: column;
+		gap: 0.18rem;
+	}
+
+	.journey-label {
+		font-size: 0.66rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--text-tertiary);
+	}
+
+	.journey-value {
+		font-size: 1.45rem;
+		font-weight: 800;
+		font-variant-numeric: tabular-nums;
+		color: var(--text-primary);
+		line-height: 1;
+	}
+
+	.journey-value.positive {
+		color: #22c55e;
+	}
+
+	.journey-value.negative {
+		color: #ef4444;
+	}
+
+	.journey-value-text {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		font-size: 0.95rem;
+		font-weight: 700;
+		color: var(--text-primary);
+	}
+
+	.journey-pill {
+		padding: 0.1rem 0.45rem;
+		font-size: 0.7rem;
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+		border-radius: var(--radius-full);
+		color: #22c55e;
+		background: rgba(34, 197, 94, 0.12);
+	}
+
 	.timeline-section {
 		margin-bottom: 1.75rem;
 	}
