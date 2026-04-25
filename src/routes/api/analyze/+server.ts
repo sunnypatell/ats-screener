@@ -88,6 +88,46 @@ const dailyLimits = new Map<string, { count: number; resetAt: number }>();
 const MAX_RPM = 10;
 const MAX_RPD = 200;
 const MAX_MAP_SIZE = 10_000;
+
+// in-memory LRU result cache keyed by SHA-256 of the full prompt
+// dies with the instance and is per-region, but warm hits skip the LLM call entirely
+// hashing the prompt (not the raw inputs) means prompt-template edits auto-bust stale entries
+interface CacheEntry {
+	parsed: Record<string, unknown>;
+	provider: string;
+	expiresAt: number;
+}
+const resultCache = new Map<string, CacheEntry>();
+const MAX_CACHE_SIZE = 200;
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+async function hashPrompt(prompt: string): Promise<string> {
+	const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(prompt));
+	return Array.from(new Uint8Array(digest))
+		.map((b) => b.toString(16).padStart(2, '0'))
+		.join('');
+}
+
+function getCached(key: string): CacheEntry | null {
+	const entry = resultCache.get(key);
+	if (!entry) return null;
+	if (Date.now() > entry.expiresAt) {
+		resultCache.delete(key);
+		return null;
+	}
+	// bump to most-recent on hit (Map preserves insertion order)
+	resultCache.delete(key);
+	resultCache.set(key, entry);
+	return entry;
+}
+
+function setCached(key: string, parsed: Record<string, unknown>, provider: string): void {
+	if (resultCache.size >= MAX_CACHE_SIZE) {
+		const oldest = resultCache.keys().next().value;
+		if (oldest !== undefined) resultCache.delete(oldest);
+	}
+	resultCache.set(key, { parsed, provider, expiresAt: Date.now() + CACHE_TTL_MS });
+}
 // per-provider timeouts: Gemma (90s) + Groq (30s) = 120s worst case
 // Gemma typically responds in 30-45s but can spike under load; Groq is <1s but gets headroom
 // Fluid Compute on Vercel Hobby gives 300s max, so 120s worst case fits comfortably
@@ -293,24 +333,32 @@ export const POST: RequestHandler = async ({ request }) => {
 			throw error(400, 'invalid mode');
 	}
 
+	const securityHeaders = {
+		'X-Content-Type-Options': 'nosniff',
+		'X-Frame-Options': 'DENY',
+		'Cache-Control': 'no-store'
+	};
+
+	// content-addressed cache: identical prompts return identical results, no LLM call
+	const cacheKey = await hashPrompt(prompt);
+	const cached = getCached(cacheKey);
+	if (cached) {
+		return json(
+			{ ...cached.parsed, _provider: cached.provider, _fallback: false, _cached: true },
+			{ headers: securityHeaders }
+		);
+	}
+
 	const result = await callLLM(prompt, keys);
 
 	if (!result) {
 		return json({ error: 'all LLM providers failed', fallback: true }, { status: 503 });
 	}
 
+	setCached(cacheKey, result.parsed, result.provider);
+
 	return json(
-		{
-			...result.parsed,
-			_provider: result.provider,
-			_fallback: false
-		},
-		{
-			headers: {
-				'X-Content-Type-Options': 'nosniff',
-				'X-Frame-Options': 'DENY',
-				'Cache-Control': 'no-store'
-			}
-		}
+		{ ...result.parsed, _provider: result.provider, _fallback: false, _cached: false },
+		{ headers: securityHeaders }
 	);
 };
