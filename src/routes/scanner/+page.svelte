@@ -129,6 +129,22 @@
 			handleFileReady();
 		}
 	});
+
+	// screen-reader-only live announcement of scoring state. polite priority
+	// so it does not interrupt other speech, atomic so the entire string is
+	// re-read when it changes. only a meaningful state transition produces a
+	// new string, so the announcement does not fire on every store tick.
+	const announcement = $derived.by(() => {
+		if (scoresStore.error) return `Scan failed: ${scoresStore.error}`;
+		if (scoresStore.isScoring) return 'Scanning your resume.';
+		if (scoresStore.hasResults && !scoresStore.isFromHistory) {
+			const total = scoresStore.results.length;
+			const passing = scoresStore.passingCount;
+			const avg = scoresStore.averageScore;
+			return `Scan complete. Average score ${avg} out of 100. ${passing} of ${total} ATS systems passed.`;
+		}
+		return '';
+	});
 </script>
 
 <SeoHead
@@ -137,6 +153,13 @@
 />
 
 <main class="scanner">
+	<!--
+		live region for screen-reader users. role=status implies aria-live=polite
+		and aria-atomic=true. positioned via the global .sr-only utility so it is
+		visually hidden but always present in the accessibility tree.
+	-->
+	<div class="sr-only" role="status">{announcement}</div>
+
 	<!-- subtle background mesh -->
 	<div class="scanner-bg">
 		<div class="bg-orb orb-1"></div>
