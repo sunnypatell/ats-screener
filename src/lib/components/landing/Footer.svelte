@@ -145,6 +145,7 @@
 			<!-- legal links -->
 			<div class="footer-col">
 				<h4 class="col-title">Legal</h4>
+				<a href="/privacy" class="footer-link">Privacy</a>
 				<a
 					href="https://github.com/sunnypatell/ats-screener/blob/main/LICENSE"
 					target="_blank"
