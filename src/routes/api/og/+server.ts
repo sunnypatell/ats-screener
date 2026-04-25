@@ -34,7 +34,7 @@ function parseInt0(v: string | null, fallback: number, min: number, max: number)
 	return Number.isFinite(n) ? clamp(n, min, max) : fallback;
 }
 
-export const GET: RequestHandler = ({ url }) => {
+export const GET: RequestHandler = async ({ url }) => {
 	const score = parseInt0(url.searchParams.get('score'), 0, 0, 100);
 	const pass = parseInt0(url.searchParams.get('pass'), 0, 0, 6);
 	const total = parseInt0(url.searchParams.get('total'), 6, 1, 6);
@@ -209,8 +209,24 @@ export const GET: RequestHandler = ({ url }) => {
 		}
 	};
 
-	// @vercel/og applies its own Cache-Control default; setting one here would
-	// concatenate rather than replace, so we let the default stand. crawlers
-	// refetch when query params change (which is the right behavior for shares)
-	return new ImageResponse(tree as never, { width: WIDTH, height: HEIGHT });
+	// @vercel/og's ImageResponse hardcodes Cache-Control: no-cache,no-store and
+	// passing a custom Cache-Control via the constructor's headers option only
+	// CONCATENATES (verified locally - ends up "no-cache, no-store, public,...").
+	// to actually cache at Vercel's CDN we re-wrap the rendered bytes in a fresh
+	// Response with the headers we want. since the URL is fully content-addressed
+	// (score+pass+total+delta), any unique combination caches forever - massive
+	// cost protection because repeat shares of the same link hit the edge cache,
+	// never the function
+	const og = new ImageResponse(tree as never, { width: WIDTH, height: HEIGHT });
+	const buffer = await og.arrayBuffer();
+	return new Response(buffer, {
+		status: 200,
+		headers: {
+			'Content-Type': 'image/png',
+			// s-maxage = vercel cdn TTL (1d), max-age = browser TTL (1h),
+			// stale-while-revalidate keeps serving stale up to 7d while refreshing
+			'Cache-Control':
+				'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800, immutable'
+		}
+	});
 };
