@@ -5,6 +5,7 @@
 	import ScanningAnimation from '$components/scoring/ScanningAnimation.svelte';
 	import ResumeStats from '$components/scoring/ResumeStats.svelte';
 	import ScanHistory from '$components/scoring/ScanHistory.svelte';
+	import SeoHead from '$components/seo/SeoHead.svelte';
 	import { resumeStore } from '$stores/resume.svelte';
 	import { scoresStore } from '$stores/scores.svelte';
 	import { authStore } from '$stores/auth.svelte';
@@ -130,13 +131,10 @@
 	});
 </script>
 
-<svelte:head>
-	<title>Resume Scanner | ATS Screener</title>
-	<meta
-		name="description"
-		content="Upload your resume and get scored by 6 real ATS platforms. See exactly how Workday, Taleo, iCIMS, Greenhouse, Lever, and SuccessFactors parse your resume."
-	/>
-</svelte:head>
+<SeoHead
+	title="Resume Scanner | ATS Screener"
+	description="Upload your resume and get scored by 6 real ATS platforms. See exactly how Workday, Taleo, iCIMS, Greenhouse, Lever, and SuccessFactors parse your resume."
+/>
 
 <main class="scanner">
 	<!-- subtle background mesh -->
