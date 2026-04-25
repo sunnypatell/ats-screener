@@ -277,7 +277,14 @@
 	.privacy-link:hover,
 	.privacy-link:focus-visible {
 		border-bottom-color: var(--accent-cyan);
-		outline: none;
+	}
+
+	/* let the global :focus-visible ring (in $lib/styles/global.css) apply on
+	   keyboard focus. removing it would mean the only focus indicator on this
+	   inline link is the underline, which is too subtle for keyboard users. */
+	.privacy-link:focus-visible {
+		border-radius: 2px;
+		outline-offset: 2px;
 	}
 
 	.file-info {
