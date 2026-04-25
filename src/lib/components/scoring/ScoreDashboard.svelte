@@ -104,6 +104,16 @@
 			? computeScanComparison(scoresStore.results, previousScan.results)
 			: null
 	);
+
+	// twitter share intent for the "I improved" moment - origin pulled from the
+	// page so preview deploys share their own URLs, not a hardcoded production one
+	function shareImprovementToTwitter() {
+		if (!comparison || comparison.deltaAverage <= 0) return;
+		const text = `Just improved my ATS resume score from ${comparison.previousAverage} to ${comparison.currentAverage} (+${comparison.deltaAverage}) using @ATSScreener — free, simulates how Workday, Lever, iCIMS and others actually parse resumes`;
+		const url = typeof window !== 'undefined' ? window.location.origin : '';
+		const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+		window.open(shareUrl, '_blank', 'noopener,noreferrer,width=600,height=520');
+	}
 </script>
 
 {#if scoresStore.hasResults}
@@ -254,6 +264,21 @@
 						{/if}
 						{#if comparison.unchanged > 0 && comparison.improved === 0 && comparison.regressed === 0}
 							<span class="meta-chip">{comparison.unchanged} unchanged</span>
+						{/if}
+						{#if positive}
+							<button
+								class="share-improvement-btn"
+								onclick={shareImprovementToTwitter}
+								title="Share this improvement on X"
+								aria-label="Share improvement on X"
+							>
+								<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+									<path
+										d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+									/>
+								</svg>
+								Share +{comparison.deltaAverage}
+							</button>
 						{/if}
 					</div>
 				</div>
@@ -879,6 +904,35 @@
 		color: #ef4444;
 		border-color: rgba(239, 68, 68, 0.2);
 		background: rgba(239, 68, 68, 0.06);
+	}
+
+	.share-improvement-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.32rem;
+		padding: 0.18rem 0.6rem;
+		font-size: 0.74rem;
+		font-weight: 600;
+		font-family: inherit;
+		color: var(--text-primary);
+		background: rgba(255, 255, 255, 0.08);
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		border-radius: var(--radius-full);
+		cursor: pointer;
+		transition:
+			background 0.18s ease,
+			border-color 0.18s ease,
+			transform 0.18s ease;
+	}
+
+	.share-improvement-btn:hover {
+		background: rgba(34, 197, 94, 0.12);
+		border-color: rgba(34, 197, 94, 0.35);
+		transform: translateY(-1px);
+	}
+
+	.share-improvement-btn svg {
+		opacity: 0.85;
 	}
 
 	.fallback-toast-actions {
