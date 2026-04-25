@@ -175,13 +175,22 @@
 	animation-delay: 560ms;
 }
 
-/* reduced motion */
+/* reduced motion: collapse animations and transitions, neutralize delays,
+   and stop document-level smooth scroll. matchMedia-checked JS scroll
+   sites must also opt in (see $lib/a11y.ts). */
 @media (prefers-reduced-motion: reduce) {
 	*,
 	*::before,
 	*::after {
 		animation-duration: 0.01ms !important;
 		animation-iteration-count: 1 !important;
+		animation-delay: 0ms !important;
 		transition-duration: 0.01ms !important;
+		transition-delay: 0ms !important;
+	}
+
+	html,
+	body {
+		scroll-behavior: auto !important;
 	}
 }

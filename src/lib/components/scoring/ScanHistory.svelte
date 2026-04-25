@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { scoresStore, type ScanHistoryEntry } from '$stores/scores.svelte';
+	import { scrollBehavior } from '$lib/a11y';
 
 	let expanded = $state(false);
 
@@ -37,11 +38,14 @@
 
 	function handleLoadEntry(entry: ScanHistoryEntry) {
 		scoresStore.loadFromHistory(entry);
-		// wait for the results section to render, then scroll to it
+		// wait for the results section to render, then scroll to it.
+		// scrollBehavior() reads the user's prefers-reduced-motion setting,
+		// so users who asked for reduced motion get an instant jump rather
+		// than a smooth scroll their OS told us not to perform.
 		requestAnimationFrame(() => {
 			document
 				.querySelector('.results-section')
-				?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
 		});
 	}
 
