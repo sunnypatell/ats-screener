@@ -15,11 +15,23 @@ const CLEANUP_INTERVAL_MS = 30_000;
 let lastMinuteCleanupAt = 0;
 let lastDailyCleanupAt = 0;
 
+// in-memory counters surfaced by /api/admin/rate-limit-stats. zero storage,
+// per-instance only (lost on cold start), but enough to spot abuse patterns
+// in the hot loop without paying for any external observability service.
+const stats = {
+	totalChecks: 0,
+	totalAllowed: 0,
+	totalBlockedMinute: 0,
+	totalBlockedDaily: 0,
+	startedAt: Date.now()
+};
+
 export type RateLimitResult =
 	| { allowed: true }
 	| { allowed: false; reason: 'minute' | 'daily'; retryAfterSec: number };
 
 export function checkRateLimit(ip: string): RateLimitResult {
+	stats.totalChecks += 1;
 	const now = Date.now();
 
 	// periodically clean up expired entries to prevent unbounded memory growth.
@@ -42,6 +54,7 @@ export function checkRateLimit(ip: string): RateLimitResult {
 	// doesn't also consume a minute slot
 	const minute = rateLimits.get(ip);
 	if (minute && now < minute.resetAt && minute.count >= MAX_RPM) {
+		stats.totalBlockedMinute += 1;
 		return {
 			allowed: false,
 			reason: 'minute',
@@ -51,6 +64,7 @@ export function checkRateLimit(ip: string): RateLimitResult {
 
 	const day = dailyLimits.get(ip);
 	if (day && now < day.resetAt && day.count >= MAX_RPD) {
+		stats.totalBlockedDaily += 1;
 		return {
 			allowed: false,
 			reason: 'daily',
@@ -65,7 +79,26 @@ export function checkRateLimit(ip: string): RateLimitResult {
 	if (day && now < day.resetAt) day.count++;
 	else dailyLimits.set(ip, { count: 1, resetAt: now + 86_400_000 });
 
+	stats.totalAllowed += 1;
 	return { allowed: true };
+}
+
+// observability surface for /api/admin/rate-limit-stats. returns the
+// in-process counters plus current map sizes so an admin can spot abuse
+// patterns without paying for external observability tooling. per-instance
+// only (lost on cold start), so this is best-effort, not authoritative.
+export function getRateLimitStats() {
+	return {
+		startedAt: new Date(stats.startedAt).toISOString(),
+		uptimeSec: Math.round((Date.now() - stats.startedAt) / 1000),
+		totalChecks: stats.totalChecks,
+		totalAllowed: stats.totalAllowed,
+		totalBlockedMinute: stats.totalBlockedMinute,
+		totalBlockedDaily: stats.totalBlockedDaily,
+		minuteMapSize: rateLimits.size,
+		dailyMapSize: dailyLimits.size,
+		config: { maxRpm: MAX_RPM, maxRpd: MAX_RPD, maxMapSize: MAX_MAP_SIZE }
+	};
 }
 
 // exported constants so tests can drive the limiter without magic numbers

@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { checkRateLimit, RATE_LIMIT_CONFIG } from '../../../src/routes/api/analyze/rate-limiter';
+import {
+	checkRateLimit,
+	getRateLimitStats,
+	RATE_LIMIT_CONFIG
+} from '../../../src/routes/api/analyze/rate-limiter';
 
 // limiter uses module-level state per-IP. tests use unique IPs so they don't
 // trip on each other across test runs.
@@ -74,5 +78,33 @@ describe('checkRateLimit: result shape', () => {
 		} else {
 			expect(['minute', 'daily']).toContain(result.reason);
 		}
+	});
+});
+
+describe('getRateLimitStats', () => {
+	it('returns the expected shape', () => {
+		const s = getRateLimitStats();
+		expect(typeof s.startedAt).toBe('string');
+		expect(Number.isFinite(s.uptimeSec)).toBe(true);
+		expect(Number.isFinite(s.totalChecks)).toBe(true);
+		expect(Number.isFinite(s.totalAllowed)).toBe(true);
+		expect(Number.isFinite(s.totalBlockedMinute)).toBe(true);
+		expect(Number.isFinite(s.totalBlockedDaily)).toBe(true);
+		expect(Number.isFinite(s.minuteMapSize)).toBe(true);
+		expect(Number.isFinite(s.dailyMapSize)).toBe(true);
+		expect(s.config.maxRpm).toBe(RATE_LIMIT_CONFIG.MAX_RPM);
+		expect(s.config.maxRpd).toBe(RATE_LIMIT_CONFIG.MAX_RPD);
+	});
+
+	it('counters advance on allowed and blocked checks', () => {
+		const before = getRateLimitStats();
+		const ip = uniqueIp();
+		for (let i = 0; i < RATE_LIMIT_CONFIG.MAX_RPM; i++) checkRateLimit(ip);
+		// one over the limit
+		checkRateLimit(ip);
+		const after = getRateLimitStats();
+		expect(after.totalChecks - before.totalChecks).toBe(RATE_LIMIT_CONFIG.MAX_RPM + 1);
+		expect(after.totalAllowed - before.totalAllowed).toBe(RATE_LIMIT_CONFIG.MAX_RPM);
+		expect(after.totalBlockedMinute - before.totalBlockedMinute).toBe(1);
 	});
 });
