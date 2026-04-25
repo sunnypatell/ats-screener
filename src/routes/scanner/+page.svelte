@@ -22,6 +22,9 @@
 	// tracks whether results should be visible (scan clicked or loaded from history)
 	let hasScanned = $state(false);
 
+	// component-local buffer for the paste-resume-text textarea
+	let pastedText = $state('');
+
 	// if results are loaded from history, show the dashboard
 	$effect(() => {
 		if (scoresStore.hasResults) hasScanned = true;
@@ -268,6 +271,36 @@
 				<!-- upload section -->
 				<section class="upload-section">
 					<ResumeUploader />
+
+					<!--
+						alternate input: paste resume text directly. closed by default
+						so the file uploader stays the primary affordance. textarea
+						content lives in component-local $state; the "Use this text"
+						button hands it off to resumeStore.setText which runs the
+						same downstream extraction the file path uses.
+					-->
+					<details class="paste-block">
+						<summary class="paste-toggle">Or paste resume text instead</summary>
+						<textarea
+							class="paste-textarea"
+							placeholder="Paste your resume text here. Plain text works best; section headings (Experience, Education, Skills) help us identify structure."
+							bind:value={pastedText}
+							rows="10"
+							aria-label="Paste resume text"
+						></textarea>
+						<div class="paste-actions">
+							<span class="paste-count">{pastedText.length} characters</span>
+							<button
+								type="button"
+								class="paste-btn"
+								disabled={pastedText.trim().length < 50}
+								onclick={() => resumeStore.setText(pastedText)}
+							>
+								Use this text
+							</button>
+						</div>
+					</details>
+
 					<JobDescriptionInput />
 
 					{#if resumeStore.warnings.length > 0}
@@ -499,6 +532,100 @@
 
 	.upload-section {
 		max-width: 760px;
+	}
+
+	.paste-block {
+		margin-top: 1rem;
+		background: var(--glass-bg);
+		border: 1px solid var(--glass-border);
+		border-radius: var(--radius-md, 10px);
+		overflow: hidden;
+	}
+
+	.paste-toggle {
+		padding: 0.7rem 1rem;
+		font-size: 0.85rem;
+		color: var(--text-tertiary);
+		cursor: pointer;
+		list-style: none;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		transition: color 0.15s ease;
+	}
+
+	.paste-toggle::-webkit-details-marker {
+		display: none;
+	}
+
+	.paste-toggle::before {
+		content: '+';
+		color: var(--accent-cyan);
+		font-weight: 400;
+		font-size: 1.1rem;
+	}
+
+	.paste-block[open] .paste-toggle::before {
+		content: '\2212';
+	}
+
+	.paste-toggle:hover {
+		color: var(--text-secondary);
+	}
+
+	.paste-textarea {
+		width: 100%;
+		min-height: 220px;
+		padding: 0.85rem 1rem;
+		background: rgba(0, 0, 0, 0.2);
+		border: none;
+		border-top: 1px solid var(--glass-border);
+		color: var(--text-primary);
+		font-family: var(--font-mono, ui-monospace, 'SF Mono', Menlo, monospace);
+		font-size: 0.85rem;
+		line-height: 1.55;
+		resize: vertical;
+		outline: none;
+	}
+
+	.paste-textarea::placeholder {
+		color: var(--text-tertiary);
+		opacity: 0.7;
+	}
+
+	.paste-actions {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0.6rem 1rem;
+		border-top: 1px solid var(--glass-border);
+		gap: 1rem;
+	}
+
+	.paste-count {
+		font-size: 0.78rem;
+		color: var(--text-tertiary);
+	}
+
+	.paste-btn {
+		padding: 0.45rem 0.9rem;
+		background: var(--accent-cyan);
+		color: #0a0a1a;
+		border: none;
+		border-radius: var(--radius-md, 8px);
+		font-weight: 600;
+		font-size: 0.85rem;
+		cursor: pointer;
+		transition: opacity 0.15s ease;
+	}
+
+	.paste-btn:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+
+	.paste-btn:not(:disabled):hover {
+		opacity: 0.9;
 	}
 
 	.warnings {

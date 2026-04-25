@@ -70,7 +70,7 @@ let cached: { xml: string; etag: string } | null = null;
 function buildFeed(origin: string): { xml: string; etag: string } {
 	if (cached) return cached;
 
-	let raw = '';
+	let raw: string;
 	try {
 		raw = readFileSync(join(process.cwd(), 'CHANGELOG.md'), 'utf-8');
 	} catch {
