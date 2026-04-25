@@ -235,10 +235,17 @@ class ScoresStore {
 		}
 	}
 
-	// load a past scan's results into the active dashboard view
-	// resets fallback flag since the toast is only relevant for the active scan session
+	// load a past scan's results into the active dashboard view.
+	// must abort any in-flight scan first, otherwise its eventual completion
+	// (finishScoring) will stomp the historical snapshot the user just clicked.
+	// also clears llmAnalysis since stored history entries do not carry it,
+	// so leaving the previous session's analysis visible would render mismatched
+	// data alongside historical results.
 	loadFromHistory(entry: ScanHistoryEntry) {
+		this.abortController?.abort();
+		this.abortController = null;
 		this.results = entry.results;
+		this.llmAnalysis = null;
 		this.isScoring = false;
 		this.isAnalyzing = false;
 		this.llmFallback = false;
