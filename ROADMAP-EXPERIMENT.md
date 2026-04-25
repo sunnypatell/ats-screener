@@ -17,6 +17,8 @@ each entry: status, department(s), value, risk, how to test.
 ## done
 
 - [x] **PR #10 audit fix: `loadFromHistory` abort race + clear `llmAnalysis` on history load** (engineering, UX). a click on a history entry mid-scan no longer lets the in-flight LLM call stomp the loaded snapshot, and stale analysis from a prior session is cleared so the dashboard never shows mismatched data. test: existing vitest suite (184 tests) green; manual flow: start a scan, click a history row, verify results stay pinned to the historical entry.
+- [x] **privacy and data-handling notice + footer link** (legal, marketing, trust). new `/privacy` route describes what is collected, how it is processed, retention, third-party sharing, your rights under PIPEDA, and contact details. written in plain language; does not reveal architecture beyond what a user needs to make an informed decision. surfaced from the Legal column in the footer. test: dev server returns 200 on the route; rendered head includes proper SeoHead meta; footer link navigates correctly.
+- [x] **PR template rewrite for open-source contributors** (community, marketing). the old template was a single one-line meta-instruction left over from an internal style note, which leaked the wrong tone to every external contributor. replaced with a short, human-toned scaffold (What changes / Why / Verification / Notes for reviewers) plus a one-line pointer to CONTRIBUTING.md. test: rendered the file in github preview locally; verified four section prompts read as hints not instructions.
 
 ## priority 1, cost containment (must hold $0 at 50k users)
 
