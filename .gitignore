@@ -40,3 +40,6 @@ blob-report/
 *.log
 *.tsbuildinfo
 .env*.local
+
+# experiment roadmap lives in claude code project memory, not in the repo
+ROADMAP-EXPERIMENT.md
