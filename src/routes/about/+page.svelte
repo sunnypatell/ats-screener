@@ -1,11 +1,57 @@
 <script lang="ts">
 	import SeoHead from '$components/seo/SeoHead.svelte';
+
+	// FAQPage JSON-LD. content here MUST stay in sync with the visible
+	// `.faq` section below. Google's structured-data guidelines require
+	// answers in JSON-LD to also be present on the page itself.
+	const faq = [
+		{
+			q: 'Is ATS Screener free to use?',
+			a: 'Yes. The app is free, open source under the MIT license, and has no paywall, no premium tier, and no ads. It is funded as a personal student project, not a business.'
+		},
+		{
+			q: 'Is ATS Screener affiliated with Workday, Taleo, iCIMS, Greenhouse, Lever, or SuccessFactors?',
+			a: 'No. The scoring simulates these platforms based on publicly documented behaviour, independent research, and community knowledge. No proprietary algorithms or trade secrets are reverse engineered or used.'
+		},
+		{
+			q: 'Is my resume uploaded to your servers?',
+			a: 'PDF and DOCX parsing happens entirely inside your browser. The extracted text is sent over TLS to AI scoring providers, but it is never stored on our servers as durable data. The full privacy notice covers retention, third parties, and your rights under PIPEDA.'
+		},
+		{
+			q: 'Can I trust the scores I see?',
+			a: 'The scores are approximations meant to highlight resume issues you can fix, not a guarantee of any real outcome. Real ATS systems vary by employer, by role, and by configuration. Use the scores to find weaknesses, not to predict hiring decisions.'
+		},
+		{
+			q: 'How can I support the project?',
+			a: 'Star the GitHub repository, share your scan results to help others discover it, or sponsor through GitHub Sponsors or Buy Me a Coffee. Contributions, bug reports, and feature requests are all welcome on GitHub.'
+		}
+	];
+
+	const faqLd = {
+		'@context': 'https://schema.org',
+		'@type': 'FAQPage',
+		mainEntity: faq.map((item) => ({
+			'@type': 'Question',
+			name: item.q,
+			acceptedAnswer: { '@type': 'Answer', text: item.a }
+		}))
+	};
+
+	// escape '<' to its unicode form so a future user-controlled field
+	// cannot break out of the surrounding <script> tag. mirrors the
+	// landing page's softwareAppLd handling.
+	const faqLdJson = JSON.stringify(faqLd).replaceAll('<', '\\u003c');
 </script>
 
 <SeoHead
 	title="About | ATS Screener"
 	description="Learn about ATS Screener, the free open-source tool that simulates how real enterprise ATS platforms parse and score your resume."
 />
+
+<svelte:head>
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+	{@html `<script type="application/ld+json">${faqLdJson}</` + `script>`}
+</svelte:head>
 
 <main class="about">
 	<div class="about-bg">
@@ -277,6 +323,20 @@
 			</div>
 		</section>
 
+		<!-- faq -->
+		<section class="section">
+			<div class="section-badge">FAQ</div>
+			<h2>Frequently Asked Questions</h2>
+			<div class="faq">
+				{#each faq as item (item.q)}
+					<details class="faq-item">
+						<summary class="faq-question">{item.q}</summary>
+						<p class="faq-answer">{item.a}</p>
+					</details>
+				{/each}
+			</div>
+		</section>
+
 		<!-- creator -->
 		<section class="section">
 			<div class="section-badge">Creator</div>
@@ -416,6 +476,69 @@
 	/* sections */
 	.section {
 		margin-bottom: 5rem;
+	}
+
+	/* faq: native <details> accordion. keyboard accessible without JS,
+	   announces expanded/collapsed state to screen readers, respects
+	   prefers-reduced-motion through the global animations.css rule. */
+	.faq {
+		max-width: 760px;
+		margin-top: 1.5rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+
+	.faq-item {
+		background: var(--glass-bg);
+		border: 1px solid var(--glass-border);
+		border-radius: var(--radius-lg, 14px);
+		padding: 0;
+		overflow: hidden;
+	}
+
+	.faq-question {
+		padding: 1rem 1.25rem;
+		font-weight: 600;
+		font-size: 0.98rem;
+		color: var(--text-primary);
+		cursor: pointer;
+		list-style: none;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 1rem;
+		transition: color 0.15s ease;
+	}
+
+	/* hide default disclosure triangle in webkit + use a custom plus/minus */
+	.faq-question::-webkit-details-marker {
+		display: none;
+	}
+
+	.faq-question::after {
+		content: '+';
+		font-weight: 400;
+		font-size: 1.4rem;
+		color: var(--accent-cyan);
+		transition: transform 0.2s ease;
+		flex-shrink: 0;
+	}
+
+	.faq-item[open] .faq-question::after {
+		content: '\2212'; /* unicode minus */
+	}
+
+	.faq-question:hover {
+		color: var(--accent-cyan);
+	}
+
+	.faq-answer {
+		padding: 0 1.25rem 1.1rem;
+		margin: 0;
+		font-size: 0.92rem;
+		line-height: 1.65;
+		color: var(--text-secondary);
 	}
 
 	.section-badge {

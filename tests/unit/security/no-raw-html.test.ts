@@ -27,6 +27,10 @@ const ALLOWED_HTML_FILES = new Set<string>([
 	// its unicode form before interpolation, so a future user-controlled
 	// field cannot close the surrounding <script> tag.
 	'src/routes/+page.svelte',
+	// FAQPage JSON-LD on the about page. same threat model as the landing:
+	// faqLd is built from a literal `faq` array in the same file (no user
+	// input), and '<' is escaped to its unicode form before interpolation.
+	'src/routes/about/+page.svelte',
 	// pagefind excerpts are generated at build time from our own /docs
 	// source and pre-sanitized by pagefind. no runtime user input flows in.
 	'src/lib/components/ui/SearchModal.svelte'
