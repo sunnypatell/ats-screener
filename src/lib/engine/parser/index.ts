@@ -126,6 +126,66 @@ function getFileType(file: File): 'pdf' | 'docx' | null {
 	return null;
 }
 
+// alternate entry point for users who want to paste resume text directly,
+// bypassing the PDF/DOCX file-pickup step. runs the same downstream
+// extraction pipeline (sections, experience, education, skills, etc) so
+// the resulting ParsedResume drops into scoreResume without further
+// special-casing. metadata fields that only make sense for binary
+// documents (hasMultipleColumns, hasTables, hasImages) default to false;
+// pageCount is estimated from word count using the standard 250 wpm
+// resume rule of thumb.
+export function parseResumeText(rawText: string): ParseResult {
+	const text = rawText.replace(/\r\n/g, '\n').trimEnd();
+
+	if (text.trim().length === 0) {
+		return {
+			success: false,
+			resume: null,
+			errors: ['pasted resume text is empty'],
+			warnings: []
+		};
+	}
+
+	const lines = text.split('\n');
+	const wordCount = text.split(/\s+/).filter(Boolean).length;
+
+	const contact = extractContact(lines);
+	const sections = detectSections(lines);
+	const experience = extractExperience(sections);
+	const education = extractEducation(sections);
+	const projects = extractProjects(sections);
+	const certifications = extractCertifications(sections);
+	const skills = extractSkills(sections);
+	const summary = extractSummary(sections);
+
+	const resume: ParsedResume = {
+		rawText: text,
+		lines,
+		contact,
+		sections,
+		experience,
+		education,
+		projects,
+		certifications,
+		skills,
+		summary,
+		metadata: {
+			fileType: 'pdf',
+			// rough resume page estimate. 500 wpm is a high-density resume,
+			// 250 is more typical, but this number only feeds a heuristic
+			// pageCount scorer so a Math.ceil is plenty.
+			pageCount: Math.max(1, Math.ceil(wordCount / 500)),
+			wordCount,
+			lineCount: lines.length,
+			hasMultipleColumns: false,
+			hasTables: false,
+			hasImages: false
+		}
+	};
+
+	return { success: true, resume, errors: [], warnings: [] };
+}
+
 // extracts structured experience entries from experience sections
 function extractExperience(sections: ResumeSection[]): ExperienceEntry[] {
 	const expSections = sections.filter((s) => s.type === 'experience');
