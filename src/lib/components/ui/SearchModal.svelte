@@ -167,6 +167,15 @@
 		gap: 0.75rem;
 		padding: 1rem 1.25rem;
 		border-bottom: 1px solid var(--glass-border);
+		transition: border-bottom-color 0.15s ease;
+	}
+
+	/* the .search-input itself sets outline: none for a flush in-modal look.
+	   without a compensating indicator keyboard users would have no signal
+	   that the field is focused. :focus-within elevates the wrapper's bottom
+	   border to cyan whenever the input is the focused element. */
+	.search-input-wrapper:focus-within {
+		border-bottom-color: var(--accent-cyan);
 	}
 
 	.search-input-icon {
