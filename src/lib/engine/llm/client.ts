@@ -4,16 +4,29 @@ import { generateFallbackAnalysis } from './fallback';
 
 const CLIENT_TIMEOUT_MS = 65_000;
 
+// discriminated result so callers can distinguish "fall back to rule-based"
+// from "user cancelled, do nothing" - the two need different downstream handling
+export type ScoreLLMResult =
+	| { status: 'ok'; results: ScoreResult[]; provider: string; fallback: boolean }
+	| { status: 'error' }
+	| { status: 'cancelled' };
+
 // performs full LLM-powered ATS scoring via the server endpoint
-// falls back to rule-based if all providers fail
+// caller can pass an AbortSignal to cancel an in-flight request (e.g. on rescan/reset)
 export async function scoreLLM(
 	resumeText: string,
-	jobDescription?: string
-): Promise<{ results: ScoreResult[]; provider: string; fallback: boolean } | null> {
-	try {
-		const controller = new AbortController();
-		const timeout = setTimeout(() => controller.abort(), CLIENT_TIMEOUT_MS);
+	jobDescription?: string,
+	options?: { signal?: AbortSignal }
+): Promise<ScoreLLMResult> {
+	const external = options?.signal;
+	if (external?.aborted) return { status: 'cancelled' };
 
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), CLIENT_TIMEOUT_MS);
+	const onExternalAbort = () => controller.abort();
+	external?.addEventListener('abort', onExternalAbort, { once: true });
+
+	try {
 		const response = await fetch('/api/analyze', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -25,12 +38,10 @@ export async function scoreLLM(
 			signal: controller.signal
 		});
 
-		clearTimeout(timeout);
-
 		if (!response.ok) {
 			const data = await response.json().catch(() => ({}));
 			console.warn('[scoreLLM] API returned', response.status, data.error ?? 'unknown error');
-			return null;
+			return { status: 'error' };
 		}
 
 		const data = await response.json();
@@ -39,7 +50,7 @@ export async function scoreLLM(
 			console.warn(
 				'[scoreLLM] response missing results or is fallback, falling back to rule-based'
 			);
-			return null;
+			return { status: 'error' };
 		}
 
 		// validate and normalize the LLM response to match ScoreResult[]
@@ -48,15 +59,20 @@ export async function scoreLLM(
 		);
 
 		return {
+			status: 'ok',
 			results,
 			provider: (data._provider as string) ?? 'unknown',
 			fallback: false
 		};
 	} catch (err) {
 		if (err instanceof DOMException && err.name === 'AbortError') {
+			if (external?.aborted) return { status: 'cancelled' };
 			console.warn('LLM scoring timed out after', CLIENT_TIMEOUT_MS, 'ms');
 		}
-		return null;
+		return { status: 'error' };
+	} finally {
+		clearTimeout(timeout);
+		external?.removeEventListener('abort', onExternalAbort);
 	}
 }
 

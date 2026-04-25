@@ -66,11 +66,12 @@
 	}
 
 	// runs scoring: LLM-powered (primary) → rule-based (fallback)
+	// startScoring returns a signal so a rescan/reset aborts the prior in-flight request
 	async function handleScan() {
 		if (!resumeStore.isReady) return;
 
 		hasScanned = true;
-		scoresStore.startScoring();
+		const signal = scoresStore.startScoring();
 
 		try {
 			const resume = resumeStore.resume!;
@@ -78,9 +79,12 @@
 
 			// dynamic import: LLM client only loaded when scoring starts
 			const { scoreLLM } = await import('$engine/llm');
-			const llmResult = await scoreLLM(resume.rawText, jd);
+			const llmResult = await scoreLLM(resume.rawText, jd, { signal });
 
-			if (llmResult && llmResult.results.length > 0) {
+			// user cancelled mid-flight (rescan or reset) - leave state to the new handler
+			if (llmResult.status === 'cancelled' || signal.aborted) return;
+
+			if (llmResult.status === 'ok' && llmResult.results.length > 0) {
 				console.log(
 					'[scan] LLM scoring complete:',
 					llmResult.results.length,
@@ -97,10 +101,12 @@
 			const { scoreResume } = await import('$engine/scorer/engine');
 			const input = buildScoringInput();
 			const results = scoreResume(input);
+			if (signal.aborted) return;
 			console.log('[scan] rule-based scoring complete:', results.length, 'results');
 			scoresStore.finishScoring(results, resumeStore.file?.name);
 			scoresStore.finishAnalyzing(null, true);
 		} catch (err) {
+			if (signal.aborted) return;
 			const msg = err instanceof Error ? err.message : 'scoring failed';
 			scoresStore.setError(msg);
 		}

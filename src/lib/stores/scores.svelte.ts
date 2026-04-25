@@ -43,6 +43,10 @@ class ScoresStore {
 	scanHistory = $state<ScanHistoryEntry[]>([]);
 	historyLoading = $state(false);
 
+	// in-flight scoring controller; aborted when a new scan starts or the user resets
+	// not exposed as $state - it's plumbing, not view state
+	private abortController: AbortController | null = null;
+
 	get hasResults(): boolean {
 		return this.results.length > 0;
 	}
@@ -74,13 +78,25 @@ class ScoresStore {
 		this.jobDescription = text;
 	}
 
-	startScoring() {
+	// returns a signal the caller threads into in-flight requests
+	// any prior in-flight scan is aborted before we hand out the new signal
+	startScoring(): AbortSignal {
+		this.abortController?.abort();
+		this.abortController = new AbortController();
 		this.isScoring = true;
 		this.llmFallback = false;
 		this.error = null;
+		return this.abortController.signal;
+	}
+
+	cancelScoring() {
+		this.abortController?.abort();
+		this.abortController = null;
+		this.isScoring = false;
 	}
 
 	finishScoring(results: ScoreResult[], fileName?: string) {
+		this.abortController = null;
 		this.results = results;
 		this.isScoring = false;
 		this.saveToHistory(results, fileName);
@@ -218,6 +234,8 @@ class ScoresStore {
 	}
 
 	setError(message: string) {
+		this.abortController?.abort();
+		this.abortController = null;
 		this.error = message;
 		this.isScoring = false;
 		this.isAnalyzing = false;
@@ -225,6 +243,8 @@ class ScoresStore {
 	}
 
 	reset() {
+		this.abortController?.abort();
+		this.abortController = null;
 		this.results = [];
 		this.llmAnalysis = null;
 		this.parsedJD = null;
