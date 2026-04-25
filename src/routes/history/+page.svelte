@@ -3,6 +3,7 @@
 	import { authStore } from '$stores/auth.svelte';
 	import { scoresStore, type ScanHistoryEntry } from '$stores/scores.svelte';
 	import ScoreDashboard from '$components/scoring/ScoreDashboard.svelte';
+	import ScoreTimeline from '$components/scoring/ScoreTimeline.svelte';
 	import SeoHead from '$components/seo/SeoHead.svelte';
 
 	let selectedEntry = $state<ScanHistoryEntry | null>(null);
@@ -134,6 +135,12 @@
 					<a href="/scanner" class="cta-btn">Scan a Resume</a>
 				</div>
 			{:else}
+				{#if history.length >= 2}
+					<div class="timeline-section">
+						<ScoreTimeline entries={history} />
+					</div>
+				{/if}
+
 				<div class="history-grid">
 					{#each history as entry (entry.id)}
 						<button class="history-card" onclick={() => viewEntry(entry)}>
@@ -289,6 +296,10 @@
 	}
 
 	/* history card grid */
+	.timeline-section {
+		margin-bottom: 1.75rem;
+	}
+
 	.history-grid {
 		display: flex;
 		flex-direction: column;
