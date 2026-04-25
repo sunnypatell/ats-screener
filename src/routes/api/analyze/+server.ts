@@ -2,6 +2,8 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
 import { buildFullScoringPrompt, buildJDAnalysisPrompt } from '$engine/llm/prompts';
+import { hashPrompt, getCached, setCached } from './cache';
+import { checkRateLimit } from './rate-limiter';
 
 // provider configuration: Gemma 3 27B (Google) → Llama 3.3 70B (Groq)
 // cross-provider fallback ensures independent quotas so one provider's limits don't cascade
@@ -82,105 +84,10 @@ const PROVIDERS: LLMProvider[] = [
 	buildGroqProvider('groq-llama-3.3-70b', 'llama-3.3-70b-versatile')
 ];
 
-// simple in-memory rate limiter per IP
-const rateLimits = new Map<string, { count: number; resetAt: number }>();
-const dailyLimits = new Map<string, { count: number; resetAt: number }>();
-const MAX_RPM = 10;
-const MAX_RPD = 200;
-const MAX_MAP_SIZE = 10_000;
-
-// in-memory LRU result cache keyed by SHA-256 of the full prompt
-// dies with the instance and is per-region, but warm hits skip the LLM call entirely
-// hashing the prompt (not the raw inputs) means prompt-template edits auto-bust stale entries
-interface CacheEntry {
-	parsed: Record<string, unknown>;
-	provider: string;
-	expiresAt: number;
-}
-const resultCache = new Map<string, CacheEntry>();
-const MAX_CACHE_SIZE = 200;
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-
-async function hashPrompt(prompt: string): Promise<string> {
-	const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(prompt));
-	return Array.from(new Uint8Array(digest))
-		.map((b) => b.toString(16).padStart(2, '0'))
-		.join('');
-}
-
-function getCached(key: string): CacheEntry | null {
-	const entry = resultCache.get(key);
-	if (!entry) return null;
-	if (Date.now() > entry.expiresAt) {
-		resultCache.delete(key);
-		return null;
-	}
-	// bump to most-recent on hit (Map preserves insertion order)
-	resultCache.delete(key);
-	resultCache.set(key, entry);
-	return entry;
-}
-
-function setCached(key: string, parsed: Record<string, unknown>, provider: string): void {
-	if (resultCache.size >= MAX_CACHE_SIZE) {
-		const oldest = resultCache.keys().next().value;
-		if (oldest !== undefined) resultCache.delete(oldest);
-	}
-	resultCache.set(key, { parsed, provider, expiresAt: Date.now() + CACHE_TTL_MS });
-}
 // per-provider timeouts: Gemma (90s) + Groq (30s) = 120s worst case
 // Gemma typically responds in 30-45s but can spike under load; Groq is <1s but gets headroom
 // Fluid Compute on Vercel Hobby gives 300s max, so 120s worst case fits comfortably
 const PROVIDER_TIMEOUTS_MS = [90_000, 30_000];
-
-type RateLimitResult =
-	| { allowed: true }
-	| { allowed: false; reason: 'minute' | 'daily'; retryAfterSec: number };
-
-function checkRateLimit(ip: string): RateLimitResult {
-	const now = Date.now();
-
-	// periodically clean up expired entries to prevent unbounded memory growth
-	if (rateLimits.size > MAX_MAP_SIZE) {
-		for (const [key, val] of rateLimits) {
-			if (now > val.resetAt) rateLimits.delete(key);
-		}
-	}
-	if (dailyLimits.size > MAX_MAP_SIZE) {
-		for (const [key, val] of dailyLimits) {
-			if (now > val.resetAt) dailyLimits.delete(key);
-		}
-	}
-
-	// check both windows BEFORE incrementing, so a daily-limit failure
-	// doesn't also consume a minute slot
-	const minute = rateLimits.get(ip);
-	if (minute && now < minute.resetAt && minute.count >= MAX_RPM) {
-		return {
-			allowed: false,
-			reason: 'minute',
-			retryAfterSec: Math.ceil((minute.resetAt - now) / 1000)
-		};
-	}
-
-	const day = dailyLimits.get(ip);
-	if (day && now < day.resetAt && day.count >= MAX_RPD) {
-		return {
-			allowed: false,
-			reason: 'daily',
-			retryAfterSec: Math.ceil((day.resetAt - now) / 1000)
-		};
-	}
-
-	// both windows have headroom - increment both
-	if (minute && now < minute.resetAt) minute.count++;
-	else rateLimits.set(ip, { count: 1, resetAt: now + 60_000 });
-
-	if (day && now < day.resetAt) day.count++;
-	else dailyLimits.set(ip, { count: 1, resetAt: now + 86_400_000 });
-
-	return { allowed: true };
-}
 
 // tries each provider in sequence until one succeeds and returns valid JSON
 async function callLLM(
