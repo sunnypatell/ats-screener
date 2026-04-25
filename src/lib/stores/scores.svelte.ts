@@ -176,7 +176,7 @@ class ScoresStore {
 			// write to top-level scan_logs for admin visibility
 			this.writeScanLog(sanitized, uid);
 
-			// prune old scans beyond the cap
+			// prune old scans beyond the cap (one query, deletes only the overflow)
 			const allScansQuery = query(scansRef, orderBy('timestamp', 'desc'));
 			const allSnap = await getDocs(allScansQuery);
 			if (allSnap.size > MAX_HISTORY) {
@@ -186,8 +186,12 @@ class ScoresStore {
 				}
 			}
 
-			// reload with the pruned set
-			await this.loadHistory();
+			// mutate local history in place rather than re-reading. firestore round
+			// trip avoided: 1 read query per scan saved, which is the difference
+			// between staying inside spark free tier (50k reads/day) and blowing it
+			// past 50k users. on next cold start loadHistory pulls the canonical set.
+			const newEntry: ScanHistoryEntry = { id: docRef.id, ...sanitized };
+			this.scanHistory = [newEntry, ...this.scanHistory].slice(0, MAX_HISTORY);
 		} catch (err) {
 			console.error('[scores] failed to save scan to history:', err);
 		}
