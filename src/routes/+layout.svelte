@@ -1,8 +1,15 @@
 <script lang="ts">
 	import '../app.css';
 	import Navbar from '$components/ui/Navbar.svelte';
+	import { installErrorReporter } from '$lib/error-reporter';
 
 	let { children } = $props();
+
+	// install the sampled client-side error reporter once per page lifetime.
+	// runs in the browser only; ssr is a no-op via the browser guard inside.
+	$effect(() => {
+		installErrorReporter();
+	});
 </script>
 
 <svelte:head>
