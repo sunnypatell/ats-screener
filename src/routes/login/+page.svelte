@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { authStore } from '$stores/auth.svelte';
+	import SeoHead from '$components/seo/SeoHead.svelte';
 
 	let mode = $state<'signin' | 'signup'>('signin');
 	let email = $state('');
@@ -19,17 +20,26 @@
 		}
 	});
 
+	// firebase treats "User@Example.com" and "user@example.com" as DIFFERENT accounts;
+	// normalizing on submit prevents accidental duplicate accounts from casing/whitespace
+	function normalizeEmail(raw: string): string {
+		return raw.trim().toLowerCase();
+	}
+
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
 		submitting = true;
 		authStore.clearError();
 
+		const normalizedEmail = normalizeEmail(email);
+		const normalizedDisplayName = displayName.trim().slice(0, 80);
+
 		try {
 			if (mode === 'signin') {
-				await authStore.signInWithEmail(email, password);
+				await authStore.signInWithEmail(normalizedEmail, password);
 				goto('/scanner');
 			} else {
-				await authStore.signUpWithEmail(email, password, displayName);
+				await authStore.signUpWithEmail(normalizedEmail, password, normalizedDisplayName);
 				signupDone = true;
 			}
 		} catch {
@@ -53,9 +63,10 @@
 	}
 
 	async function handlePasswordReset() {
-		if (!resetEmail.trim()) return;
+		const normalized = normalizeEmail(resetEmail);
+		if (!normalized) return;
 		try {
-			await authStore.sendPasswordReset(resetEmail);
+			await authStore.sendPasswordReset(normalized);
 			resetSent = true;
 		} catch {
 			// error is set in authStore
@@ -63,9 +74,10 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Sign In | ATS Screener</title>
-</svelte:head>
+<SeoHead
+	title="Sign In | ATS Screener"
+	description="Sign in to ATS Screener to scan your resume across 6 real ATS platforms and track your score history."
+/>
 
 <div class="login-page">
 	<div class="login-card">
@@ -217,6 +229,8 @@
 							type="text"
 							bind:value={displayName}
 							placeholder="Your name"
+							maxlength="80"
+							autocomplete="name"
 							class="field-input"
 						/>
 					</label>

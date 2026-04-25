@@ -3,6 +3,7 @@
 	import { authStore } from '$stores/auth.svelte';
 	import { scoresStore, type ScanHistoryEntry } from '$stores/scores.svelte';
 	import ScoreDashboard from '$components/scoring/ScoreDashboard.svelte';
+	import SeoHead from '$components/seo/SeoHead.svelte';
 
 	let selectedEntry = $state<ScanHistoryEntry | null>(null);
 
@@ -55,9 +56,11 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Scan History | ATS Screener</title>
-</svelte:head>
+<SeoHead
+	title="Scan History | ATS Screener"
+	description="Review your past resume scans, compare scores over time, and load any past result back into the dashboard."
+	noIndex
+/>
 
 <main class="history-page">
 	<div class="history-bg">
