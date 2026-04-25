@@ -133,7 +133,11 @@ function setCached(key: string, parsed: Record<string, unknown>, provider: strin
 // Fluid Compute on Vercel Hobby gives 300s max, so 120s worst case fits comfortably
 const PROVIDER_TIMEOUTS_MS = [90_000, 30_000];
 
-function checkRateLimit(ip: string): boolean {
+type RateLimitResult =
+	| { allowed: true }
+	| { allowed: false; reason: 'minute' | 'daily'; retryAfterSec: number };
+
+function checkRateLimit(ip: string): RateLimitResult {
 	const now = Date.now();
 
 	// periodically clean up expired entries to prevent unbounded memory growth
@@ -148,23 +152,34 @@ function checkRateLimit(ip: string): boolean {
 		}
 	}
 
+	// check both windows BEFORE incrementing, so a daily-limit failure
+	// doesn't also consume a minute slot
 	const minute = rateLimits.get(ip);
-	if (minute && now < minute.resetAt) {
-		if (minute.count >= MAX_RPM) return false;
-		minute.count++;
-	} else {
-		rateLimits.set(ip, { count: 1, resetAt: now + 60_000 });
+	if (minute && now < minute.resetAt && minute.count >= MAX_RPM) {
+		return {
+			allowed: false,
+			reason: 'minute',
+			retryAfterSec: Math.ceil((minute.resetAt - now) / 1000)
+		};
 	}
 
 	const day = dailyLimits.get(ip);
-	if (day && now < day.resetAt) {
-		if (day.count >= MAX_RPD) return false;
-		day.count++;
-	} else {
-		dailyLimits.set(ip, { count: 1, resetAt: now + 86_400_000 });
+	if (day && now < day.resetAt && day.count >= MAX_RPD) {
+		return {
+			allowed: false,
+			reason: 'daily',
+			retryAfterSec: Math.ceil((day.resetAt - now) / 1000)
+		};
 	}
 
-	return true;
+	// both windows have headroom - increment both
+	if (minute && now < minute.resetAt) minute.count++;
+	else rateLimits.set(ip, { count: 1, resetAt: now + 60_000 });
+
+	if (day && now < day.resetAt) day.count++;
+	else dailyLimits.set(ip, { count: 1, resetAt: now + 86_400_000 });
+
+	return { allowed: true };
 }
 
 // tries each provider in sequence until one succeeds and returns valid JSON
@@ -280,8 +295,20 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	// rate limiting per IP
 	const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-	if (!checkRateLimit(ip)) {
-		return json({ error: 'rate limit exceeded. try again in 60 seconds.' }, { status: 429 });
+	const limit = checkRateLimit(ip);
+	if (!limit.allowed) {
+		const reasonMsg =
+			limit.reason === 'minute' ? 'too many requests this minute' : 'daily limit reached';
+		return json(
+			{
+				error: `rate limit exceeded: ${reasonMsg}. retry after ${limit.retryAfterSec}s.`,
+				retryAfter: limit.retryAfterSec
+			},
+			{
+				status: 429,
+				headers: { 'Retry-After': String(limit.retryAfterSec) }
+			}
+		);
 	}
 
 	// validate Content-Type
