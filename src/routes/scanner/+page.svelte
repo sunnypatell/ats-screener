@@ -9,6 +9,7 @@
 	import { resumeStore } from '$stores/resume.svelte';
 	import { scoresStore } from '$stores/scores.svelte';
 	import { authStore } from '$stores/auth.svelte';
+	import { anonTrial } from '$stores/anon-trial.svelte';
 	import type { ScoringInput } from '$engine/scorer/types';
 
 	// load history when auth state is ready
@@ -94,6 +95,9 @@
 				);
 				scoresStore.finishScoring(llmResult.results, resumeStore.file?.name);
 				scoresStore.finishAnalyzing(null, false);
+				// burn the anonymous-trial token on first successful scan so the
+				// next visit nudges toward sign-in (no-op for authenticated users).
+				if (!authStore.isAuthenticated) anonTrial.markUsed();
 				return;
 			}
 
@@ -105,6 +109,8 @@
 			if (signal.aborted) return;
 			console.log('[scan] rule-based scoring complete:', results.length, 'results');
 			scoresStore.finishScoring(results, resumeStore.file?.name);
+			// rule-based fallback still counts as a completed anonymous scan
+			if (!authStore.isAuthenticated) anonTrial.markUsed();
 			// when rate-limited, surface the retry timestamp so the toast can show a countdown
 			const retryAtMs =
 				llmResult.status === 'rate_limited' ? Date.now() + llmResult.retryAfterSec * 1000 : null;
@@ -173,7 +179,7 @@
 				<p class="auth-gate-text">Loading...</p>
 			</div>
 		</div>
-	{:else if !authStore.isAuthenticated}
+	{:else if !authStore.isAuthenticated && anonTrial.used}
 		<div class="auth-gate">
 			<div class="auth-gate-card">
 				<svg
@@ -188,10 +194,10 @@
 					<rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
 					<path d="M7 11V7a5 5 0 0 1 10 0v4" />
 				</svg>
-				<h2 class="auth-gate-title">Sign In to Scan</h2>
+				<h2 class="auth-gate-title">Create a free account to keep scanning</h2>
 				<p class="auth-gate-text">
-					Create a free account to scan your resume across 6 real ATS platforms. Your scan history
-					will be saved automatically.
+					You used your free anonymous scan. Sign in to keep scanning, save your scan history, and
+					see how your scores trend over time.
 				</p>
 				<a href="/login" class="auth-gate-btn"> Sign In or Create Account </a>
 			</div>
