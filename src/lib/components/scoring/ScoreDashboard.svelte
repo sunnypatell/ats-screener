@@ -9,6 +9,7 @@
 	import { generatePDF } from '$engine/scorer/report';
 	import { getScoreColor, getScoreLabel } from '$engine/scorer/classification';
 	import { computeScanComparison } from '$engine/scorer/comparison';
+	import { getExampleFor } from '$engine/suggestions/templates';
 	import type { Suggestion, StructuredSuggestion } from '$engine/scorer/types';
 
 	// derived stats for the summary card header
@@ -592,6 +593,12 @@
 								</div>
 							</div>
 							{#if expandedSuggestion === i}
+								{@const suggestionText = structured
+									? suggestion.summary
+									: typeof suggestion === 'string'
+										? suggestion
+										: ''}
+								{@const example = getExampleFor(suggestionText)}
 								<div class="suggestion-card-body">
 									{#if structured && suggestion.details.length > 0}
 										<ul class="suggestion-details">
@@ -601,6 +608,21 @@
 										</ul>
 									{:else if !structured}
 										<p>{suggestion}</p>
+									{/if}
+									{#if example}
+										<div class="suggestion-example">
+											<p class="example-tip">{example.tip}</p>
+											<div class="example-pair">
+												<div class="example-block before">
+													<span class="example-label">Before</span>
+													<pre>{example.before}</pre>
+												</div>
+												<div class="example-block after">
+													<span class="example-label">After</span>
+													<pre>{example.after}</pre>
+												</div>
+											</div>
+										</div>
 									{/if}
 								</div>
 							{/if}
@@ -1289,6 +1311,79 @@
 		border-radius: 50%;
 		background: var(--accent-cyan);
 		opacity: 0.6;
+	}
+
+	/* before/after example block inside expanded suggestion */
+	.suggestion-example {
+		margin-top: 1rem;
+		padding: 0.85rem 1rem 0.95rem;
+		background: rgba(255, 255, 255, 0.02);
+		border: 1px solid var(--glass-border);
+		border-radius: var(--radius-md);
+	}
+
+	.example-tip {
+		font-size: 0.78rem;
+		color: var(--text-secondary);
+		margin: 0 0 0.75rem;
+		line-height: 1.55;
+	}
+
+	.example-pair {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.6rem;
+	}
+
+	.example-block {
+		padding: 0.55rem 0.75rem;
+		border-radius: var(--radius-sm);
+		border: 1px solid;
+		min-width: 0;
+	}
+
+	.example-block.before {
+		background: rgba(239, 68, 68, 0.05);
+		border-color: rgba(239, 68, 68, 0.18);
+	}
+
+	.example-block.after {
+		background: rgba(34, 197, 94, 0.05);
+		border-color: rgba(34, 197, 94, 0.2);
+	}
+
+	.example-label {
+		display: block;
+		font-size: 0.62rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		margin-bottom: 0.35rem;
+		opacity: 0.8;
+	}
+
+	.example-block.before .example-label {
+		color: #ef4444;
+	}
+
+	.example-block.after .example-label {
+		color: #22c55e;
+	}
+
+	.example-block pre {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: 0.74rem;
+		line-height: 1.55;
+		color: var(--text-secondary);
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+
+	@media (max-width: 640px) {
+		.example-pair {
+			grid-template-columns: 1fr;
+		}
 	}
 
 	@keyframes cardExpand {
