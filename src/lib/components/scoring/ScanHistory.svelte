@@ -52,7 +52,11 @@
 
 {#if hasHistory}
 	<div class="history-section">
-		<button class="history-toggle" onclick={() => (expanded = !expanded)}>
+		<button
+			class="history-toggle"
+			onclick={() => (expanded = !expanded)}
+			aria-expanded={expanded}
+		>
 			<div class="toggle-left">
 				<svg
 					width="14"

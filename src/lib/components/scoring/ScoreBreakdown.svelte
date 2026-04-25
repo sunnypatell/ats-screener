@@ -9,7 +9,11 @@
 </script>
 
 <div class="breakdown" class:expanded>
-	<button class="breakdown-toggle" onclick={() => (expanded = !expanded)}>
+	<button
+		class="breakdown-toggle"
+		onclick={() => (expanded = !expanded)}
+		aria-expanded={expanded}
+	>
 		<div class="toggle-left">
 			<span class="toggle-system">{result.system}</span>
 			<span class="toggle-vendor">{result.vendor}</span>

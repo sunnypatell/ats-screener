@@ -104,6 +104,10 @@
 			? computeScanComparison(scoresStore.results, previousScan.results)
 			: null
 	);
+	// fast lookup so each ScoreCard can render its own delta in the grid
+	const previousByPlatform = $derived(
+		new Map(comparison?.platforms.map((p) => [p.system, p.previous]) ?? [])
+	);
 
 	// twitter share intent for the "I improved" moment - the URL points at /share
 	// (not the homepage) so twitter's crawler fetches a page whose og:image is a
@@ -487,7 +491,7 @@
 		{#if activeView === 'cards'}
 			<div class="scores-grid">
 				{#each scoresStore.results as result (result.system)}
-					<ScoreCard {result} />
+					<ScoreCard {result} previousScore={previousByPlatform.get(result.system)} />
 				{/each}
 			</div>
 		{:else}

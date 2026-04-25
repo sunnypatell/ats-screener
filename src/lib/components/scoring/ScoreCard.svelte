@@ -2,7 +2,14 @@
 	import type { ScoreResult } from '$engine/scorer/types';
 	import { getScoreColor, getScoreLabel } from '$engine/scorer/classification';
 
-	let { result }: { result: ScoreResult } = $props();
+	let { result, previousScore }: { result: ScoreResult; previousScore?: number } = $props();
+
+	// only show the delta pill when there's a meaningful, signed change vs the
+	// previous scan; identical scores stay quiet to avoid visual noise
+	const delta = $derived(
+		previousScore !== undefined ? result.overallScore - previousScore : null
+	);
+	const showDelta = $derived(delta !== null && delta !== 0);
 
 	// mouse position in px for the spotlight hover effect
 	let mouseX = $state(0);
@@ -74,6 +81,16 @@
 			<span class="score-value" style="color: {scoreColor}">
 				{result.overallScore}
 			</span>
+			{#if showDelta && delta !== null}
+				<span
+					class="score-delta"
+					class:positive={delta > 0}
+					class:negative={delta < 0}
+					title="{delta > 0 ? '+' : ''}{delta} vs previous scan"
+				>
+					{delta > 0 ? '+' : ''}{delta}
+				</span>
+			{/if}
 		</div>
 	</div>
 
@@ -234,6 +251,32 @@
 
 	.score-progress {
 		transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	.score-delta {
+		position: absolute;
+		bottom: -10px;
+		right: -8px;
+		padding: 0.08rem 0.42rem;
+		font-size: 0.62rem;
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+		border-radius: var(--radius-full);
+		line-height: 1.4;
+		white-space: nowrap;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+	}
+
+	.score-delta.positive {
+		color: #22c55e;
+		background: rgba(34, 197, 94, 0.18);
+		border: 1px solid rgba(34, 197, 94, 0.32);
+	}
+
+	.score-delta.negative {
+		color: #ef4444;
+		background: rgba(239, 68, 68, 0.18);
+		border: 1px solid rgba(239, 68, 68, 0.32);
 	}
 
 	.card-status {
