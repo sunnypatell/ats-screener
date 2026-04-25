@@ -1,8 +1,11 @@
 import { ImageResponse } from '@vercel/og';
 import type { RequestHandler } from './$types';
 
-// edge runtime is required by @vercel/og (uses Web APIs only)
-export const config = { runtime: 'edge' };
+// runs on the default (node) serverless runtime - the deprecated `runtime: 'edge'`
+// adapter-vercel option pulls SvelteKit's bundled root.js (which references
+// node:crypto via dynamic import) into an edge-only build that esbuild fails to
+// resolve. @vercel/og >=0.6 works fine on node-runtime serverless functions
+export const config = { maxDuration: 30 };
 
 const WIDTH = 1200;
 const HEIGHT = 630;

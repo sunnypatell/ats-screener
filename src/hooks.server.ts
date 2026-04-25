@@ -1,6 +1,7 @@
 import type { Handle } from '@sveltejs/kit';
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+// no node built-ins here - hooks.server.ts is bundled into BOTH node and edge
+// route functions, and edge bundling fails on fs/path/node:crypto. docs serving
+// (which used fs) lives in a node-runtime catchall route at /docs/[...slug]
 
 // applied as defaults: routes that already set a header keep their value
 const SECURITY_HEADERS: Record<string, string> = {
@@ -45,22 +46,5 @@ function applySecurityHeaders(response: Response, path: string): Response {
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const path = event.url.pathname;
-
-	// serve static docs (Astro Starlight build output)
-	if (path.startsWith('/docs')) {
-		const staticBase = join(process.cwd(), 'static');
-		// try path/index.html for directory-style URLs
-		const withIndex = join(staticBase, path, 'index.html');
-		if (existsSync(withIndex)) {
-			const html = readFileSync(withIndex, 'utf-8');
-			return applySecurityHeaders(
-				new Response(html, {
-					headers: { 'Content-Type': 'text/html; charset=utf-8' }
-				}),
-				path
-			);
-		}
-	}
-
 	return applySecurityHeaders(await resolve(event), path);
 };
