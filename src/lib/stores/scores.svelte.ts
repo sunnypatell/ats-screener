@@ -45,6 +45,14 @@ class ScoresStore {
 	error = $state<string | null>(null);
 	scanHistory = $state<ScanHistoryEntry[]>([]);
 	historyLoading = $state(false);
+	// true when the dashboard is showing a snapshot loaded from history
+	// (suppresses the "you went from X to Y" comparison band)
+	isFromHistory = $state(false);
+	// captured at startScoring time so the comparison band stays correct during
+	// the ~1s race between finishScoring (results visible) and saveToHistory's
+	// async reload (which would otherwise leave scanHistory[1] pointing at the
+	// scan BEFORE the previous one for that brief window)
+	previousScanForComparison = $state<ScanHistoryEntry | null>(null);
 
 	// in-flight scoring controller; aborted when a new scan starts or the user resets
 	// not exposed as $state - it's plumbing, not view state
@@ -86,9 +94,14 @@ class ScoresStore {
 	startScoring(): AbortSignal {
 		this.abortController?.abort();
 		this.abortController = new AbortController();
+		// snapshot the current top of history; after saveToHistory completes that
+		// entry becomes scanHistory[1], but we already have it cached for the
+		// comparison band so the UI never flickers on the stale window
+		this.previousScanForComparison = this.scanHistory[0] ?? null;
 		this.isScoring = true;
 		this.llmFallback = false;
 		this.llmRetryAtMs = null;
+		this.isFromHistory = false;
 		this.error = null;
 		return this.abortController.signal;
 	}
@@ -221,6 +234,8 @@ class ScoresStore {
 		this.isAnalyzing = false;
 		this.llmFallback = false;
 		this.llmRetryAtMs = null;
+		this.isFromHistory = true;
+		this.previousScanForComparison = null;
 		this.error = null;
 	}
 
@@ -259,6 +274,9 @@ class ScoresStore {
 		this.isScoring = false;
 		this.isAnalyzing = false;
 		this.llmFallback = false;
+		this.llmRetryAtMs = null;
+		this.isFromHistory = false;
+		this.previousScanForComparison = null;
 		this.error = null;
 	}
 }

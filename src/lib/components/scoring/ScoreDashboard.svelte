@@ -8,6 +8,7 @@
 	import ShareBadge from './ShareBadge.svelte';
 	import { generatePDF } from '$engine/scorer/report';
 	import { getScoreColor, getScoreLabel } from '$engine/scorer/classification';
+	import { computeScanComparison } from '$engine/scorer/comparison';
 	import type { Suggestion, StructuredSuggestion } from '$engine/scorer/types';
 
 	// derived stats for the summary card header
@@ -87,6 +88,22 @@
 			? Math.max(0, Math.ceil((scoresStore.llmRetryAtMs - now) / 1000))
 			: 0
 	);
+
+	// scan-vs-previous-scan comparison
+	// startScoring snapshots the previous top-of-history into previousScanForComparison,
+	// which avoids the brief race where scanHistory[1] is stale before the post-save reload
+	// finishes; we fall back to scanHistory[1] for any path that didn't go through startScoring
+	// suppressed when viewing a snapshot loaded from history
+	const previousScan = $derived(
+		scoresStore.isFromHistory
+			? null
+			: (scoresStore.previousScanForComparison ?? scoresStore.scanHistory[1] ?? null)
+	);
+	const comparison = $derived(
+		previousScan && scoresStore.hasResults
+			? computeScanComparison(scoresStore.results, previousScan.results)
+			: null
+	);
 </script>
 
 {#if scoresStore.hasResults}
@@ -158,6 +175,89 @@
 					</div>
 				</div>
 			</div>
+
+			{#if comparison}
+				{@const positive = comparison.deltaAverage > 0}
+				{@const negative = comparison.deltaAverage < 0}
+				<div
+					class="comparison-band"
+					class:up={positive}
+					class:down={negative}
+					class:flat={!positive && !negative}
+				>
+					<div class="comparison-headline">
+						{#if positive}
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<polyline points="17 6 23 6 23 12" />
+								<path d="M1 18l8-8 4 4 9-9" />
+							</svg>
+						{:else if negative}
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<polyline points="17 18 23 18 23 12" />
+								<path d="M1 6l8 8 4-4 9 9" />
+							</svg>
+						{:else}
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<line x1="5" y1="12" x2="19" y2="12" />
+							</svg>
+						{/if}
+						<span class="comparison-text">
+							{#if positive}
+								Your score went from <strong>{comparison.previousAverage}</strong> to
+								<strong>{comparison.currentAverage}</strong>
+								<span class="delta-pill positive">+{comparison.deltaAverage}</span>
+							{:else if negative}
+								Your score moved from <strong>{comparison.previousAverage}</strong> to
+								<strong>{comparison.currentAverage}</strong>
+								<span class="delta-pill negative">{comparison.deltaAverage}</span>
+							{:else}
+								No change since your last scan ({comparison.currentAverage})
+							{/if}
+						</span>
+					</div>
+					<div class="comparison-meta">
+						{#if comparison.deltaPassing !== 0}
+							<span
+								class="meta-chip"
+								class:positive={comparison.deltaPassing > 0}
+								class:negative={comparison.deltaPassing < 0}
+							>
+								{comparison.previousPassing} → {comparison.currentPassing} passing
+							</span>
+						{/if}
+						{#if comparison.improved > 0}
+							<span class="meta-chip positive">{comparison.improved} improved</span>
+						{/if}
+						{#if comparison.regressed > 0}
+							<span class="meta-chip negative">{comparison.regressed} regressed</span>
+						{/if}
+						{#if comparison.unchanged > 0 && comparison.improved === 0 && comparison.regressed === 0}
+							<span class="meta-chip">{comparison.unchanged} unchanged</span>
+						{/if}
+					</div>
+				</div>
+			{/if}
 
 			{#if scoresStore.llmFallback}
 				<div class="fallback-toast">
@@ -676,6 +776,109 @@
 	.fallback-retry-hint strong {
 		color: var(--accent-cyan);
 		font-weight: 600;
+	}
+
+	/* scan-vs-previous comparison band */
+	.comparison-band {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem 1rem;
+		margin-top: 1rem;
+		padding: 0.75rem 1.1rem;
+		border-radius: var(--radius-lg);
+		background: var(--glass-bg);
+		border: 1px solid var(--glass-border);
+		backdrop-filter: blur(12px);
+	}
+
+	.comparison-band.up {
+		border-color: rgba(34, 197, 94, 0.25);
+		background: rgba(34, 197, 94, 0.04);
+	}
+
+	.comparison-band.down {
+		border-color: rgba(239, 68, 68, 0.22);
+		background: rgba(239, 68, 68, 0.04);
+	}
+
+	.comparison-band.flat {
+		border-color: rgba(255, 255, 255, 0.08);
+	}
+
+	.comparison-headline {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		font-size: 0.88rem;
+		color: var(--text-secondary);
+	}
+
+	.comparison-band.up .comparison-headline svg {
+		color: #22c55e;
+	}
+
+	.comparison-band.down .comparison-headline svg {
+		color: #ef4444;
+	}
+
+	.comparison-band.flat .comparison-headline svg {
+		color: var(--text-tertiary);
+	}
+
+	.comparison-text strong {
+		color: var(--text-primary);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.delta-pill {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.1rem 0.5rem;
+		margin-left: 0.4rem;
+		font-size: 0.78rem;
+		font-weight: 600;
+		border-radius: var(--radius-full);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.delta-pill.positive {
+		color: #22c55e;
+		background: rgba(34, 197, 94, 0.12);
+	}
+
+	.delta-pill.negative {
+		color: #ef4444;
+		background: rgba(239, 68, 68, 0.12);
+	}
+
+	.comparison-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+	}
+
+	.meta-chip {
+		padding: 0.18rem 0.55rem;
+		font-size: 0.74rem;
+		color: var(--text-tertiary);
+		border-radius: var(--radius-full);
+		background: rgba(255, 255, 255, 0.04);
+		border: 1px solid rgba(255, 255, 255, 0.06);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.meta-chip.positive {
+		color: #22c55e;
+		border-color: rgba(34, 197, 94, 0.2);
+		background: rgba(34, 197, 94, 0.06);
+	}
+
+	.meta-chip.negative {
+		color: #ef4444;
+		border-color: rgba(239, 68, 68, 0.2);
+		background: rgba(239, 68, 68, 0.06);
 	}
 
 	.fallback-toast-actions {
