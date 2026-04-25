@@ -2,13 +2,16 @@
 	import '../app.css';
 	import Navbar from '$components/ui/Navbar.svelte';
 	import { installErrorReporter } from '$lib/error-reporter';
+	import { installWebVitals } from '$lib/web-vitals';
 
 	let { children } = $props();
 
-	// install the sampled client-side error reporter once per page lifetime.
-	// runs in the browser only; ssr is a no-op via the browser guard inside.
+	// install the sampled client-side error reporter and the web-vitals
+	// collector once per page lifetime. both run in the browser only; ssr
+	// is a no-op via the browser guards inside each module.
 	$effect(() => {
 		installErrorReporter();
+		installWebVitals();
 	});
 </script>
 
