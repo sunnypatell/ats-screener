@@ -50,6 +50,18 @@
 	function openFilePicker() {
 		fileInput.click();
 	}
+
+	// space and enter both activate per WAI-ARIA button semantics. preventDefault
+	// stops space from scrolling the page when the uploader has focus.
+	// guard against bubbled keys from focusable children (the privacy link
+	// inside upload-prompt) so following the link does not trigger file pick.
+	function handleUploaderKey(e: KeyboardEvent) {
+		if (e.target !== e.currentTarget) return;
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			openFilePicker();
+		}
+	}
 </script>
 
 <div
@@ -61,8 +73,9 @@
 	ondrop={handleDrop}
 	role="button"
 	tabindex="0"
+	aria-label="Upload resume. Click, press Enter or Space, or drag a PDF or DOCX file."
 	onclick={openFilePicker}
-	onkeydown={(e) => e.key === 'Enter' && openFilePicker()}
+	onkeydown={handleUploaderKey}
 >
 	<input
 		bind:this={fileInput}
@@ -150,6 +163,10 @@
 				<span class="format-badge">.PDF</span>
 				<span class="format-badge">.DOCX</span>
 			</div>
+			<p class="privacy-hint">
+				Parsed entirely in your browser. The file itself never reaches our servers.
+				<a href="/privacy" class="privacy-link" onclick={(e) => e.stopPropagation()}> Read more </a>
+			</p>
 		</div>
 	{/if}
 
@@ -239,6 +256,28 @@
 		border: 1px solid var(--glass-border);
 		border-radius: var(--radius-md);
 		letter-spacing: 0.05em;
+	}
+
+	.privacy-hint {
+		margin-top: 1rem;
+		font-size: 0.78rem;
+		color: var(--text-tertiary);
+		opacity: 0.75;
+		line-height: 1.5;
+	}
+
+	.privacy-link {
+		color: var(--accent-cyan);
+		text-decoration: none;
+		border-bottom: 1px solid transparent;
+		transition: border-color 0.15s ease;
+		margin-left: 0.25rem;
+	}
+
+	.privacy-link:hover,
+	.privacy-link:focus-visible {
+		border-bottom-color: var(--accent-cyan);
+		outline: none;
 	}
 
 	.file-info {
