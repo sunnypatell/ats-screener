@@ -128,6 +128,7 @@
 			<div class="footer-col">
 				<h4 class="col-title">Resources</h4>
 				<a href="/docs" class="footer-link">Documentation</a>
+				<a href="/docs/release-notes/changelog/" class="footer-link">Changelog</a>
 				<a
 					href="https://github.com/sunnypatell/ats-screener/issues"
 					target="_blank"

@@ -3,11 +3,13 @@
 	"type": "module",
 	"version": "0.0.1",
 	"scripts": {
-		"dev": "astro dev",
-		"start": "astro dev",
+		"dev": "node scripts/sync-changelog.mjs && astro dev",
+		"start": "node scripts/sync-changelog.mjs && astro dev",
+		"prebuild": "node scripts/sync-changelog.mjs",
 		"build": "astro build",
 		"preview": "astro preview",
-		"astro": "astro"
+		"astro": "astro",
+		"sync-changelog": "node scripts/sync-changelog.mjs"
 	},
 	"dependencies": {
 		"@astrojs/starlight": "^0.37.6",

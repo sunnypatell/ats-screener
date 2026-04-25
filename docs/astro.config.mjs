@@ -106,6 +106,10 @@ export default defineConfig({
 					]
 				},
 				{
+					label: 'Release Notes',
+					items: [{ label: 'Changelog', slug: 'release-notes/changelog' }]
+				},
+				{
 					label: 'Legal',
 					items: [{ label: 'Privacy and Data Handling', slug: 'legal/privacy' }]
 				}

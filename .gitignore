@@ -43,3 +43,7 @@ blob-report/
 
 # experiment roadmap lives in claude code project memory, not in the repo
 ROADMAP-EXPERIMENT.md
+
+# auto-synced from CHANGELOG.md by docs/scripts/sync-changelog.mjs;
+# CHANGELOG.md is the single source of truth at the repo root.
+docs/src/content/docs/release-notes/changelog.md
