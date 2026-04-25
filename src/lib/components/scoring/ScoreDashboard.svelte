@@ -105,14 +105,21 @@
 			: null
 	);
 
-	// twitter share intent for the "I improved" moment - origin pulled from the
-	// page so preview deploys share their own URLs, not a hardcoded production one
+	// twitter share intent for the "I improved" moment - the URL points at /share
+	// (not the homepage) so twitter's crawler fetches a page whose og:image is a
+	// dynamic PNG rendering this user's actual delta and score
 	function shareImprovementToTwitter() {
-		if (!comparison || comparison.deltaAverage <= 0) return;
+		if (!comparison || comparison.deltaAverage <= 0 || typeof window === 'undefined') return;
 		const text = `Just improved my ATS resume score from ${comparison.previousAverage} to ${comparison.currentAverage} (+${comparison.deltaAverage}) using @ATSScreener — free, simulates how Workday, Lever, iCIMS and others actually parse resumes`;
-		const url = typeof window !== 'undefined' ? window.location.origin : '';
-		const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
-		window.open(shareUrl, '_blank', 'noopener,noreferrer,width=600,height=520');
+		const params = new URLSearchParams({
+			score: String(scoresStore.averageScore),
+			pass: String(scoresStore.passingCount),
+			total: String(scoresStore.results.length),
+			delta: String(comparison.deltaAverage)
+		});
+		const sharePageUrl = `${window.location.origin}/share?${params.toString()}`;
+		const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(sharePageUrl)}`;
+		window.open(intent, '_blank', 'noopener,noreferrer,width=600,height=520');
 	}
 </script>
 

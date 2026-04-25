@@ -25,9 +25,47 @@
 	const circumference = 2 * Math.PI * 58;
 	const dashOffset = $derived(circumference - (avgScore / 100) * circumference);
 
+	// score-encoded share URL pointed at the /share landing page; that page's
+	// og:image references /api/og with the same params, so when LinkedIn or
+	// Twitter scrape this URL the preview shows the user's actual score
+	const shareUrl = $derived.by(() => {
+		if (typeof window === 'undefined') return '';
+		const params = new URLSearchParams({
+			score: String(avgScore),
+			pass: String(passCount),
+			total: String(totalCount)
+		});
+		return `${window.location.origin}/share?${params.toString()}`;
+	});
+
 	const shareText = $derived(
 		`Just scored ${avgScore}/100 on ATS Screener, a free open-source resume tool by linkedin.com/in/sunny-patel-30b460204 that simulates how real ATS platforms (Workday, Taleo, iCIMS, Greenhouse, Lever, and SuccessFactors) parse your resume.\n\n${passCount}/${totalCount} systems passed. Try it free at ats-screener.vercel.app\n\n#ATSScreener #Resume #JobSearch #OpenSource #CareerTips`
 	);
+
+	let copyState = $state<'idle' | 'copied'>('idle');
+	async function copyShareLink() {
+		if (!shareUrl) return;
+		try {
+			await navigator.clipboard.writeText(shareUrl);
+			copyState = 'copied';
+			setTimeout(() => (copyState = 'idle'), 1800);
+		} catch {
+			// clipboard API can fail on insecure origins; fall back to textarea+execCommand
+			const ta = document.createElement('textarea');
+			ta.value = shareUrl;
+			ta.style.position = 'fixed';
+			ta.style.opacity = '0';
+			document.body.appendChild(ta);
+			ta.select();
+			try {
+				document.execCommand('copy');
+				copyState = 'copied';
+				setTimeout(() => (copyState = 'idle'), 1800);
+			} finally {
+				document.body.removeChild(ta);
+			}
+		}
+	}
 
 	function close() {
 		open = false;
@@ -80,7 +118,10 @@
 	}
 
 	function shareToLinkedIn() {
-		const url = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(shareText)}`;
+		// include the /share URL in the post text so linkedin's crawler fetches
+		// it and renders the dynamic OG card in the preview
+		const fullText = shareUrl ? `${shareText}\n\n${shareUrl}` : shareText;
+		const url = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(fullText)}`;
 		window.open(url, '_blank', 'noopener,noreferrer');
 	}
 
@@ -593,6 +634,39 @@
 							<line x1="8" y1="12" x2="16" y2="12" />
 						</svg>
 						Add to LinkedIn Profile
+					</button>
+
+					<button
+						class="action-btn secondary"
+						onclick={copyShareLink}
+						aria-label="Copy share link"
+					>
+						{#if copyState === 'copied'}
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="#22c55e"
+								stroke-width="2"
+							>
+								<polyline points="20,6 9,17 4,12" />
+							</svg>
+							Link copied
+						{:else}
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+								<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+							</svg>
+							Copy share link
+						{/if}
 					</button>
 				</div>
 			</div>
