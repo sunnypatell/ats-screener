@@ -38,7 +38,7 @@ each entry: status, department(s), value, risk, how to test.
 ## priority 3, accessibility (target WCAG 2.2 AA)
 
 - [ ] **`prefers-reduced-motion` respect across all CSS animations** (a11y). audit every `transition`, `@keyframes`, and svelte `transition:` directive; wrap in `@media (prefers-reduced-motion: no-preference)` or short-circuit when reduced-motion is set. test: lighthouse a11y; manual via OS toggle.
-- [ ] **skip-to-content link** (a11y). visually hidden until focused, jumps to `<main id="content">`. test: keyboard tab from a fresh page load; verify the link appears and lands focus correctly.
+- [x] **skip-to-content link** (a11y). new layout-level `<a class="skip-link" href="#content">` rendered before the Navbar, sliding into view from the top edge on focus. wrapper `<div id="content" tabindex="-1">` provides the focus target so the link works on every route without per-page coordination. animation respects `prefers-reduced-motion: reduce`. test: dev server `/` returns the link in dom and the wrapper id; gate green.
 - [ ] **focus-visible audit on all interactive elements** (a11y). svelte components, custom buttons, share badges, suggestion cards. ensure a 2px high-contrast outline appears under keyboard focus and not under mouse focus. test: tab through scanner end to end, screenshot focus rings.
 - [ ] **ARIA live region for scan state changes** (a11y). screen readers should hear "scanning", "scan complete, average score 87 of 100", "scan failed, fallback used". `polite` priority. test: VoiceOver runthrough.
 - [ ] **dark theme color contrast audit** (a11y, design). axe or pa11y over the rendered pages, fix any AA failures. test: tooling output clean.
