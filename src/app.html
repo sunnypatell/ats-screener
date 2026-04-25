@@ -3,38 +3,11 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta
-			name="description"
-			content="Free ATS resume screener that simulates real HCMS platforms. Get accurate scores for Workday, Taleo, iCIMS, Greenhouse, Lever, and SuccessFactors."
-		/>
 		<meta name="theme-color" content="#0a0a1a" />
 		<meta name="author" content="Sunny Patel" />
-		<meta name="robots" content="index, follow" />
-
-		<!-- open graph -->
-		<meta property="og:type" content="website" />
-		<meta property="og:site_name" content="ATS Screener" />
-		<meta property="og:url" content="https://ats-screener.vercel.app" />
-		<meta property="og:title" content="ATS Screener - Free Resume Scanner for Real ATS Platforms" />
-		<meta
-			property="og:description"
-			content="Free, open-source resume screener simulating Workday, Taleo, iCIMS, Greenhouse, Lever, and SuccessFactors. Real scores, not made-up numbers."
-		/>
-		<meta property="og:image" content="https://ats-screener.vercel.app/og-image.png" />
-		<meta property="og:image:width" content="1200" />
-		<meta property="og:image:height" content="630" />
-
-		<!-- twitter card -->
-		<meta name="twitter:card" content="summary_large_image" />
-		<meta
-			name="twitter:title"
-			content="ATS Screener - Free Resume Scanner for Real ATS Platforms"
-		/>
-		<meta
-			name="twitter:description"
-			content="Free, open-source resume screener simulating Workday, Taleo, iCIMS, Greenhouse, Lever, and SuccessFactors. Real scores, not made-up numbers."
-		/>
-		<meta name="twitter:image" content="https://ats-screener.vercel.app/og-image.png" />
+		<!-- per-route robots/og/twitter/title/description/canonical are emitted by
+		     SeoHead. avoid a static robots tag here so noIndex pages don't ship
+		     conflicting directives ("index, follow" + "noindex, nofollow") -->
 
 		<link rel="icon" href="%sveltekit.assets%/favicon.svg" />
 		<link rel="apple-touch-icon" href="%sveltekit.assets%/apple-touch-icon.png" />

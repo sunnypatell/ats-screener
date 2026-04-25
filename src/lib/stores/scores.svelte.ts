@@ -2,19 +2,7 @@ import { browser } from '$app/environment';
 import type { ScoreResult } from '$engine/scorer/types';
 import type { LLMAnalysis } from '$engine/llm/types';
 import type { ParsedJobDescription } from '$engine/job-parser/types';
-import {
-	collection,
-	addDoc,
-	setDoc,
-	getDocs,
-	deleteDoc,
-	doc,
-	query,
-	orderBy,
-	limit,
-	serverTimestamp
-} from 'firebase/firestore';
-import { db } from '$lib/firebase';
+import { getFirebase } from '$lib/firebase';
 import { authStore } from './auth.svelte';
 
 const MAX_HISTORY = 5;
@@ -39,9 +27,24 @@ class ScoresStore {
 	isScoring = $state(false);
 	isAnalyzing = $state(false);
 	llmFallback = $state(false);
+	// absolute timestamp (ms) when the AI path becomes available again after a 429
+	// null when not rate-limited; UI derives a live countdown from this
+	llmRetryAtMs = $state<number | null>(null);
 	error = $state<string | null>(null);
 	scanHistory = $state<ScanHistoryEntry[]>([]);
 	historyLoading = $state(false);
+	// true when the dashboard is showing a snapshot loaded from history
+	// (suppresses the "you went from X to Y" comparison band)
+	isFromHistory = $state(false);
+	// captured at startScoring time so the comparison band stays correct during
+	// the ~1s race between finishScoring (results visible) and saveToHistory's
+	// async reload (which would otherwise leave scanHistory[1] pointing at the
+	// scan BEFORE the previous one for that brief window)
+	previousScanForComparison = $state<ScanHistoryEntry | null>(null);
+
+	// in-flight scoring controller; aborted when a new scan starts or the user resets
+	// not exposed as $state - it's plumbing, not view state
+	private abortController: AbortController | null = null;
 
 	get hasResults(): boolean {
 		return this.results.length > 0;
@@ -74,13 +77,43 @@ class ScoresStore {
 		this.jobDescription = text;
 	}
 
-	startScoring() {
+	// returns a signal the caller threads into in-flight requests
+	// any prior in-flight scan is aborted before we hand out the new signal
+	startScoring(): AbortSignal {
+		this.abortController?.abort();
+		this.abortController = new AbortController();
+		// snapshot the previous scan for the comparison band. preference order:
+		// 1. the currently-visible results (a just-finished scan that may not yet
+		//    be in scanHistory if its async saveToHistory is still in flight)
+		// 2. scanHistory[0] (most recent saved scan)
+		// without (1) a rapid re-scan would compare against scanHistory's STALE
+		// top entry - i.e. two generations back instead of the immediate previous
+		this.previousScanForComparison = this.hasResults
+			? {
+					id: '',
+					timestamp: new Date().toISOString(),
+					mode: this.mode,
+					averageScore: this.averageScore,
+					passingCount: this.passingCount,
+					results: this.results
+				}
+			: (this.scanHistory[0] ?? null);
 		this.isScoring = true;
 		this.llmFallback = false;
+		this.llmRetryAtMs = null;
+		this.isFromHistory = false;
 		this.error = null;
+		return this.abortController.signal;
+	}
+
+	cancelScoring() {
+		this.abortController?.abort();
+		this.abortController = null;
+		this.isScoring = false;
 	}
 
 	finishScoring(results: ScoreResult[], fileName?: string) {
+		this.abortController = null;
 		this.results = results;
 		this.isScoring = false;
 		this.saveToHistory(results, fileName);
@@ -92,6 +125,8 @@ class ScoresStore {
 
 		this.historyLoading = true;
 		try {
+			const { db } = await getFirebase();
+			const { collection, query, orderBy, limit, getDocs } = await import('firebase/firestore');
 			const scansRef = collection(db, 'users', authStore.user.uid, 'scans');
 			const q = query(scansRef, orderBy('timestamp', 'desc'), limit(MAX_HISTORY));
 			const snapshot = await getDocs(q);
@@ -118,6 +153,9 @@ class ScoresStore {
 
 		try {
 			const uid = authStore.user.uid;
+			const { db } = await getFirebase();
+			const { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } =
+				await import('firebase/firestore');
 			const scansRef = collection(db, 'users', uid, 'scans');
 			const entry: Omit<ScanHistoryEntry, 'id'> = {
 				timestamp: new Date().toISOString(),
@@ -158,6 +196,8 @@ class ScoresStore {
 	/** log scan to top-level scan_logs collection for admin browsing */
 	private async writeScanLog(entry: Omit<ScanHistoryEntry, 'id'>, uid: string) {
 		try {
+			const { db } = await getFirebase();
+			const { setDoc, doc, serverTimestamp } = await import('firebase/firestore');
 			const user = authStore.user;
 			const now = new Date();
 			// inverted timestamp so newest logs sort first in Firebase Console
@@ -182,6 +222,8 @@ class ScoresStore {
 		if (!browser || !authStore.isAuthenticated || !authStore.user) return;
 
 		try {
+			const { db } = await getFirebase();
+			const { collection, getDocs, deleteDoc } = await import('firebase/firestore');
 			const scansRef = collection(db, 'users', authStore.user.uid, 'scans');
 			const snapshot = await getDocs(scansRef);
 			for (const d of snapshot.docs) {
@@ -200,6 +242,9 @@ class ScoresStore {
 		this.isScoring = false;
 		this.isAnalyzing = false;
 		this.llmFallback = false;
+		this.llmRetryAtMs = null;
+		this.isFromHistory = true;
+		this.previousScanForComparison = null;
 		this.error = null;
 	}
 
@@ -207,9 +252,14 @@ class ScoresStore {
 		this.isAnalyzing = true;
 	}
 
-	finishAnalyzing(analysis: LLMAnalysis | null, fallback: boolean) {
+	finishAnalyzing(
+		analysis: LLMAnalysis | null,
+		fallback: boolean,
+		retryAtMs: number | null = null
+	) {
 		this.llmAnalysis = analysis;
 		this.llmFallback = fallback;
+		this.llmRetryAtMs = retryAtMs;
 		this.isAnalyzing = false;
 	}
 
@@ -218,13 +268,18 @@ class ScoresStore {
 	}
 
 	setError(message: string) {
+		this.abortController?.abort();
+		this.abortController = null;
 		this.error = message;
 		this.isScoring = false;
 		this.isAnalyzing = false;
 		this.llmFallback = false;
+		this.llmRetryAtMs = null;
 	}
 
 	reset() {
+		this.abortController?.abort();
+		this.abortController = null;
 		this.results = [];
 		this.llmAnalysis = null;
 		this.parsedJD = null;
@@ -232,6 +287,9 @@ class ScoresStore {
 		this.isScoring = false;
 		this.isAnalyzing = false;
 		this.llmFallback = false;
+		this.llmRetryAtMs = null;
+		this.isFromHistory = false;
+		this.previousScanForComparison = null;
 		this.error = null;
 	}
 }

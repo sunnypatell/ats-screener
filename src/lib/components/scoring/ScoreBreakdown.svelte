@@ -1,15 +1,30 @@
 <script lang="ts">
-	import type { ScoreResult } from '$engine/scorer/types';
+	import type { ScoreResult, Suggestion, StructuredSuggestion } from '$engine/scorer/types';
 	import { getScoreColor, getScoreLabel } from '$engine/scorer/classification';
 
 	let { result }: { result: ScoreResult } = $props();
 
 	// toggles the expanded state for this breakdown
 	let expanded = $state(false);
+
+	// suggestions can be either a plain string (legacy/rule-based path) or a
+	// StructuredSuggestion object (LLM path). without narrowing, svelte's text
+	// interpolation falls back to String(obj) and renders "[object Object]"
+	function isStructured(s: Suggestion): s is StructuredSuggestion {
+		return typeof s === 'object' && s !== null && 'summary' in s;
+	}
+	function suggestionText(s: Suggestion): string {
+		if (typeof s === 'string') return s;
+		if (isStructured(s)) return s.summary;
+		return '';
+	}
+	function suggestionDetails(s: Suggestion): string[] {
+		return isStructured(s) ? s.details : [];
+	}
 </script>
 
 <div class="breakdown" class:expanded>
-	<button class="breakdown-toggle" onclick={() => (expanded = !expanded)}>
+	<button class="breakdown-toggle" onclick={() => (expanded = !expanded)} aria-expanded={expanded}>
 		<div class="toggle-left">
 			<span class="toggle-system">{result.system}</span>
 			<span class="toggle-vendor">{result.vendor}</span>
@@ -186,7 +201,20 @@
 					<h4>Suggestions for {result.system}</h4>
 					<ul class="suggestion-list">
 						{#each result.suggestions as suggestion}
-							<li>{suggestion}</li>
+							{@const text = suggestionText(suggestion)}
+							{@const details = suggestionDetails(suggestion)}
+							{#if text}
+								<li>
+									<span class="suggestion-text">{text}</span>
+									{#if details.length > 0}
+										<ul class="suggestion-detail-list">
+											{#each details as detail}
+												<li>{detail}</li>
+											{/each}
+										</ul>
+									{/if}
+								</li>
+							{/if}
 						{/each}
 					</ul>
 				</div>
@@ -422,5 +450,32 @@
 		left: 0;
 		color: var(--accent-cyan);
 		font-weight: bold;
+	}
+
+	.suggestion-text {
+		display: block;
+	}
+
+	.suggestion-detail-list {
+		list-style: none;
+		padding: 0;
+		margin: 0.4rem 0 0.2rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+	}
+
+	.suggestion-detail-list li {
+		font-size: 0.78rem;
+		color: var(--text-tertiary);
+		padding-left: 0.85rem;
+		line-height: 1.5;
+	}
+
+	.suggestion-detail-list li::before {
+		content: '·';
+		left: 0;
+		color: var(--text-tertiary);
+		opacity: 0.7;
 	}
 </style>

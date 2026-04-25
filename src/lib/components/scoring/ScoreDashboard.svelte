@@ -8,6 +8,8 @@
 	import ShareBadge from './ShareBadge.svelte';
 	import { generatePDF } from '$engine/scorer/report';
 	import { getScoreColor, getScoreLabel } from '$engine/scorer/classification';
+	import { computeScanComparison } from '$engine/scorer/comparison';
+	import { getExampleFor } from '$engine/suggestions/templates';
 	import type { Suggestion, StructuredSuggestion } from '$engine/scorer/types';
 
 	// derived stats for the summary card header
@@ -71,6 +73,94 @@
 
 	// alias for backward compat in template
 	const getAvgColor = getScoreColor;
+
+	// per-block copy state for the example blocks - keyed by `${suggestionIndex}-${'before'|'after'}`
+	// so multiple copies can show their "copied" state without trampling each other
+	let copiedKey = $state<string | null>(null);
+	let copiedTimer: ReturnType<typeof setTimeout> | null = null;
+
+	// widened to Event so both pointer and keyboard handlers can pass through
+	// without unsafe casts (KeyboardEvent and MouseEvent both have stopPropagation)
+	async function copyExample(text: string, key: string, e: Event) {
+		// the example block is inside the suggestion-card click target, so without
+		// stopping propagation the click bubbles up and toggles the suggestion's
+		// expanded state, which collapses the block the user just copied from
+		e.stopPropagation();
+		try {
+			await navigator.clipboard.writeText(text);
+		} catch {
+			const ta = document.createElement('textarea');
+			ta.value = text;
+			ta.style.position = 'fixed';
+			ta.style.opacity = '0';
+			document.body.appendChild(ta);
+			ta.select();
+			try {
+				document.execCommand('copy');
+			} finally {
+				document.body.removeChild(ta);
+			}
+		}
+		copiedKey = key;
+		if (copiedTimer) clearTimeout(copiedTimer);
+		copiedTimer = setTimeout(() => {
+			copiedKey = null;
+			copiedTimer = null;
+		}, 1600);
+	}
+
+	// live countdown for the rate-limit retry hint inside the fallback toast
+	// only ticks while the toast is visible and a retry timestamp is set
+	let now = $state(Date.now());
+	$effect(() => {
+		if (!scoresStore.llmFallback || scoresStore.llmRetryAtMs === null) return;
+		const id = setInterval(() => {
+			now = Date.now();
+		}, 1000);
+		return () => clearInterval(id);
+	});
+	const retrySecondsRemaining = $derived(
+		scoresStore.llmRetryAtMs !== null
+			? Math.max(0, Math.ceil((scoresStore.llmRetryAtMs - now) / 1000))
+			: 0
+	);
+
+	// scan-vs-previous-scan comparison
+	// startScoring snapshots the previous top-of-history into previousScanForComparison,
+	// which avoids the brief race where scanHistory[1] is stale before the post-save reload
+	// finishes; we fall back to scanHistory[1] for any path that didn't go through startScoring
+	// suppressed when viewing a snapshot loaded from history
+	const previousScan = $derived(
+		scoresStore.isFromHistory
+			? null
+			: (scoresStore.previousScanForComparison ?? scoresStore.scanHistory[1] ?? null)
+	);
+	const comparison = $derived(
+		previousScan && scoresStore.hasResults
+			? computeScanComparison(scoresStore.results, previousScan.results)
+			: null
+	);
+	// fast lookup so each ScoreCard can render its own delta in the grid
+	const previousByPlatform = $derived(
+		new Map(comparison?.platforms.map((p) => [p.system, p.previous]) ?? [])
+	);
+
+	// twitter share intent for the "I improved" moment - the URL points at /share
+	// (not the homepage) so twitter's crawler fetches a page whose og:image is a
+	// dynamic PNG rendering this user's actual delta and score
+	function shareImprovementToTwitter() {
+		if (!comparison || comparison.deltaAverage <= 0 || typeof window === 'undefined') return;
+		const text = `Just improved my ATS resume score from ${comparison.previousAverage} to ${comparison.currentAverage} (+${comparison.deltaAverage}) using @ATSScreener (free, simulates how Workday, Lever, iCIMS and others actually parse resumes)`;
+		const params = new URLSearchParams({
+			score: String(scoresStore.averageScore),
+			pass: String(scoresStore.passingCount),
+			total: String(scoresStore.results.length),
+			delta: String(comparison.deltaAverage)
+		});
+		const sharePageUrl = `${window.location.origin}/share?${params.toString()}`;
+		const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(sharePageUrl)}`;
+		window.open(intent, '_blank', 'noopener,noreferrer,width=600,height=520');
+	}
 </script>
 
 {#if scoresStore.hasResults}
@@ -143,6 +233,104 @@
 				</div>
 			</div>
 
+			{#if comparison}
+				{@const positive = comparison.deltaAverage > 0}
+				{@const negative = comparison.deltaAverage < 0}
+				<div
+					class="comparison-band"
+					class:up={positive}
+					class:down={negative}
+					class:flat={!positive && !negative}
+				>
+					<div class="comparison-headline">
+						{#if positive}
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<polyline points="17 6 23 6 23 12" />
+								<path d="M1 18l8-8 4 4 9-9" />
+							</svg>
+						{:else if negative}
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<polyline points="17 18 23 18 23 12" />
+								<path d="M1 6l8 8 4-4 9 9" />
+							</svg>
+						{:else}
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<line x1="5" y1="12" x2="19" y2="12" />
+							</svg>
+						{/if}
+						<span class="comparison-text">
+							{#if positive}
+								Your score went from <strong>{comparison.previousAverage}</strong> to
+								<strong>{comparison.currentAverage}</strong>
+								<span class="delta-pill positive">+{comparison.deltaAverage}</span>
+							{:else if negative}
+								Your score moved from <strong>{comparison.previousAverage}</strong> to
+								<strong>{comparison.currentAverage}</strong>
+								<span class="delta-pill negative">{comparison.deltaAverage}</span>
+							{:else}
+								No change since your last scan ({comparison.currentAverage})
+							{/if}
+						</span>
+					</div>
+					<div class="comparison-meta">
+						{#if comparison.deltaPassing !== 0}
+							<span
+								class="meta-chip"
+								class:positive={comparison.deltaPassing > 0}
+								class:negative={comparison.deltaPassing < 0}
+							>
+								{comparison.previousPassing} → {comparison.currentPassing} passing
+							</span>
+						{/if}
+						{#if comparison.improved > 0}
+							<span class="meta-chip positive">{comparison.improved} improved</span>
+						{/if}
+						{#if comparison.regressed > 0}
+							<span class="meta-chip negative">{comparison.regressed} regressed</span>
+						{/if}
+						{#if comparison.unchanged > 0 && comparison.improved === 0 && comparison.regressed === 0}
+							<span class="meta-chip">{comparison.unchanged} unchanged</span>
+						{/if}
+						{#if positive}
+							<button
+								class="share-improvement-btn"
+								onclick={shareImprovementToTwitter}
+								title="Share this improvement on X"
+								aria-label="Share improvement on X"
+							>
+								<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+									<path
+										d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+									/>
+								</svg>
+								Share +{comparison.deltaAverage}
+							</button>
+						{/if}
+					</div>
+				</div>
+			{/if}
+
 			{#if scoresStore.llmFallback}
 				<div class="fallback-toast">
 					<div class="fallback-toast-left">
@@ -168,6 +356,11 @@
 							(rule-based analysis), but the AI suggestions/accuracy won't be as specific. try again
 							later, or if you want to help keep this free for everyone
 							<span class="fallback-emoji">😅</span>
+							{#if retrySecondsRemaining > 0}
+								<span class="fallback-retry-hint">
+									AI scoring re-available in <strong>{retrySecondsRemaining}s</strong>
+								</span>
+							{/if}
 						</p>
 					</div>
 					<div class="fallback-toast-actions">
@@ -334,7 +527,7 @@
 		{#if activeView === 'cards'}
 			<div class="scores-grid">
 				{#each scoresStore.results as result (result.system)}
-					<ScoreCard {result} />
+					<ScoreCard {result} previousScore={previousByPlatform.get(result.system)} />
 				{/each}
 			</div>
 		{:else}
@@ -391,10 +584,22 @@
 									: i < 4
 										? 'medium'
 										: 'low'}
-						<button
+						<!-- div+role=button instead of <button> so the nested copy <button>s
+						     inside the body don't violate "no interactive descendants in a
+						     button" (invalid HTML, broken keyboard/screen-reader semantics) -->
+						<div
 							class="suggestion-card"
 							class:expanded={expandedSuggestion === i}
+							role="button"
+							tabindex="0"
+							aria-expanded={expandedSuggestion === i}
 							onclick={() => toggleSuggestion(i)}
+							onkeydown={(e) => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									toggleSuggestion(i);
+								}
+							}}
 						>
 							<div class="suggestion-card-header">
 								<div class="suggestion-card-left">
@@ -435,6 +640,12 @@
 								</div>
 							</div>
 							{#if expandedSuggestion === i}
+								{@const suggestionText = structured
+									? suggestion.summary
+									: typeof suggestion === 'string'
+										? suggestion
+										: ''}
+								{@const example = getExampleFor(suggestionText)}
 								<div class="suggestion-card-body">
 									{#if structured && suggestion.details.length > 0}
 										<ul class="suggestion-details">
@@ -443,11 +654,106 @@
 											{/each}
 										</ul>
 									{:else if !structured}
-										<p>{suggestion}</p>
+										<!-- defensive: if suggestion is somehow a non-string non-structured
+										value (e.g. malformed LLM output), interpolating directly would
+										render "[object Object]" - same class as the bug fixed in
+										ScoreBreakdown. typeof guard keeps the render type-safe -->
+										<p>{typeof suggestion === 'string' ? suggestion : ''}</p>
+									{/if}
+									{#if example}
+										<div class="suggestion-example">
+											<p class="example-tip">{example.tip}</p>
+											<div class="example-pair">
+												<div class="example-block before">
+													<div class="example-block-header">
+														<span class="example-label">Before</span>
+														<button
+															type="button"
+															class="copy-btn"
+															class:copied={copiedKey === `${i}-before`}
+															onclick={(e) => copyExample(example.before, `${i}-before`, e)}
+															aria-label="Copy before text"
+														>
+															{#if copiedKey === `${i}-before`}
+																<svg
+																	width="11"
+																	height="11"
+																	viewBox="0 0 24 24"
+																	fill="none"
+																	stroke="currentColor"
+																	stroke-width="3"
+																>
+																	<polyline points="20,6 9,17 4,12" />
+																</svg>
+																Copied
+															{:else}
+																<svg
+																	width="11"
+																	height="11"
+																	viewBox="0 0 24 24"
+																	fill="none"
+																	stroke="currentColor"
+																	stroke-width="2"
+																>
+																	<rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+																	<path
+																		d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+																	/>
+																</svg>
+																Copy
+															{/if}
+														</button>
+													</div>
+													<pre>{example.before}</pre>
+												</div>
+												<div class="example-block after">
+													<div class="example-block-header">
+														<span class="example-label">After</span>
+														<button
+															type="button"
+															class="copy-btn"
+															class:copied={copiedKey === `${i}-after`}
+															onclick={(e) => copyExample(example.after, `${i}-after`, e)}
+															aria-label="Copy after text"
+														>
+															{#if copiedKey === `${i}-after`}
+																<svg
+																	width="11"
+																	height="11"
+																	viewBox="0 0 24 24"
+																	fill="none"
+																	stroke="currentColor"
+																	stroke-width="3"
+																>
+																	<polyline points="20,6 9,17 4,12" />
+																</svg>
+																Copied
+															{:else}
+																<svg
+																	width="11"
+																	height="11"
+																	viewBox="0 0 24 24"
+																	fill="none"
+																	stroke="currentColor"
+																	stroke-width="2"
+																>
+																	<rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+																	<path
+																		d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+																	/>
+																</svg>
+																Copy
+															{/if}
+														</button>
+													</div>
+													<pre>{example.after}</pre>
+												</div>
+											</div>
+										</div>
 									{/if}
 								</div>
 							{/if}
-						</button>
+						</div>
 					{/each}
 				</div>
 			</div>
@@ -642,6 +948,151 @@
 		font-size: 1rem;
 		vertical-align: middle;
 		line-height: 1;
+	}
+
+	.fallback-retry-hint {
+		display: block;
+		margin-top: 0.4rem;
+		font-size: 0.78rem;
+		color: var(--text-tertiary);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.fallback-retry-hint strong {
+		color: var(--accent-cyan);
+		font-weight: 600;
+	}
+
+	/* scan-vs-previous comparison band */
+	.comparison-band {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem 1rem;
+		margin-top: 1rem;
+		padding: 0.75rem 1.1rem;
+		border-radius: var(--radius-lg);
+		background: var(--glass-bg);
+		border: 1px solid var(--glass-border);
+		backdrop-filter: blur(12px);
+	}
+
+	.comparison-band.up {
+		border-color: rgba(34, 197, 94, 0.25);
+		background: rgba(34, 197, 94, 0.04);
+	}
+
+	.comparison-band.down {
+		border-color: rgba(239, 68, 68, 0.22);
+		background: rgba(239, 68, 68, 0.04);
+	}
+
+	.comparison-band.flat {
+		border-color: rgba(255, 255, 255, 0.08);
+	}
+
+	.comparison-headline {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		font-size: 0.88rem;
+		color: var(--text-secondary);
+	}
+
+	.comparison-band.up .comparison-headline svg {
+		color: #22c55e;
+	}
+
+	.comparison-band.down .comparison-headline svg {
+		color: #ef4444;
+	}
+
+	.comparison-band.flat .comparison-headline svg {
+		color: var(--text-tertiary);
+	}
+
+	.comparison-text strong {
+		color: var(--text-primary);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.delta-pill {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.1rem 0.5rem;
+		margin-left: 0.4rem;
+		font-size: 0.78rem;
+		font-weight: 600;
+		border-radius: var(--radius-full);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.delta-pill.positive {
+		color: #22c55e;
+		background: rgba(34, 197, 94, 0.12);
+	}
+
+	.delta-pill.negative {
+		color: #ef4444;
+		background: rgba(239, 68, 68, 0.12);
+	}
+
+	.comparison-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+	}
+
+	.meta-chip {
+		padding: 0.18rem 0.55rem;
+		font-size: 0.74rem;
+		color: var(--text-tertiary);
+		border-radius: var(--radius-full);
+		background: rgba(255, 255, 255, 0.04);
+		border: 1px solid rgba(255, 255, 255, 0.06);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.meta-chip.positive {
+		color: #22c55e;
+		border-color: rgba(34, 197, 94, 0.2);
+		background: rgba(34, 197, 94, 0.06);
+	}
+
+	.meta-chip.negative {
+		color: #ef4444;
+		border-color: rgba(239, 68, 68, 0.2);
+		background: rgba(239, 68, 68, 0.06);
+	}
+
+	.share-improvement-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.32rem;
+		padding: 0.18rem 0.6rem;
+		font-size: 0.74rem;
+		font-weight: 600;
+		font-family: inherit;
+		color: var(--text-primary);
+		background: rgba(255, 255, 255, 0.08);
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		border-radius: var(--radius-full);
+		cursor: pointer;
+		transition:
+			background 0.18s ease,
+			border-color 0.18s ease,
+			transform 0.18s ease;
+	}
+
+	.share-improvement-btn:hover {
+		background: rgba(34, 197, 94, 0.12);
+		border-color: rgba(34, 197, 94, 0.35);
+		transform: translateY(-1px);
+	}
+
+	.share-improvement-btn svg {
+		opacity: 0.85;
 	}
 
 	.fallback-toast-actions {
@@ -987,6 +1438,122 @@
 		border-radius: 50%;
 		background: var(--accent-cyan);
 		opacity: 0.6;
+	}
+
+	/* before/after example block inside expanded suggestion */
+	.suggestion-example {
+		margin-top: 1rem;
+		padding: 0.85rem 1rem 0.95rem;
+		background: rgba(255, 255, 255, 0.02);
+		border: 1px solid var(--glass-border);
+		border-radius: var(--radius-md);
+	}
+
+	.example-tip {
+		font-size: 0.78rem;
+		color: var(--text-secondary);
+		margin: 0 0 0.75rem;
+		line-height: 1.55;
+	}
+
+	.example-pair {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.6rem;
+	}
+
+	.example-block {
+		padding: 0.55rem 0.75rem;
+		border-radius: var(--radius-sm);
+		border: 1px solid;
+		min-width: 0;
+	}
+
+	.example-block.before {
+		background: rgba(239, 68, 68, 0.05);
+		border-color: rgba(239, 68, 68, 0.18);
+	}
+
+	.example-block.after {
+		background: rgba(34, 197, 94, 0.05);
+		border-color: rgba(34, 197, 94, 0.2);
+	}
+
+	.example-block-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		margin-bottom: 0.35rem;
+	}
+
+	.example-label {
+		display: block;
+		font-size: 0.62rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		opacity: 0.8;
+	}
+
+	.copy-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		padding: 0.1rem 0.45rem;
+		font-size: 0.66rem;
+		font-weight: 600;
+		color: var(--text-tertiary);
+		background: rgba(255, 255, 255, 0.04);
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		border-radius: var(--radius-full);
+		cursor: pointer;
+		transition:
+			background 0.15s ease,
+			border-color 0.15s ease,
+			color 0.15s ease;
+		user-select: none;
+	}
+
+	.copy-btn:hover {
+		background: rgba(255, 255, 255, 0.08);
+		border-color: rgba(255, 255, 255, 0.16);
+		color: var(--text-secondary);
+	}
+
+	.copy-btn:focus-visible {
+		outline: 2px solid var(--accent-cyan);
+		outline-offset: 2px;
+	}
+
+	.copy-btn.copied {
+		color: #22c55e;
+		background: rgba(34, 197, 94, 0.1);
+		border-color: rgba(34, 197, 94, 0.28);
+	}
+
+	.example-block.before .example-label {
+		color: #ef4444;
+	}
+
+	.example-block.after .example-label {
+		color: #22c55e;
+	}
+
+	.example-block pre {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: 0.74rem;
+		line-height: 1.55;
+		color: var(--text-secondary);
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+
+	@media (max-width: 640px) {
+		.example-pair {
+			grid-template-columns: 1fr;
+		}
 	}
 
 	@keyframes cardExpand {

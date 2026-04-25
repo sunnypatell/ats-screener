@@ -1,21 +1,6 @@
 import { browser } from '$app/environment';
-import {
-	onAuthStateChanged,
-	signInWithPopup,
-	signInWithRedirect,
-	getRedirectResult,
-	getAdditionalUserInfo,
-	signInWithEmailAndPassword,
-	createUserWithEmailAndPassword,
-	sendEmailVerification,
-	sendPasswordResetEmail,
-	signOut as firebaseSignOut,
-	GoogleAuthProvider,
-	updateProfile,
-	type User
-} from 'firebase/auth';
-import { doc, updateDoc, increment } from 'firebase/firestore';
-import { auth, db } from '$lib/firebase';
+import type { User } from 'firebase/auth';
+import { getFirebase } from '$lib/firebase';
 
 class AuthStore {
 	user = $state<User | null>(null);
@@ -48,25 +33,36 @@ class AuthStore {
 
 	constructor() {
 		if (browser) {
-			onAuthStateChanged(auth, (user) => {
-				this.user = user;
-				this.loading = false;
-			});
-			// handle redirect result from signInWithRedirect fallback
-			getRedirectResult(auth)
-				.then((result) => {
-					if (result && getAdditionalUserInfo(result)?.isNewUser) {
-						this.incrementUserCount();
-					}
-				})
-				.catch(() => {});
+			void this.setupAuthListener();
 		} else {
 			this.loading = false;
 		}
 	}
 
+	private async setupAuthListener() {
+		const { auth } = await getFirebase();
+		const { onAuthStateChanged, getRedirectResult, getAdditionalUserInfo } =
+			await import('firebase/auth');
+		onAuthStateChanged(auth, (user) => {
+			this.user = user;
+			this.loading = false;
+		});
+		// handle redirect result from signInWithRedirect fallback
+		try {
+			const result = await getRedirectResult(auth);
+			if (result && getAdditionalUserInfo(result)?.isNewUser) {
+				this.incrementUserCount();
+			}
+		} catch {
+			// non-critical; redirect path is the fallback for popup blockers
+		}
+	}
+
 	async signInWithGoogle() {
 		this.error = null;
+		const { auth } = await getFirebase();
+		const { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getAdditionalUserInfo } =
+			await import('firebase/auth');
 		const provider = new GoogleAuthProvider();
 		try {
 			const result = await signInWithPopup(auth, provider);
@@ -94,6 +90,8 @@ class AuthStore {
 
 	async signInWithEmail(email: string, password: string) {
 		this.error = null;
+		const { auth } = await getFirebase();
+		const { signInWithEmailAndPassword } = await import('firebase/auth');
 		try {
 			await signInWithEmailAndPassword(auth, email, password);
 		} catch (err) {
@@ -104,6 +102,9 @@ class AuthStore {
 
 	async signUpWithEmail(email: string, password: string, displayName: string) {
 		this.error = null;
+		const { auth } = await getFirebase();
+		const { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } =
+			await import('firebase/auth');
 		try {
 			const credential = await createUserWithEmailAndPassword(auth, email, password);
 			if (displayName) {
@@ -123,6 +124,8 @@ class AuthStore {
 
 	async sendPasswordReset(email: string) {
 		this.error = null;
+		const { auth } = await getFirebase();
+		const { sendPasswordResetEmail } = await import('firebase/auth');
 		try {
 			await sendPasswordResetEmail(auth, email);
 		} catch (err) {
@@ -133,6 +136,8 @@ class AuthStore {
 
 	async signOut() {
 		this.error = null;
+		const { auth } = await getFirebase();
+		const { signOut: firebaseSignOut } = await import('firebase/auth');
 		try {
 			await firebaseSignOut(auth);
 		} catch (err) {
@@ -144,7 +149,9 @@ class AuthStore {
 		this.error = null;
 	}
 
-	private incrementUserCount() {
+	private async incrementUserCount() {
+		const { db } = await getFirebase();
+		const { doc, updateDoc, increment } = await import('firebase/firestore');
 		updateDoc(doc(db, 'stats', 'public'), {
 			userCount: increment(1)
 		}).catch(() => {

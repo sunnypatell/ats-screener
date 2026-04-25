@@ -5,6 +5,7 @@
 	import ScanningAnimation from '$components/scoring/ScanningAnimation.svelte';
 	import ResumeStats from '$components/scoring/ResumeStats.svelte';
 	import ScanHistory from '$components/scoring/ScanHistory.svelte';
+	import SeoHead from '$components/seo/SeoHead.svelte';
 	import { resumeStore } from '$stores/resume.svelte';
 	import { scoresStore } from '$stores/scores.svelte';
 	import { authStore } from '$stores/auth.svelte';
@@ -66,11 +67,12 @@
 	}
 
 	// runs scoring: LLM-powered (primary) → rule-based (fallback)
+	// startScoring returns a signal so a rescan/reset aborts the prior in-flight request
 	async function handleScan() {
 		if (!resumeStore.isReady) return;
 
 		hasScanned = true;
-		scoresStore.startScoring();
+		const signal = scoresStore.startScoring();
 
 		try {
 			const resume = resumeStore.resume!;
@@ -78,9 +80,12 @@
 
 			// dynamic import: LLM client only loaded when scoring starts
 			const { scoreLLM } = await import('$engine/llm');
-			const llmResult = await scoreLLM(resume.rawText, jd);
+			const llmResult = await scoreLLM(resume.rawText, jd, { signal });
 
-			if (llmResult && llmResult.results.length > 0) {
+			// user cancelled mid-flight (rescan or reset) - leave state to the new handler
+			if (llmResult.status === 'cancelled' || signal.aborted) return;
+
+			if (llmResult.status === 'ok' && llmResult.results.length > 0) {
 				console.log(
 					'[scan] LLM scoring complete:',
 					llmResult.results.length,
@@ -92,15 +97,20 @@
 				return;
 			}
 
-			// all LLM providers failed, fall back to deterministic rule-based scoring
+			// all LLM providers failed (or rate-limited), fall back to deterministic rule-based scoring
 			console.log('[scan] LLM unavailable, using rule-based scoring');
 			const { scoreResume } = await import('$engine/scorer/engine');
 			const input = buildScoringInput();
 			const results = scoreResume(input);
+			if (signal.aborted) return;
 			console.log('[scan] rule-based scoring complete:', results.length, 'results');
 			scoresStore.finishScoring(results, resumeStore.file?.name);
-			scoresStore.finishAnalyzing(null, true);
+			// when rate-limited, surface the retry timestamp so the toast can show a countdown
+			const retryAtMs =
+				llmResult.status === 'rate_limited' ? Date.now() + llmResult.retryAfterSec * 1000 : null;
+			scoresStore.finishAnalyzing(null, true, retryAtMs);
 		} catch (err) {
+			if (signal.aborted) return;
 			const msg = err instanceof Error ? err.message : 'scoring failed';
 			scoresStore.setError(msg);
 		}
@@ -121,13 +131,10 @@
 	});
 </script>
 
-<svelte:head>
-	<title>Resume Scanner | ATS Screener</title>
-	<meta
-		name="description"
-		content="Upload your resume and get scored by 6 real ATS platforms. See exactly how Workday, Taleo, iCIMS, Greenhouse, Lever, and SuccessFactors parse your resume."
-	/>
-</svelte:head>
+<SeoHead
+	title="Resume Scanner | ATS Screener"
+	description="Upload your resume and get scored by 6 real ATS platforms. See exactly how Workday, Taleo, iCIMS, Greenhouse, Lever, and SuccessFactors parse your resume."
+/>
 
 <main class="scanner">
 	<!-- subtle background mesh -->

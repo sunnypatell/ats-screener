@@ -6,6 +6,14 @@
 	const history = $derived(scoresStore.history);
 	const hasHistory = $derived(history.length > 0);
 
+	// per-row average-score delta vs the chronologically prior scan;
+	// history is newest-first so history[i+1] is the previous one
+	function deltaFor(index: number): number | null {
+		const prior = history[index + 1];
+		if (!prior) return null;
+		return history[index].averageScore - prior.averageScore;
+	}
+
 	function formatDate(iso: string): string {
 		const d = new Date(iso);
 		const now = new Date();
@@ -44,7 +52,7 @@
 
 {#if hasHistory}
 	<div class="history-section">
-		<button class="history-toggle" onclick={() => (expanded = !expanded)}>
+		<button class="history-toggle" onclick={() => (expanded = !expanded)} aria-expanded={expanded}>
 			<div class="toggle-left">
 				<svg
 					width="14"
@@ -76,14 +84,27 @@
 
 		{#if expanded}
 			<div class="history-list">
-				{#each history as entry (entry.id)}
+				{#each history as entry, i (entry.id)}
+					{@const delta = deltaFor(i)}
 					<button
 						class="history-entry"
 						onclick={() => handleLoadEntry(entry)}
 						title="Click to view these results"
 					>
-						<div class="entry-score" style="color: {scoreColor(entry.averageScore)}">
-							{entry.averageScore}
+						<div class="entry-score-block">
+							<div class="entry-score" style="color: {scoreColor(entry.averageScore)}">
+								{entry.averageScore}
+							</div>
+							{#if delta !== null && delta !== 0}
+								<span
+									class="entry-delta"
+									class:positive={delta > 0}
+									class:negative={delta < 0}
+									title="{delta > 0 ? '+' : ''}{delta} vs previous scan"
+								>
+									{delta > 0 ? '+' : ''}{delta}
+								</span>
+							{/if}
 						</div>
 						<div class="entry-details">
 							<div class="entry-info">
@@ -238,12 +259,39 @@
 		background: rgba(6, 182, 212, 0.04);
 	}
 
+	.entry-score-block {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.15rem;
+		min-width: 2.5rem;
+	}
+
 	.entry-score {
 		font-size: 1.1rem;
 		font-weight: 800;
 		font-variant-numeric: tabular-nums;
-		min-width: 2.5rem;
 		text-align: center;
+		line-height: 1;
+	}
+
+	.entry-delta {
+		font-size: 0.62rem;
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+		padding: 0.05rem 0.32rem;
+		border-radius: var(--radius-full);
+		line-height: 1.4;
+	}
+
+	.entry-delta.positive {
+		color: #22c55e;
+		background: rgba(34, 197, 94, 0.12);
+	}
+
+	.entry-delta.negative {
+		color: #ef4444;
+		background: rgba(239, 68, 68, 0.12);
 	}
 
 	.entry-details {

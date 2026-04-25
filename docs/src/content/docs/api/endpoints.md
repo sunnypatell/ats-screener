@@ -103,20 +103,35 @@ Extract structured requirements from a job description without scoring a resume.
 			"suggestions": ["Add AWS and CI/CD keywords to match Workday's exact matching"]
 		}
 	],
-	"_provider": "gemini",
-	"_fallback": false
+	"_provider": "gemma-3-27b",
+	"_fallback": false,
+	"_cached": false
 }
 ```
 
 ### Response Fields
 
-| Field                    | Type     | Description                             |
-| ------------------------ | -------- | --------------------------------------- |
-| `results`                | array    | Array of 6 platform scoring objects     |
-| `results[].system`       | string   | Platform name                           |
-| `results[].overallScore` | number   | 0-100 weighted composite score          |
-| `results[].passesFilter` | boolean  | Whether resume passes initial screening |
-| `results[].breakdown`    | object   | Per-dimension scores and details        |
-| `results[].suggestions`  | string[] | Platform-specific improvement tips      |
-| `_provider`              | string   | Which LLM provider handled the request  |
-| `_fallback`              | boolean  | Whether a fallback provider was used    |
+| Field                    | Type                       | Description                                                                                                |
+| ------------------------ | -------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `results`                | array                      | Array of 6 platform scoring objects                                                                        |
+| `results[].system`       | string                     | Platform name                                                                                              |
+| `results[].overallScore` | number                     | 0-100 weighted composite score                                                                             |
+| `results[].passesFilter` | boolean                    | Whether resume passes initial screening                                                                    |
+| `results[].breakdown`    | object                     | Per-dimension scores and details                                                                           |
+| `results[].suggestions`  | string \| StructuredItem[] | Platform-specific improvement tips. May be plain strings (rule-based) or structured objects (LLM-enhanced) |
+| `_provider`              | string                     | Which LLM provider handled the request (e.g. `gemma-3-27b`, `groq-llama-3.3-70b`)                          |
+| `_fallback`              | boolean                    | `true` when all providers failed and the client must fall back to local rule-based scoring                 |
+| `_cached`                | boolean                    | `true` when the response was served from the in-memory result cache (sub-100ms, zero LLM cost)             |
+
+The server keeps a SHA-256 keyed in-memory LRU of recent prompts (200 entries, 24h TTL). Identical input hits the cache and returns instantly; the `_cached` flag tells you whether the response was a hit. The cache lives per Vercel instance; cold starts begin empty.
+
+## Auxiliary Endpoints
+
+| Path              | Method | Purpose                                                                                                |
+| ----------------- | ------ | ------------------------------------------------------------------------------------------------------ |
+| `/healthz`        | GET    | Liveness probe; JSON `{ status, timestamp }`. For uptime monitors                                      |
+| `/robots.txt`     | GET    | Dynamic; the `Sitemap:` URL tracks the deployment origin                                               |
+| `/sitemap.xml`    | GET    | Dynamic; lists public routes (`/`, `/scanner`, `/about`) with `lastmod` and `priority`                 |
+| `/api/og`         | GET    | Edge-cached PNG (`@vercel/og`) for share previews. Query: `score`, `pass`, `total`, optional `delta`   |
+| `/share`          | GET    | Branded share landing page; reads the same query params and emits `og:image` pointing at `/api/og`     |
+| `/api/csp-report` | POST   | Receives Content-Security-Policy violation reports for the report-only header set by `hooks.server.ts` |

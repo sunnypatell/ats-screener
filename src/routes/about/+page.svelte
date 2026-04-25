@@ -1,13 +1,11 @@
 <script lang="ts">
+	import SeoHead from '$components/seo/SeoHead.svelte';
 </script>
 
-<svelte:head>
-	<title>About | ATS Screener</title>
-	<meta
-		name="description"
-		content="Learn about ATS Screener, the free open-source tool that simulates how real enterprise ATS platforms parse and score your resume."
-	/>
-</svelte:head>
+<SeoHead
+	title="About | ATS Screener"
+	description="Learn about ATS Screener, the free open-source tool that simulates how real enterprise ATS platforms parse and score your resume."
+/>
 
 <main class="about">
 	<div class="about-bg">

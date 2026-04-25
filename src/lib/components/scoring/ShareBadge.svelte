@@ -25,9 +25,47 @@
 	const circumference = 2 * Math.PI * 58;
 	const dashOffset = $derived(circumference - (avgScore / 100) * circumference);
 
+	// score-encoded share URL pointed at the /share landing page; that page's
+	// og:image references /api/og with the same params, so when LinkedIn or
+	// Twitter scrape this URL the preview shows the user's actual score
+	const shareUrl = $derived.by(() => {
+		if (typeof window === 'undefined') return '';
+		const params = new URLSearchParams({
+			score: String(avgScore),
+			pass: String(passCount),
+			total: String(totalCount)
+		});
+		return `${window.location.origin}/share?${params.toString()}`;
+	});
+
 	const shareText = $derived(
 		`Just scored ${avgScore}/100 on ATS Screener, a free open-source resume tool by linkedin.com/in/sunny-patel-30b460204 that simulates how real ATS platforms (Workday, Taleo, iCIMS, Greenhouse, Lever, and SuccessFactors) parse your resume.\n\n${passCount}/${totalCount} systems passed. Try it free at ats-screener.vercel.app\n\n#ATSScreener #Resume #JobSearch #OpenSource #CareerTips`
 	);
+
+	let copyState = $state<'idle' | 'copied'>('idle');
+	async function copyShareLink() {
+		if (!shareUrl) return;
+		try {
+			await navigator.clipboard.writeText(shareUrl);
+			copyState = 'copied';
+			setTimeout(() => (copyState = 'idle'), 1800);
+		} catch {
+			// clipboard API can fail on insecure origins; fall back to textarea+execCommand
+			const ta = document.createElement('textarea');
+			ta.value = shareUrl;
+			ta.style.position = 'fixed';
+			ta.style.opacity = '0';
+			document.body.appendChild(ta);
+			ta.select();
+			try {
+				document.execCommand('copy');
+				copyState = 'copied';
+				setTimeout(() => (copyState = 'idle'), 1800);
+			} finally {
+				document.body.removeChild(ta);
+			}
+		}
+	}
 
 	function close() {
 		open = false;
@@ -80,8 +118,20 @@
 	}
 
 	function shareToLinkedIn() {
-		const url = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(shareText)}`;
+		// include the /share URL in the post text so linkedin's crawler fetches
+		// it and renders the dynamic OG card in the preview
+		const fullText = shareUrl ? `${shareText}\n\n${shareUrl}` : shareText;
+		const url = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(fullText)}`;
 		window.open(url, '_blank', 'noopener,noreferrer');
+	}
+
+	function shareToTwitter() {
+		// X has a 280-char tweet cap; build a tighter version of shareText
+		const tight = `Just scored ${avgScore}/100 on ATS Screener (free, simulates how Workday, Lever, iCIMS and others actually parse resumes). ${passCount}/${totalCount} systems passed.`;
+		const params = new URLSearchParams({ text: tight });
+		if (shareUrl) params.set('url', shareUrl);
+		const url = `https://twitter.com/intent/tweet?${params.toString()}`;
+		window.open(url, '_blank', 'noopener,noreferrer,width=600,height=520');
 	}
 
 	function addToLinkedInProfile() {
@@ -579,6 +629,15 @@
 						Share to LinkedIn
 					</button>
 
+					<button class="action-btn twitter" onclick={shareToTwitter}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+							<path
+								d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+							/>
+						</svg>
+						Share to X
+					</button>
+
 					<button class="action-btn secondary" onclick={addToLinkedInProfile}>
 						<svg
 							width="16"
@@ -593,6 +652,35 @@
 							<line x1="8" y1="12" x2="16" y2="12" />
 						</svg>
 						Add to LinkedIn Profile
+					</button>
+
+					<button class="action-btn secondary" onclick={copyShareLink} aria-label="Copy share link">
+						{#if copyState === 'copied'}
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="#22c55e"
+								stroke-width="2"
+							>
+								<polyline points="20,6 9,17 4,12" />
+							</svg>
+							Link copied
+						{:else}
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+								<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+							</svg>
+							Copy share link
+						{/if}
 					</button>
 				</div>
 			</div>
@@ -749,6 +837,18 @@
 		background: rgba(10, 102, 194, 0.25);
 		border-color: rgba(10, 102, 194, 0.45);
 		box-shadow: 0 0 20px rgba(10, 102, 194, 0.1);
+	}
+
+	.action-btn.twitter {
+		background: rgba(255, 255, 255, 0.06);
+		border-color: rgba(255, 255, 255, 0.14);
+		color: var(--text-primary);
+	}
+
+	.action-btn.twitter:hover {
+		background: rgba(255, 255, 255, 0.1);
+		border-color: rgba(255, 255, 255, 0.22);
+		box-shadow: 0 0 18px rgba(255, 255, 255, 0.05);
 	}
 
 	.action-btn.secondary {

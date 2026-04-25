@@ -2,6 +2,8 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
 import { buildFullScoringPrompt, buildJDAnalysisPrompt } from '$engine/llm/prompts';
+import { hashPrompt, getCached, setCached } from './cache';
+import { checkRateLimit } from './rate-limiter';
 
 // provider configuration: Gemma 3 27B (Google) → Llama 3.3 70B (Groq)
 // cross-provider fallback ensures independent quotas so one provider's limits don't cascade
@@ -82,50 +84,10 @@ const PROVIDERS: LLMProvider[] = [
 	buildGroqProvider('groq-llama-3.3-70b', 'llama-3.3-70b-versatile')
 ];
 
-// simple in-memory rate limiter per IP
-const rateLimits = new Map<string, { count: number; resetAt: number }>();
-const dailyLimits = new Map<string, { count: number; resetAt: number }>();
-const MAX_RPM = 10;
-const MAX_RPD = 200;
-const MAX_MAP_SIZE = 10_000;
 // per-provider timeouts: Gemma (90s) + Groq (30s) = 120s worst case
 // Gemma typically responds in 30-45s but can spike under load; Groq is <1s but gets headroom
 // Fluid Compute on Vercel Hobby gives 300s max, so 120s worst case fits comfortably
 const PROVIDER_TIMEOUTS_MS = [90_000, 30_000];
-
-function checkRateLimit(ip: string): boolean {
-	const now = Date.now();
-
-	// periodically clean up expired entries to prevent unbounded memory growth
-	if (rateLimits.size > MAX_MAP_SIZE) {
-		for (const [key, val] of rateLimits) {
-			if (now > val.resetAt) rateLimits.delete(key);
-		}
-	}
-	if (dailyLimits.size > MAX_MAP_SIZE) {
-		for (const [key, val] of dailyLimits) {
-			if (now > val.resetAt) dailyLimits.delete(key);
-		}
-	}
-
-	const minute = rateLimits.get(ip);
-	if (minute && now < minute.resetAt) {
-		if (minute.count >= MAX_RPM) return false;
-		minute.count++;
-	} else {
-		rateLimits.set(ip, { count: 1, resetAt: now + 60_000 });
-	}
-
-	const day = dailyLimits.get(ip);
-	if (day && now < day.resetAt) {
-		if (day.count >= MAX_RPD) return false;
-		day.count++;
-	} else {
-		dailyLimits.set(ip, { count: 1, resetAt: now + 86_400_000 });
-	}
-
-	return true;
-}
 
 // tries each provider in sequence until one succeeds and returns valid JSON
 async function callLLM(
@@ -240,8 +202,20 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	// rate limiting per IP
 	const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-	if (!checkRateLimit(ip)) {
-		return json({ error: 'rate limit exceeded. try again in 60 seconds.' }, { status: 429 });
+	const limit = checkRateLimit(ip);
+	if (!limit.allowed) {
+		const reasonMsg =
+			limit.reason === 'minute' ? 'too many requests this minute' : 'daily limit reached';
+		return json(
+			{
+				error: `rate limit exceeded: ${reasonMsg}. retry after ${limit.retryAfterSec}s.`,
+				retryAfter: limit.retryAfterSec
+			},
+			{
+				status: 429,
+				headers: { 'Retry-After': String(limit.retryAfterSec) }
+			}
+		);
 	}
 
 	// validate Content-Type
@@ -293,24 +267,32 @@ export const POST: RequestHandler = async ({ request }) => {
 			throw error(400, 'invalid mode');
 	}
 
+	const securityHeaders = {
+		'X-Content-Type-Options': 'nosniff',
+		'X-Frame-Options': 'DENY',
+		'Cache-Control': 'no-store'
+	};
+
+	// content-addressed cache: identical prompts return identical results, no LLM call
+	const cacheKey = await hashPrompt(prompt);
+	const cached = getCached(cacheKey);
+	if (cached) {
+		return json(
+			{ ...cached.parsed, _provider: cached.provider, _fallback: false, _cached: true },
+			{ headers: securityHeaders }
+		);
+	}
+
 	const result = await callLLM(prompt, keys);
 
 	if (!result) {
 		return json({ error: 'all LLM providers failed', fallback: true }, { status: 503 });
 	}
 
+	setCached(cacheKey, result.parsed, result.provider);
+
 	return json(
-		{
-			...result.parsed,
-			_provider: result.provider,
-			_fallback: false
-		},
-		{
-			headers: {
-				'X-Content-Type-Options': 'nosniff',
-				'X-Frame-Options': 'DENY',
-				'Cache-Control': 'no-store'
-			}
-		}
+		{ ...result.parsed, _provider: result.provider, _fallback: false, _cached: false },
+		{ headers: securityHeaders }
 	);
 };

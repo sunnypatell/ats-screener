@@ -1,27 +1,40 @@
-import { initializeApp, getApps } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import {
-	PUBLIC_FIREBASE_API_KEY,
-	PUBLIC_FIREBASE_AUTH_DOMAIN,
-	PUBLIC_FIREBASE_PROJECT_ID,
-	PUBLIC_FIREBASE_STORAGE_BUCKET,
-	PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-	PUBLIC_FIREBASE_APP_ID
-} from '$env/static/public';
+// firebase initialization is deferred behind a dynamic import so the SDK
+// (~480kb minified) is only fetched once a consumer actually needs auth or
+// firestore. landing-page visitors who never sign in pay zero.
+//
+// using $env/dynamic/public (not /static/public) so the build does not fail
+// on Vercel preview deployments where the PUBLIC_FIREBASE_* vars are scoped
+// to Production only. on a preview deploy the values come back undefined,
+// firebase init throws at runtime, and the auth-aware code paths swallow it
+// gracefully (auth simply does not work on preview, which is the expectation)
+import { env } from '$env/dynamic/public';
+import type { Auth } from 'firebase/auth';
+import type { Firestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-	apiKey: PUBLIC_FIREBASE_API_KEY,
-	authDomain: PUBLIC_FIREBASE_AUTH_DOMAIN,
-	projectId: PUBLIC_FIREBASE_PROJECT_ID,
-	storageBucket: PUBLIC_FIREBASE_STORAGE_BUCKET,
-	messagingSenderId: PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-	appId: PUBLIC_FIREBASE_APP_ID
+	apiKey: env.PUBLIC_FIREBASE_API_KEY,
+	authDomain: env.PUBLIC_FIREBASE_AUTH_DOMAIN,
+	projectId: env.PUBLIC_FIREBASE_PROJECT_ID,
+	storageBucket: env.PUBLIC_FIREBASE_STORAGE_BUCKET,
+	messagingSenderId: env.PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+	appId: env.PUBLIC_FIREBASE_APP_ID
 };
 
-// prevent re-initialization on HMR
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+let appPromise: Promise<{ auth: Auth; db: Firestore }> | null = null;
 
-export const auth = getAuth(app);
-// database was created as 'default' (not '(default)'), must specify explicitly
-export const db = getFirestore(app, 'default');
+// resolves to initialized auth + firestore handles, memoized so repeat callers
+// don't re-trigger the import or the initializeApp call
+export function getFirebase(): Promise<{ auth: Auth; db: Firestore }> {
+	if (appPromise) return appPromise;
+	appPromise = (async () => {
+		const [{ initializeApp, getApps }, { getAuth }, { getFirestore }] = await Promise.all([
+			import('firebase/app'),
+			import('firebase/auth'),
+			import('firebase/firestore')
+		]);
+		const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+		// database was created as 'default' (not '(default)'), must specify explicitly
+		return { auth: getAuth(app), db: getFirestore(app, 'default') };
+	})();
+	return appPromise;
+}
