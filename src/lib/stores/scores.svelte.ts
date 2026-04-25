@@ -1,11 +1,19 @@
 import { browser } from '$app/environment';
+import { env as publicEnv } from '$env/dynamic/public';
 import type { ScoreResult } from '$engine/scorer/types';
 import type { LLMAnalysis } from '$engine/llm/types';
 import type { ParsedJobDescription } from '$engine/job-parser/types';
 import { getFirebase } from '$lib/firebase';
+import { parseSampleRate, shouldSample } from '$lib/sampling';
 import { authStore } from './auth.svelte';
 
 const MAX_HISTORY = 5;
+// admin scan_logs are observability, not user data. at 50k users they alone
+// would push past firestore spark's 20k writes/day cap, so we accept losing
+// detail in exchange for staying free. default 1.0 (no behavior change at
+// current scale); set PUBLIC_SCAN_LOG_SAMPLE_RATE to e.g. 0.1 to keep 10% of
+// scans logged once traffic ramps.
+const SCAN_LOG_SAMPLE_RATE = parseSampleRate(publicEnv.PUBLIC_SCAN_LOG_SAMPLE_RATE);
 
 export interface ScanHistoryEntry {
 	id: string;
@@ -197,8 +205,12 @@ class ScoresStore {
 		}
 	}
 
-	/** log scan to top-level scan_logs collection for admin browsing */
+	/** log scan to top-level scan_logs collection for admin browsing.
+	 * sampled by PUBLIC_SCAN_LOG_SAMPLE_RATE (default 1.0). hashing on
+	 * uid+timestamp keeps the decision deterministic and reproducible.
+	 */
 	private async writeScanLog(entry: Omit<ScanHistoryEntry, 'id'>, uid: string) {
+		if (!shouldSample(`${uid}:${entry.timestamp}`, SCAN_LOG_SAMPLE_RATE)) return;
 		try {
 			const { db } = await getFirebase();
 			const { setDoc, doc, serverTimestamp } = await import('firebase/firestore');
