@@ -640,7 +640,11 @@
 											{/each}
 										</ul>
 									{:else if !structured}
-										<p>{suggestion}</p>
+										<!-- defensive: if suggestion is somehow a non-string non-structured
+										value (e.g. malformed LLM output), interpolating directly would
+										render "[object Object]" - same class as the bug fixed in
+										ScoreBreakdown. typeof guard keeps the render type-safe -->
+										<p>{typeof suggestion === 'string' ? suggestion : ''}</p>
 									{/if}
 									{#if example}
 										<div class="suggestion-example">

@@ -32,18 +32,28 @@ Cache-Control: no-store
 
 ## Handling Rate Limits
 
-When you receive a `429` response:
+When you receive a `429` response, the body distinguishes which window was hit and the response includes a `Retry-After` header set to the seconds-until-reset for that window:
+
+```http
+HTTP/1.1 429 Too Many Requests
+Retry-After: 60
+Content-Type: application/json
+```
 
 ```json
 {
-	"error": "rate limit exceeded. try again in 60 seconds."
+	"error": "rate limit exceeded: too many requests this minute. retry after 60s.",
+	"retryAfter": 60
 }
 ```
 
+The error string ends with either `too many requests this minute` (per-minute window) or `daily limit reached` (per-day window). The `retryAfter` field (seconds) and the `Retry-After` header always match; clients can use either.
+
 **Best practices:**
 
-- Implement exponential backoff in your client
-- Cache results locally to avoid redundant requests
+- Honor the `Retry-After` header — it is the exact reset window for the limit you tripped
+- Cache results locally to avoid redundant requests (the server also caches identical inputs in-memory; see the `_cached` flag in [endpoints](./endpoints))
+- Implement exponential backoff for transient 5xx errors (rate-limit 429s should use Retry-After directly)
 - For high-volume use, self-host with your own API keys
 
 ## Self-Hosted Limits

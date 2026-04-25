@@ -37,17 +37,24 @@
 		}
 		let cancelled = false;
 		(async () => {
-			const { parseJobDescription } = await import('$engine/job-parser');
-			if (cancelled) return;
-			const result = parseJobDescription(v);
-			if (cancelled) return;
-			parsed = {
-				extractedSkills: result.extractedSkills.slice(0, 12),
-				requiredSkills: result.requiredSkills,
-				experienceLevel: result.experienceLevel,
-				roleType: result.roleType,
-				industryContext: result.industryContext
-			};
+			try {
+				const { parseJobDescription } = await import('$engine/job-parser');
+				if (cancelled) return;
+				const result = parseJobDescription(v);
+				if (cancelled) return;
+				parsed = {
+					extractedSkills: result.extractedSkills.slice(0, 12),
+					requiredSkills: result.requiredSkills,
+					experienceLevel: result.experienceLevel,
+					roleType: result.roleType,
+					industryContext: result.industryContext
+				};
+			} catch (err) {
+				// preview is best-effort - if the parser throws (corrupt input,
+				// transient import failure), keep the previous parsed state and
+				// log so it's grep-able in console without breaking the scan flow
+				console.warn('[jd-preview] parse failed:', err);
+			}
 		})();
 		return () => {
 			cancelled = true;
