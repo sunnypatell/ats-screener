@@ -2,19 +2,7 @@ import { browser } from '$app/environment';
 import type { ScoreResult } from '$engine/scorer/types';
 import type { LLMAnalysis } from '$engine/llm/types';
 import type { ParsedJobDescription } from '$engine/job-parser/types';
-import {
-	collection,
-	addDoc,
-	setDoc,
-	getDocs,
-	deleteDoc,
-	doc,
-	query,
-	orderBy,
-	limit,
-	serverTimestamp
-} from 'firebase/firestore';
-import { db } from '$lib/firebase';
+import { getFirebase } from '$lib/firebase';
 import { authStore } from './auth.svelte';
 
 const MAX_HISTORY = 5;
@@ -125,6 +113,8 @@ class ScoresStore {
 
 		this.historyLoading = true;
 		try {
+			const { db } = await getFirebase();
+			const { collection, query, orderBy, limit, getDocs } = await import('firebase/firestore');
 			const scansRef = collection(db, 'users', authStore.user.uid, 'scans');
 			const q = query(scansRef, orderBy('timestamp', 'desc'), limit(MAX_HISTORY));
 			const snapshot = await getDocs(q);
@@ -151,6 +141,10 @@ class ScoresStore {
 
 		try {
 			const uid = authStore.user.uid;
+			const { db } = await getFirebase();
+			const { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } = await import(
+				'firebase/firestore'
+			);
 			const scansRef = collection(db, 'users', uid, 'scans');
 			const entry: Omit<ScanHistoryEntry, 'id'> = {
 				timestamp: new Date().toISOString(),
@@ -191,6 +185,8 @@ class ScoresStore {
 	/** log scan to top-level scan_logs collection for admin browsing */
 	private async writeScanLog(entry: Omit<ScanHistoryEntry, 'id'>, uid: string) {
 		try {
+			const { db } = await getFirebase();
+			const { setDoc, doc, serverTimestamp } = await import('firebase/firestore');
 			const user = authStore.user;
 			const now = new Date();
 			// inverted timestamp so newest logs sort first in Firebase Console
@@ -215,6 +211,8 @@ class ScoresStore {
 		if (!browser || !authStore.isAuthenticated || !authStore.user) return;
 
 		try {
+			const { db } = await getFirebase();
+			const { collection, getDocs, deleteDoc } = await import('firebase/firestore');
 			const scansRef = collection(db, 'users', authStore.user.uid, 'scans');
 			const snapshot = await getDocs(scansRef);
 			for (const d of snapshot.docs) {

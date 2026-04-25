@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { doc, getDoc } from 'firebase/firestore';
-	import { db } from '$lib/firebase';
+	import { getFirebase } from '$lib/firebase';
 	import FlipWords from '$components/ui/FlipWords.svelte';
 	import SparklesText from '$components/ui/SparklesText.svelte';
 	import NumberFlow from '@number-flow/svelte';
@@ -62,14 +61,20 @@
 	onMount(() => {
 		mounted = true;
 
-		// fetch live user count
-		getDoc(doc(db, 'stats', 'public'))
-			.then((snap) => {
+		// fetch live user count - lazy-imports firebase so the landing page
+		// doesn't pull the SDK into its critical bundle
+		(async () => {
+			try {
+				const { db } = await getFirebase();
+				const { doc, getDoc } = await import('firebase/firestore');
+				const snap = await getDoc(doc(db, 'stats', 'public'));
 				if (snap.exists()) {
 					userCount = snap.data().userCount ?? 0;
 				}
-			})
-			.catch(() => {});
+			} catch {
+				// non-critical; counter falls back to 0
+			}
+		})();
 	});
 
 	// converts pixel coords to percentage of hero bounds for the glow
