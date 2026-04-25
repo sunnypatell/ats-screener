@@ -41,9 +41,8 @@ class AuthStore {
 
 	private async setupAuthListener() {
 		const { auth } = await getFirebase();
-		const { onAuthStateChanged, getRedirectResult, getAdditionalUserInfo } = await import(
-			'firebase/auth'
-		);
+		const { onAuthStateChanged, getRedirectResult, getAdditionalUserInfo } =
+			await import('firebase/auth');
 		onAuthStateChanged(auth, (user) => {
 			this.user = user;
 			this.loading = false;
@@ -104,9 +103,8 @@ class AuthStore {
 	async signUpWithEmail(email: string, password: string, displayName: string) {
 		this.error = null;
 		const { auth } = await getFirebase();
-		const { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } = await import(
-			'firebase/auth'
-		);
+		const { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } =
+			await import('firebase/auth');
 		try {
 			const credential = await createUserWithEmailAndPassword(auth, email, password);
 			if (displayName) {

@@ -154,9 +154,8 @@ class ScoresStore {
 		try {
 			const uid = authStore.user.uid;
 			const { db } = await getFirebase();
-			const { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } = await import(
-				'firebase/firestore'
-			);
+			const { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } =
+				await import('firebase/firestore');
 			const scansRef = collection(db, 'users', uid, 'scans');
 			const entry: Omit<ScanHistoryEntry, 'id'> = {
 				timestamp: new Date().toISOString(),
@@ -253,7 +252,11 @@ class ScoresStore {
 		this.isAnalyzing = true;
 	}
 
-	finishAnalyzing(analysis: LLMAnalysis | null, fallback: boolean, retryAtMs: number | null = null) {
+	finishAnalyzing(
+		analysis: LLMAnalysis | null,
+		fallback: boolean,
+		retryAtMs: number | null = null
+	) {
 		this.llmAnalysis = analysis;
 		this.llmFallback = fallback;
 		this.llmRetryAtMs = retryAtMs;

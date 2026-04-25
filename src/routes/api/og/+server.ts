@@ -38,7 +38,9 @@ export const GET: RequestHandler = async ({ url }) => {
 	const score = parseInt0(url.searchParams.get('score'), 0, 0, 100);
 	const pass = parseInt0(url.searchParams.get('pass'), 0, 0, 6);
 	const total = parseInt0(url.searchParams.get('total'), 6, 1, 6);
-	const delta = url.searchParams.has('delta') ? parseInt0(url.searchParams.get('delta'), 0, -100, 100) : null;
+	const delta = url.searchParams.has('delta')
+		? parseInt0(url.searchParams.get('delta'), 0, -100, 100)
+		: null;
 
 	const color = tierColor(score);
 	const label = tierLabel(score);
@@ -54,8 +56,7 @@ export const GET: RequestHandler = async ({ url }) => {
 				display: 'flex',
 				flexDirection: 'column',
 				justifyContent: 'space-between',
-				background:
-					'linear-gradient(135deg, #0a0a1a 0%, #0d0d24 50%, #12122e 100%)',
+				background: 'linear-gradient(135deg, #0a0a1a 0%, #0d0d24 50%, #12122e 100%)',
 				color: '#e4e4e7',
 				padding: '64px 72px',
 				fontFamily: 'Inter, system-ui, sans-serif'
@@ -199,10 +200,7 @@ export const GET: RequestHandler = async ({ url }) => {
 							fontSize: '22px',
 							color: '#71717a'
 						},
-						children: [
-							'Free • Open source • No paywalls',
-							'ats-screener.vercel.app'
-						]
+						children: ['Free • Open source • No paywalls', 'ats-screener.vercel.app']
 					}
 				}
 			]

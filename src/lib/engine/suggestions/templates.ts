@@ -29,11 +29,19 @@ export function classifySuggestion(text: string): SuggestionType | null {
 	if (/skills?\s+section|dedicated\s+skills|list\s+(your\s+)?skills/.test(t)) {
 		return 'skills-section';
 	}
-	if (/missing\s+(keyword|term|skill)|add(?:ing)?\s+(?:these\s+|the\s+)?(?:keyword|term|skill)|consider adding/.test(t)) {
+	if (
+		/missing\s+(keyword|term|skill)|add(?:ing)?\s+(?:these\s+|the\s+)?(?:keyword|term|skill)|consider adding/.test(
+			t
+		)
+	) {
 		return 'missing-keywords';
 	}
 	if (/short|more\s+detail|expand|length|too\s+brief/.test(t)) return 'short-resume';
-	if (/standard\s+section|section\s+(missing|header)|use\s+standard|recognised\s+section|recognized\s+section/.test(t)) {
+	if (
+		/standard\s+section|section\s+(missing|header)|use\s+standard|recognised\s+section|recognized\s+section/.test(
+			t
+		)
+	) {
 		return 'sections';
 	}
 	if (/format|multi.?column|tables?|images?|two.?column|page\s+limit|page\s+count/.test(t)) {

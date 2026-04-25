@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-	checkRateLimit,
-	RATE_LIMIT_CONFIG
-} from '../../../src/routes/api/analyze/rate-limiter';
+import { checkRateLimit, RATE_LIMIT_CONFIG } from '../../../src/routes/api/analyze/rate-limiter';
 
 // limiter uses module-level state per-IP. tests use unique IPs so they don't
 // trip on each other across test runs.

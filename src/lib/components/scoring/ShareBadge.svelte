@@ -654,11 +654,7 @@
 						Add to LinkedIn Profile
 					</button>
 
-					<button
-						class="action-btn secondary"
-						onclick={copyShareLink}
-						aria-label="Copy share link"
-					>
+					<button class="action-btn secondary" onclick={copyShareLink} aria-label="Copy share link">
 						{#if copyState === 'copied'}
 							<svg
 								width="16"

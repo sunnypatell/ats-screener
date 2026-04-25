@@ -81,11 +81,7 @@
 </script>
 
 <div class="jd-input">
-	<button
-		class="jd-toggle"
-		onclick={() => (expanded = !expanded)}
-		aria-expanded={expanded}
-	>
+	<button class="jd-toggle" onclick={() => (expanded = !expanded)} aria-expanded={expanded}>
 		<span class="toggle-icon" class:expanded>
 			<svg
 				width="16"

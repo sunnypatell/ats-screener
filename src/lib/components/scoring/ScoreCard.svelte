@@ -6,9 +6,7 @@
 
 	// only show the delta pill when there's a meaningful, signed change vs the
 	// previous scan; identical scores stay quiet to avoid visual noise
-	const delta = $derived(
-		previousScore !== undefined ? result.overallScore - previousScore : null
-	);
+	const delta = $derived(previousScore !== undefined ? result.overallScore - previousScore : null);
 	const showDelta = $derived(delta !== null && delta !== 0);
 
 	// mouse position in px for the spotlight hover effect

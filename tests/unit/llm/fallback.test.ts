@@ -171,9 +171,7 @@ describe('generateFallbackAnalysis: suggestions', () => {
 
 	it('suggests more detail for very short resumes', () => {
 		const result = generateFallbackAnalysis(makePayload({ resumeText: 'Short resume.' }));
-		const hasShortSuggestion = result.suggestions.some((s) =>
-			s.toLowerCase().includes('short')
-		);
+		const hasShortSuggestion = result.suggestions.some((s) => s.toLowerCase().includes('short'));
 		expect(hasShortSuggestion).toBe(true);
 	});
 
@@ -181,9 +179,7 @@ describe('generateFallbackAnalysis: suggestions', () => {
 		const result = generateFallbackAnalysis(
 			makePayload({ jobDescription: 'senior staff engineer leading the platform team' })
 		);
-		const hasLeadership = result.suggestions.some((s) =>
-			s.toLowerCase().includes('leadership')
-		);
+		const hasLeadership = result.suggestions.some((s) => s.toLowerCase().includes('leadership'));
 		expect(hasLeadership).toBe(true);
 	});
 });

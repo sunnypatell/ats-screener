@@ -1,7 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { computeTimeline } from '$engine/scorer/timeline';
 
-function entry(id: string, timestamp: string, score: number, mode: 'general' | 'targeted' = 'general') {
+function entry(
+	id: string,
+	timestamp: string,
+	score: number,
+	mode: 'general' | 'targeted' = 'general'
+) {
 	return { id, timestamp, averageScore: score, mode };
 }
 
@@ -23,10 +28,7 @@ describe('computeTimeline', () => {
 	});
 
 	it('inverts y so higher scores render visually higher', () => {
-		const chart = computeTimeline([
-			entry('a', '2025-01-01', 30),
-			entry('b', '2025-02-01', 90)
-		]);
+		const chart = computeTimeline([entry('a', '2025-01-01', 30), entry('b', '2025-02-01', 90)]);
 		// higher score = lower y in SVG coordinates
 		expect(chart!.points[1].y).toBeLessThan(chart!.points[0].y);
 	});
@@ -42,18 +44,12 @@ describe('computeTimeline', () => {
 	});
 
 	it('areaD closes the shape back to the baseline', () => {
-		const chart = computeTimeline([
-			entry('a', '2025-01-01', 50),
-			entry('b', '2025-02-01', 60)
-		]);
+		const chart = computeTimeline([entry('a', '2025-01-01', 50), entry('b', '2025-02-01', 60)]);
 		expect(chart!.areaD.endsWith(' Z')).toBe(true);
 	});
 
 	it('keeps points inside the inner padding box', () => {
-		const chart = computeTimeline([
-			entry('a', '2025-01-01', 0),
-			entry('b', '2025-02-01', 100)
-		]);
+		const chart = computeTimeline([entry('a', '2025-01-01', 0), entry('b', '2025-02-01', 100)]);
 		for (const p of chart!.points) {
 			expect(p.x).toBeGreaterThanOrEqual(chart!.innerLeft);
 			expect(p.x).toBeLessThanOrEqual(chart!.innerRight);
@@ -63,10 +59,10 @@ describe('computeTimeline', () => {
 	});
 
 	it('respects custom viewBox dimensions', () => {
-		const chart = computeTimeline(
-			[entry('a', '2025-01-01', 50), entry('b', '2025-02-01', 60)],
-			{ width: 1200, height: 400 }
-		);
+		const chart = computeTimeline([entry('a', '2025-01-01', 50), entry('b', '2025-02-01', 60)], {
+			width: 1200,
+			height: 400
+		});
 		expect(chart!.width).toBe(1200);
 		expect(chart!.height).toBe(400);
 		expect(chart!.points[1].x).toBeLessThanOrEqual(1200);

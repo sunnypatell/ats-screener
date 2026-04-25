@@ -170,7 +170,8 @@
 							<div class="journey-stat">
 								<span class="journey-label">Over</span>
 								<span class="journey-value-text">
-									{journey.daysSpan} {journey.daysSpan === 1 ? 'day' : 'days'}
+									{journey.daysSpan}
+									{journey.daysSpan === 1 ? 'day' : 'days'}
 								</span>
 							</div>
 						{/if}
