@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { browser } from '$app/environment';
 	import Logo from './Logo.svelte';
 	import UserMenu from './UserMenu.svelte';
@@ -11,7 +11,7 @@
 	let mobileOpen = $state(false);
 
 	// highlight the active route
-	const currentPath = $derived($page.url.pathname);
+	const currentPath = $derived(page.url.pathname);
 	const isOnDocs = $derived(currentPath.startsWith('/docs'));
 	const isMac = $derived(browser ? navigator.platform.toUpperCase().includes('MAC') : true);
 

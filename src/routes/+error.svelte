@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import SeoHead from '$components/seo/SeoHead.svelte';
 </script>
 
@@ -16,24 +16,24 @@
 	</div>
 
 	<div class="error-card">
-		<div class="error-status">{$page.status}</div>
+		<div class="error-status">{page.status}</div>
 		<h1 class="error-title">
-			{#if $page.status === 404}
+			{#if page.status === 404}
 				Page not found
-			{:else if $page.status === 429}
+			{:else if page.status === 429}
 				Too many requests
-			{:else if $page.status >= 500}
+			{:else if page.status >= 500}
 				Something went wrong
 			{:else}
 				Unexpected error
 			{/if}
 		</h1>
 		<p class="error-message">
-			{#if $page.error?.message && $page.status !== 500}
-				{$page.error.message}
-			{:else if $page.status === 404}
+			{#if page.error?.message && page.status !== 500}
+				{page.error.message}
+			{:else if page.status === 404}
 				The page you're looking for doesn't exist or has moved.
-			{:else if $page.status === 429}
+			{:else if page.status === 429}
 				You've hit the rate limit. Please wait a minute and try again.
 			{:else}
 				An unexpected error occurred. Refreshing usually helps.

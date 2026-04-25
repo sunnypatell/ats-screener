@@ -5,8 +5,9 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="theme-color" content="#0a0a1a" />
 		<meta name="author" content="Sunny Patel" />
-		<meta name="robots" content="index, follow" />
-		<!-- per-route og/twitter/title/description/canonical are emitted by SeoHead -->
+		<!-- per-route robots/og/twitter/title/description/canonical are emitted by
+		     SeoHead. avoid a static robots tag here so noIndex pages don't ship
+		     conflicting directives ("index, follow" + "noindex, nofollow") -->
 
 		<link rel="icon" href="%sveltekit.assets%/favicon.svg" />
 		<link rel="apple-touch-icon" href="%sveltekit.assets%/apple-touch-icon.png" />

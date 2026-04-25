@@ -62,16 +62,19 @@ export function computeTimeline(
 	// sort ascending so leftmost point is the oldest scan
 	const sorted = [...entries].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 
-	// y scale: clamp to [0, 100] but pad slightly so the line never touches the edge
+	// y scale spans [0, 100]; clamp the geometry input so anomalous out-of-range
+	// scores still render INSIDE the chart instead of overflowing the padding box.
+	// the unclamped value still goes on `point.score` for tooltip display.
 	const yMin = 0;
 	const yMax = 100;
 	const yRange = yMax - yMin;
+	const clampScore = (s: number) => Math.max(yMin, Math.min(yMax, s));
 
 	const n = sorted.length;
 	const points: TimelinePoint[] = sorted.map((entry, i) => ({
 		x: innerLeft + (i * innerWidth) / Math.max(n - 1, 1),
 		// invert because SVG y grows downward
-		y: innerTop + (1 - (entry.averageScore - yMin) / yRange) * innerHeight,
+		y: innerTop + (1 - (clampScore(entry.averageScore) - yMin) / yRange) * innerHeight,
 		score: entry.averageScore,
 		timestamp: entry.timestamp,
 		fileName: entry.fileName,

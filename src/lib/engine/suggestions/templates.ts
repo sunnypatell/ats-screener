@@ -53,7 +53,7 @@ export function classifySuggestion(text: string): SuggestionType | null {
 const EXAMPLES: Record<SuggestionType, SuggestionExample> = {
 	quantification: {
 		type: 'quantification',
-		tip: 'Add concrete numbers — percent improvements, dollar amounts, scale.',
+		tip: 'Add concrete numbers (percent improvements, dollar amounts, scale).',
 		before: 'Led the migration of the platform.',
 		after: 'Led the migration of the platform serving 2M daily users, reducing infra cost 38%.'
 	},
@@ -65,7 +65,7 @@ const EXAMPLES: Record<SuggestionType, SuggestionExample> = {
 	},
 	'missing-keywords': {
 		type: 'missing-keywords',
-		tip: 'Weave missing JD keywords into a real bullet — never standalone keyword stuffing.',
+		tip: 'Weave missing JD keywords into a real bullet, never standalone keyword stuffing.',
 		before: 'Built backend services.',
 		after:
 			'Built Node.js / TypeScript / GraphQL backend services on AWS, integrated with PostgreSQL and Redis.'

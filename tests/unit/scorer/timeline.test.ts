@@ -58,6 +58,19 @@ describe('computeTimeline', () => {
 		}
 	});
 
+	it('clamps out-of-range averageScore so points stay inside the padding box', () => {
+		const chart = computeTimeline([entry('a', '2025-01-01', -50), entry('b', '2025-02-01', 150)]);
+		expect(chart).not.toBeNull();
+		// y must stay in [innerTop, innerBottom] regardless of input score
+		for (const p of chart!.points) {
+			expect(p.y).toBeGreaterThanOrEqual(chart!.innerTop);
+			expect(p.y).toBeLessThanOrEqual(chart!.innerBottom);
+		}
+		// the unclamped score is preserved on the point for tooltip display
+		expect(chart!.points[0].score).toBe(-50);
+		expect(chart!.points[1].score).toBe(150);
+	});
+
 	it('respects custom viewBox dimensions', () => {
 		const chart = computeTimeline([entry('a', '2025-01-01', 50), entry('b', '2025-02-01', 60)], {
 			width: 1200,

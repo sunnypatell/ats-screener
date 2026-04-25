@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import SeoHead from '$components/seo/SeoHead.svelte';
 	import { getScoreColor, getScoreLabel } from '$engine/scorer/classification';
 
@@ -12,11 +12,13 @@
 		return Number.isFinite(n) ? clamp(n, min, max) : fallback;
 	}
 
-	const score = $derived(parseIntSafe($page.url.searchParams.get('score'), 0, 0, 100));
-	const pass = $derived(parseIntSafe($page.url.searchParams.get('pass'), 0, 0, 6));
-	const total = $derived(parseIntSafe($page.url.searchParams.get('total'), 6, 1, 6));
-	const hasDelta = $derived($page.url.searchParams.has('delta'));
-	const delta = $derived(parseIntSafe($page.url.searchParams.get('delta'), 0, -100, 100));
+	const score = $derived(parseIntSafe(page.url.searchParams.get('score'), 0, 0, 100));
+	// derive total first, then cap pass at total so a tampered URL like
+	// ?pass=6&total=1 cannot render "6 of 1 ATS systems passed"
+	const total = $derived(parseIntSafe(page.url.searchParams.get('total'), 6, 1, 6));
+	const pass = $derived(Math.min(parseIntSafe(page.url.searchParams.get('pass'), 0, 0, 6), total));
+	const hasDelta = $derived(page.url.searchParams.has('delta'));
+	const delta = $derived(parseIntSafe(page.url.searchParams.get('delta'), 0, -100, 100));
 
 	// og:image points at the dynamic edge endpoint with the same query, so when
 	// LinkedIn/Twitter fetches this page they get a per-share PNG preview
@@ -28,7 +30,7 @@
 		if (hasDelta) params.set('delta', String(delta));
 		return params.toString();
 	});
-	const ogImage = $derived(`${$page.url.origin}/api/og?${ogImageQuery}`);
+	const ogImage = $derived(`${page.url.origin}/api/og?${ogImageQuery}`);
 
 	const title = $derived(
 		hasDelta && delta > 0
@@ -67,7 +69,7 @@
 		</div>
 
 		<div class="cta">
-			<a href="/scanner" class="cta-btn">Scan your resume — free</a>
+			<a href="/scanner" class="cta-btn">Scan your resume free</a>
 		</div>
 
 		<p class="footnote">

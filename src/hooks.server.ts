@@ -36,8 +36,10 @@ function applySecurityHeaders(response: Response, path: string): Response {
 	for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
 		if (!response.headers.has(name)) response.headers.set(name, value);
 	}
-	// don't apply CSP to the csp-report endpoint itself (avoid feedback loops on
-	// any future violation in error responses) or to non-html responses where it's irrelevant
+	// emit CSP-Report-Only on every response except the report endpoint itself
+	// (avoids feedback loops on its own error responses). browsers apply CSP
+	// directives only on document/iframe contexts so the header is benign on
+	// JSON / image / svg responses, just unread bytes on the wire
 	if (path !== '/api/csp-report' && !response.headers.has('Content-Security-Policy-Report-Only')) {
 		response.headers.set('Content-Security-Policy-Report-Only', CSP_REPORT_ONLY);
 	}

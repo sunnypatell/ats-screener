@@ -51,7 +51,7 @@ The error string ends with either `too many requests this minute` (per-minute wi
 
 **Best practices:**
 
-- Honor the `Retry-After` header — it is the exact reset window for the limit you tripped
+- Honor the `Retry-After` header (it is the exact reset window for the limit you tripped)
 - Cache results locally to avoid redundant requests (the server also caches identical inputs in-memory; see the `_cached` flag in [endpoints](./endpoints))
 - Implement exponential backoff for transient 5xx errors (rate-limit 429s should use Retry-After directly)
 - For high-volume use, self-host with your own API keys

@@ -79,10 +79,12 @@
 	let copiedKey = $state<string | null>(null);
 	let copiedTimer: ReturnType<typeof setTimeout> | null = null;
 
-	async function copyExample(text: string, key: string, e: MouseEvent) {
-		// the example block is inside a <button class="suggestion-card">, so without
+	// widened to Event so both pointer and keyboard handlers can pass through
+	// without unsafe casts (KeyboardEvent and MouseEvent both have stopPropagation)
+	async function copyExample(text: string, key: string, e: Event) {
+		// the example block is inside the suggestion-card click target, so without
 		// stopping propagation the click bubbles up and toggles the suggestion's
-		// expanded state - which collapses the block the user just copied from
+		// expanded state, which collapses the block the user just copied from
 		e.stopPropagation();
 		try {
 			await navigator.clipboard.writeText(text);
@@ -148,7 +150,7 @@
 	// dynamic PNG rendering this user's actual delta and score
 	function shareImprovementToTwitter() {
 		if (!comparison || comparison.deltaAverage <= 0 || typeof window === 'undefined') return;
-		const text = `Just improved my ATS resume score from ${comparison.previousAverage} to ${comparison.currentAverage} (+${comparison.deltaAverage}) using @ATSScreener — free, simulates how Workday, Lever, iCIMS and others actually parse resumes`;
+		const text = `Just improved my ATS resume score from ${comparison.previousAverage} to ${comparison.currentAverage} (+${comparison.deltaAverage}) using @ATSScreener (free, simulates how Workday, Lever, iCIMS and others actually parse resumes)`;
 		const params = new URLSearchParams({
 			score: String(scoresStore.averageScore),
 			pass: String(scoresStore.passingCount),
@@ -582,10 +584,22 @@
 									: i < 4
 										? 'medium'
 										: 'low'}
-						<button
+						<!-- div+role=button instead of <button> so the nested copy <button>s
+						     inside the body don't violate "no interactive descendants in a
+						     button" (invalid HTML, broken keyboard/screen-reader semantics) -->
+						<div
 							class="suggestion-card"
 							class:expanded={expandedSuggestion === i}
+							role="button"
+							tabindex="0"
+							aria-expanded={expandedSuggestion === i}
 							onclick={() => toggleSuggestion(i)}
+							onkeydown={(e) => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									toggleSuggestion(i);
+								}
+							}}
 						>
 							<div class="suggestion-card-header">
 								<div class="suggestion-card-left">
@@ -653,22 +667,11 @@
 												<div class="example-block before">
 													<div class="example-block-header">
 														<span class="example-label">Before</span>
-														<span
+														<button
+															type="button"
 															class="copy-btn"
 															class:copied={copiedKey === `${i}-before`}
-															role="button"
-															tabindex="0"
 															onclick={(e) => copyExample(example.before, `${i}-before`, e)}
-															onkeydown={(e) => {
-																if (e.key === 'Enter' || e.key === ' ') {
-																	e.preventDefault();
-																	copyExample(
-																		example.before,
-																		`${i}-before`,
-																		e as unknown as MouseEvent
-																	);
-																}
-															}}
 															aria-label="Copy before text"
 														>
 															{#if copiedKey === `${i}-before`}
@@ -699,29 +702,18 @@
 																</svg>
 																Copy
 															{/if}
-														</span>
+														</button>
 													</div>
 													<pre>{example.before}</pre>
 												</div>
 												<div class="example-block after">
 													<div class="example-block-header">
 														<span class="example-label">After</span>
-														<span
+														<button
+															type="button"
 															class="copy-btn"
 															class:copied={copiedKey === `${i}-after`}
-															role="button"
-															tabindex="0"
 															onclick={(e) => copyExample(example.after, `${i}-after`, e)}
-															onkeydown={(e) => {
-																if (e.key === 'Enter' || e.key === ' ') {
-																	e.preventDefault();
-																	copyExample(
-																		example.after,
-																		`${i}-after`,
-																		e as unknown as MouseEvent
-																	);
-																}
-															}}
 															aria-label="Copy after text"
 														>
 															{#if copiedKey === `${i}-after`}
@@ -752,7 +744,7 @@
 																</svg>
 																Copy
 															{/if}
-														</span>
+														</button>
 													</div>
 													<pre>{example.after}</pre>
 												</div>
@@ -761,7 +753,7 @@
 									{/if}
 								</div>
 							{/if}
-						</button>
+						</div>
 					{/each}
 				</div>
 			</div>

@@ -123,13 +123,13 @@ Extract structured requirements from a job description without scoring a resume.
 | `_fallback`              | boolean                    | `true` when all providers failed and the client must fall back to local rule-based scoring                 |
 | `_cached`                | boolean                    | `true` when the response was served from the in-memory result cache (sub-100ms, zero LLM cost)             |
 
-The server keeps a SHA-256 keyed in-memory LRU of recent prompts (200 entries, 24h TTL). Identical input hits the cache and returns instantly — the `_cached` flag tells you whether the response was a hit. The cache lives per Vercel instance; cold starts begin empty.
+The server keeps a SHA-256 keyed in-memory LRU of recent prompts (200 entries, 24h TTL). Identical input hits the cache and returns instantly; the `_cached` flag tells you whether the response was a hit. The cache lives per Vercel instance; cold starts begin empty.
 
 ## Auxiliary Endpoints
 
 | Path              | Method | Purpose                                                                                                |
 | ----------------- | ------ | ------------------------------------------------------------------------------------------------------ |
-| `/healthz`        | GET    | Liveness probe — JSON `{ status, timestamp }`. For uptime monitors                                     |
+| `/healthz`        | GET    | Liveness probe; JSON `{ status, timestamp }`. For uptime monitors                                      |
 | `/robots.txt`     | GET    | Dynamic; the `Sitemap:` URL tracks the deployment origin                                               |
 | `/sitemap.xml`    | GET    | Dynamic; lists public routes (`/`, `/scanner`, `/about`) with `lastmod` and `priority`                 |
 | `/api/og`         | GET    | Edge-cached PNG (`@vercel/og`) for share previews. Query: `score`, `pass`, `total`, optional `delta`   |

@@ -19,4 +19,5 @@ Sitemap: ${url.origin}/sitemap.xml
 	});
 };
 
-export const prerender = true;
+// keep dynamic; prerender would bake the request origin at build time and
+// preview deploys would ship a Sitemap URL pointing at production

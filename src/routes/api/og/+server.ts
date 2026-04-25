@@ -36,8 +36,10 @@ function parseInt0(v: string | null, fallback: number, min: number, max: number)
 
 export const GET: RequestHandler = async ({ url }) => {
 	const score = parseInt0(url.searchParams.get('score'), 0, 0, 100);
-	const pass = parseInt0(url.searchParams.get('pass'), 0, 0, 6);
+	// parse total first, then cap pass to <= total so a tampered URL like
+	// ?pass=6&total=1 cannot render "6 of 1 ATS systems passed"
 	const total = parseInt0(url.searchParams.get('total'), 6, 1, 6);
+	const pass = clamp(parseInt0(url.searchParams.get('pass'), 0, 0, 6), 0, total);
 	const delta = url.searchParams.has('delta')
 		? parseInt0(url.searchParams.get('delta'), 0, -100, 100)
 		: null;

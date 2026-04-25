@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
 	// per-route meta tags - lifted out of app.html so each page can supply
 	// its own title/description/canonical without rendering duplicate og: tags
@@ -21,7 +21,7 @@
 		noIndex = false
 	}: Props = $props();
 
-	const url = $derived($page.url);
+	const url = $derived(page.url);
 	const resolvedCanonical = $derived(canonical ?? `${url.origin}${url.pathname}`);
 	const resolvedOgImage = $derived(
 		ogImage.startsWith('http') ? ogImage : `${url.origin}${ogImage}`
@@ -32,9 +32,9 @@
 	<title>{title}</title>
 	<meta name="description" content={description} />
 	<link rel="canonical" href={resolvedCanonical} />
-	{#if noIndex}
-		<meta name="robots" content="noindex, nofollow" />
-	{/if}
+	<!-- single source of truth for robots; app.html no longer emits a baseline
+	     so this attribute covers both indexable and noIndex pages without conflict -->
+	<meta name="robots" content={noIndex ? 'noindex, nofollow' : 'index, follow'} />
 
 	<meta property="og:type" content={ogType} />
 	<meta property="og:site_name" content="ATS Screener" />
