@@ -125,6 +125,15 @@
 		window.open(url, '_blank', 'noopener,noreferrer');
 	}
 
+	function shareToTwitter() {
+		// X has a 280-char tweet cap; build a tighter version of shareText
+		const tight = `Just scored ${avgScore}/100 on ATS Screener — free, simulates how Workday, Lever, iCIMS and others actually parse resumes. ${passCount}/${totalCount} systems passed.`;
+		const params = new URLSearchParams({ text: tight });
+		if (shareUrl) params.set('url', shareUrl);
+		const url = `https://twitter.com/intent/tweet?${params.toString()}`;
+		window.open(url, '_blank', 'noopener,noreferrer,width=600,height=520');
+	}
+
 	function addToLinkedInProfile() {
 		const d = new Date();
 		const year = d.getFullYear();
@@ -620,6 +629,15 @@
 						Share to LinkedIn
 					</button>
 
+					<button class="action-btn twitter" onclick={shareToTwitter}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+							<path
+								d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+							/>
+						</svg>
+						Share to X
+					</button>
+
 					<button class="action-btn secondary" onclick={addToLinkedInProfile}>
 						<svg
 							width="16"
@@ -823,6 +841,18 @@
 		background: rgba(10, 102, 194, 0.25);
 		border-color: rgba(10, 102, 194, 0.45);
 		box-shadow: 0 0 20px rgba(10, 102, 194, 0.1);
+	}
+
+	.action-btn.twitter {
+		background: rgba(255, 255, 255, 0.06);
+		border-color: rgba(255, 255, 255, 0.14);
+		color: var(--text-primary);
+	}
+
+	.action-btn.twitter:hover {
+		background: rgba(255, 255, 255, 0.1);
+		border-color: rgba(255, 255, 255, 0.22);
+		box-shadow: 0 0 18px rgba(255, 255, 255, 0.05);
 	}
 
 	.action-btn.secondary {
