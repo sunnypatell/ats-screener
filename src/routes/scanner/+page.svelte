@@ -96,7 +96,7 @@
 				return;
 			}
 
-			// all LLM providers failed, fall back to deterministic rule-based scoring
+			// all LLM providers failed (or rate-limited), fall back to deterministic rule-based scoring
 			console.log('[scan] LLM unavailable, using rule-based scoring');
 			const { scoreResume } = await import('$engine/scorer/engine');
 			const input = buildScoringInput();
@@ -104,7 +104,10 @@
 			if (signal.aborted) return;
 			console.log('[scan] rule-based scoring complete:', results.length, 'results');
 			scoresStore.finishScoring(results, resumeStore.file?.name);
-			scoresStore.finishAnalyzing(null, true);
+			// when rate-limited, surface the retry timestamp so the toast can show a countdown
+			const retryAtMs =
+				llmResult.status === 'rate_limited' ? Date.now() + llmResult.retryAfterSec * 1000 : null;
+			scoresStore.finishAnalyzing(null, true, retryAtMs);
 		} catch (err) {
 			if (signal.aborted) return;
 			const msg = err instanceof Error ? err.message : 'scoring failed';

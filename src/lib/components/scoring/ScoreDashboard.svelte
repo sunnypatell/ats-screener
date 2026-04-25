@@ -71,6 +71,22 @@
 
 	// alias for backward compat in template
 	const getAvgColor = getScoreColor;
+
+	// live countdown for the rate-limit retry hint inside the fallback toast
+	// only ticks while the toast is visible and a retry timestamp is set
+	let now = $state(Date.now());
+	$effect(() => {
+		if (!scoresStore.llmFallback || scoresStore.llmRetryAtMs === null) return;
+		const id = setInterval(() => {
+			now = Date.now();
+		}, 1000);
+		return () => clearInterval(id);
+	});
+	const retrySecondsRemaining = $derived(
+		scoresStore.llmRetryAtMs !== null
+			? Math.max(0, Math.ceil((scoresStore.llmRetryAtMs - now) / 1000))
+			: 0
+	);
 </script>
 
 {#if scoresStore.hasResults}
@@ -168,6 +184,11 @@
 							(rule-based analysis), but the AI suggestions/accuracy won't be as specific. try again
 							later, or if you want to help keep this free for everyone
 							<span class="fallback-emoji">😅</span>
+							{#if retrySecondsRemaining > 0}
+								<span class="fallback-retry-hint">
+									AI scoring re-available in <strong>{retrySecondsRemaining}s</strong>
+								</span>
+							{/if}
 						</p>
 					</div>
 					<div class="fallback-toast-actions">
@@ -642,6 +663,19 @@
 		font-size: 1rem;
 		vertical-align: middle;
 		line-height: 1;
+	}
+
+	.fallback-retry-hint {
+		display: block;
+		margin-top: 0.4rem;
+		font-size: 0.78rem;
+		color: var(--text-tertiary);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.fallback-retry-hint strong {
+		color: var(--accent-cyan);
+		font-weight: 600;
 	}
 
 	.fallback-toast-actions {

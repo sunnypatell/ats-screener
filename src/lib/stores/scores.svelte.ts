@@ -39,6 +39,9 @@ class ScoresStore {
 	isScoring = $state(false);
 	isAnalyzing = $state(false);
 	llmFallback = $state(false);
+	// absolute timestamp (ms) when the AI path becomes available again after a 429
+	// null when not rate-limited; UI derives a live countdown from this
+	llmRetryAtMs = $state<number | null>(null);
 	error = $state<string | null>(null);
 	scanHistory = $state<ScanHistoryEntry[]>([]);
 	historyLoading = $state(false);
@@ -85,6 +88,7 @@ class ScoresStore {
 		this.abortController = new AbortController();
 		this.isScoring = true;
 		this.llmFallback = false;
+		this.llmRetryAtMs = null;
 		this.error = null;
 		return this.abortController.signal;
 	}
@@ -216,6 +220,7 @@ class ScoresStore {
 		this.isScoring = false;
 		this.isAnalyzing = false;
 		this.llmFallback = false;
+		this.llmRetryAtMs = null;
 		this.error = null;
 	}
 
@@ -223,9 +228,10 @@ class ScoresStore {
 		this.isAnalyzing = true;
 	}
 
-	finishAnalyzing(analysis: LLMAnalysis | null, fallback: boolean) {
+	finishAnalyzing(analysis: LLMAnalysis | null, fallback: boolean, retryAtMs: number | null = null) {
 		this.llmAnalysis = analysis;
 		this.llmFallback = fallback;
+		this.llmRetryAtMs = retryAtMs;
 		this.isAnalyzing = false;
 	}
 
@@ -240,6 +246,7 @@ class ScoresStore {
 		this.isScoring = false;
 		this.isAnalyzing = false;
 		this.llmFallback = false;
+		this.llmRetryAtMs = null;
 	}
 
 	reset() {

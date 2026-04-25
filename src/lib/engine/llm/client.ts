@@ -6,9 +6,12 @@ const CLIENT_TIMEOUT_MS = 65_000;
 
 // discriminated result so callers can distinguish "fall back to rule-based"
 // from "user cancelled, do nothing" - the two need different downstream handling
+// rate_limited is treated like error for fallback purposes, but carries a retry
+// hint so the UI can tell users when the AI path will be available again
 export type ScoreLLMResult =
 	| { status: 'ok'; results: ScoreResult[]; provider: string; fallback: boolean }
 	| { status: 'error' }
+	| { status: 'rate_limited'; retryAfterSec: number }
 	| { status: 'cancelled' };
 
 // performs full LLM-powered ATS scoring via the server endpoint
@@ -41,6 +44,16 @@ export async function scoreLLM(
 		if (!response.ok) {
 			const data = await response.json().catch(() => ({}));
 			console.warn('[scoreLLM] API returned', response.status, data.error ?? 'unknown error');
+			if (response.status === 429) {
+				const headerVal = response.headers.get('Retry-After');
+				const retryAfterSec =
+					typeof data.retryAfter === 'number' && data.retryAfter > 0
+						? data.retryAfter
+						: headerVal && Number.isFinite(Number(headerVal))
+							? Math.max(1, Number(headerVal))
+							: 60;
+				return { status: 'rate_limited', retryAfterSec };
+			}
 			return { status: 'error' };
 		}
 
