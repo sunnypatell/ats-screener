@@ -7,6 +7,13 @@ const dailyLimits = new Map<string, { count: number; resetAt: number }>();
 const MAX_RPM = 10;
 const MAX_RPD = 200;
 const MAX_MAP_SIZE = 10_000;
+// throttle the O(n) cleanup so we don't pay it on every request once size > 10k.
+// at 50k unique users/day the daily map exceeds the threshold continuously, and
+// without throttling each request would walk the entire map. running it at most
+// once per CLEANUP_INTERVAL_MS bounds the cost regardless of size
+const CLEANUP_INTERVAL_MS = 30_000;
+let lastMinuteCleanupAt = 0;
+let lastDailyCleanupAt = 0;
 
 export type RateLimitResult =
 	| { allowed: true }
@@ -15,16 +22,20 @@ export type RateLimitResult =
 export function checkRateLimit(ip: string): RateLimitResult {
 	const now = Date.now();
 
-	// periodically clean up expired entries to prevent unbounded memory growth
-	if (rateLimits.size > MAX_MAP_SIZE) {
+	// periodically clean up expired entries to prevent unbounded memory growth.
+	// throttled so the O(n) sweep can't fire on every request when the map sits
+	// above MAX_MAP_SIZE (which becomes steady-state at high traffic)
+	if (rateLimits.size > MAX_MAP_SIZE && now - lastMinuteCleanupAt > CLEANUP_INTERVAL_MS) {
 		for (const [key, val] of rateLimits) {
 			if (now > val.resetAt) rateLimits.delete(key);
 		}
+		lastMinuteCleanupAt = now;
 	}
-	if (dailyLimits.size > MAX_MAP_SIZE) {
+	if (dailyLimits.size > MAX_MAP_SIZE && now - lastDailyCleanupAt > CLEANUP_INTERVAL_MS) {
 		for (const [key, val] of dailyLimits) {
 			if (now > val.resetAt) dailyLimits.delete(key);
 		}
+		lastDailyCleanupAt = now;
 	}
 
 	// check both windows BEFORE incrementing, so a daily-limit failure

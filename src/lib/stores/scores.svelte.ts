@@ -82,10 +82,22 @@ class ScoresStore {
 	startScoring(): AbortSignal {
 		this.abortController?.abort();
 		this.abortController = new AbortController();
-		// snapshot the current top of history; after saveToHistory completes that
-		// entry becomes scanHistory[1], but we already have it cached for the
-		// comparison band so the UI never flickers on the stale window
-		this.previousScanForComparison = this.scanHistory[0] ?? null;
+		// snapshot the previous scan for the comparison band. preference order:
+		// 1. the currently-visible results (a just-finished scan that may not yet
+		//    be in scanHistory if its async saveToHistory is still in flight)
+		// 2. scanHistory[0] (most recent saved scan)
+		// without (1) a rapid re-scan would compare against scanHistory's STALE
+		// top entry - i.e. two generations back instead of the immediate previous
+		this.previousScanForComparison = this.hasResults
+			? {
+					id: '',
+					timestamp: new Date().toISOString(),
+					mode: this.mode,
+					averageScore: this.averageScore,
+					passingCount: this.passingCount,
+					results: this.results
+				}
+			: (this.scanHistory[0] ?? null);
 		this.isScoring = true;
 		this.llmFallback = false;
 		this.llmRetryAtMs = null;
