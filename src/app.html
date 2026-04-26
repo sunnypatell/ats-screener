@@ -39,5 +39,36 @@
 	</head>
 	<body data-sveltekit-preload-data="hover">
 		<div style="display: contents">%sveltekit.body%</div>
+		<noscript>
+			<div
+				style="
+					max-width: 640px;
+					margin: 4rem auto;
+					padding: 2rem 1.5rem;
+					font-family: system-ui, sans-serif;
+					line-height: 1.6;
+					color: #e4e4e7;
+					background: rgba(255, 255, 255, 0.04);
+					border: 1px solid rgba(255, 255, 255, 0.1);
+					border-radius: 12px;
+				"
+			>
+				<h1 style="margin: 0 0 0.5rem; font-size: 1.4rem">JavaScript is required</h1>
+				<p style="margin: 0 0 1rem; color: #a1a1aa">
+					ATS Screener parses your resume in the browser, which needs JavaScript to run. The page
+					loads but the scanner cannot start until you enable it.
+				</p>
+				<p style="margin: 0; font-size: 0.9rem; color: #a1a1aa">
+					You can still browse the
+					<a href="/docs" style="color: #06b6d4">documentation</a>, the
+					<a
+						href="https://github.com/sunnypatell/ats-screener"
+						style="color: #06b6d4"
+						rel="noopener"
+						>source code on GitHub</a
+					>, or read the <a href="/docs/legal/privacy/" style="color: #06b6d4">privacy notice</a>.
+				</p>
+			</div>
+		</noscript>
 	</body>
 </html>
