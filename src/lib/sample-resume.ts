@@ -1,12 +1,13 @@
-// fictional but representative resume used by the "try a sample" affordance
-// on the scanner page. plain text so it flows through parseResumeText with
-// realistic section detection: experience with quantified bullets, education
-// with GPA, dedicated skills section, certifications. lets a casual visitor
-// experience the full scoring pipeline without uploading anything personal.
+// fictional but representative resume + paired job description, used by the
+// "try a sample" affordances on the scanner page. plain text so they flow
+// through parseResumeText / parseJobDescription with realistic structure
+// (sections, requirements, keywords). lets a casual visitor experience both
+// the general and targeted scoring pipelines without uploading anything
+// personal or hunting for a real job posting.
 //
 // keep this content evergreen (no specific years that age the example) and
-// neutral (fictional name, no real company URLs). the goal is "good enough
-// to score well" so visitors see a realistic high-score path.
+// neutral (fictional names, no real company URLs). the resume is sized to
+// score well so the demo lands a realistic high score.
 
 export const SAMPLE_RESUME = `Alex Morgan
 alex.morgan@example.com
@@ -56,4 +57,38 @@ PROJECTS
 Open-source resume scorer (github.com/example/scorer)
 - TypeScript SvelteKit app, 2.4k stars on GitHub
 - Parses PDFs in-browser, scores against six ATS profiles
+`;
+
+// matching sample job description. lets the user click "Try sample JD"
+// to demo the targeted-scoring path. content mirrors the resume's
+// strongest signals (TypeScript, AWS, scalable systems, mentorship)
+// so the targeted score lands in a realistic range against the
+// sample resume (versus a wildly mismatched JD which would obscure
+// the demo).
+export const SAMPLE_JD = `Senior Software Engineer
+
+We are hiring a senior software engineer to lead the platform team. You will design and build scalable services that power our core product, mentor engineers, and own end-to-end reliability for high-traffic features.
+
+Responsibilities:
+- Architect and ship distributed services in TypeScript or Go
+- Lead migrations from legacy monoliths to modern microservices
+- Drive observability, autoscaling, and cost-efficiency improvements
+- Mentor mid-level engineers and review code with care
+- Own incident response for the platform on-call rotation
+
+Required:
+- 5+ years building production web applications at scale
+- Strong TypeScript or JavaScript experience
+- Deep familiarity with AWS (EC2, ECS, RDS, S3, IAM)
+- Experience with Docker and Kubernetes in production
+- Track record of mentoring engineers and growing teams
+- Bachelor's degree in Computer Science or equivalent experience
+
+Nice to have:
+- Experience with Svelte, Next.js, or other modern frameworks
+- gRPC or GraphQL API design
+- Background in resume parsing, ATS systems, or HR tech
+- Public open-source contributions
+
+Tech stack: TypeScript, Node.js, React, AWS, Docker, Kubernetes, PostgreSQL, Redis, Kafka.
 `;

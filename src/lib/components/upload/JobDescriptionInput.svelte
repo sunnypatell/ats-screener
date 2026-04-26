@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { scoresStore } from '$stores/scores.svelte';
 	import { resumeStore } from '$stores/resume.svelte';
+	import { SAMPLE_JD } from '$lib/sample-resume';
 
 	let expanded = $state(false);
 
@@ -110,6 +111,15 @@
 				value={scoresStore.jobDescription}
 				oninput={(e) => scoresStore.setJobDescription((e.target as HTMLTextAreaElement).value)}
 			></textarea>
+			{#if !scoresStore.hasJobDescription}
+				<button
+					type="button"
+					class="jd-sample-btn"
+					onclick={() => scoresStore.setJobDescription(SAMPLE_JD)}
+				>
+					Try with a sample job description
+				</button>
+			{/if}
 			{#if scoresStore.hasJobDescription}
 				<div class="jd-status">
 					<svg
@@ -243,6 +253,27 @@
 
 	.jd-textarea::placeholder {
 		color: var(--text-tertiary);
+	}
+
+	.jd-sample-btn {
+		display: inline-block;
+		margin-top: 0.6rem;
+		padding: 0.4rem 0.85rem;
+		background: rgba(6, 182, 212, 0.06);
+		color: var(--accent-cyan);
+		border: 1px solid rgba(6, 182, 212, 0.2);
+		border-radius: var(--radius-md);
+		font-size: 0.8rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition:
+			background 0.15s ease,
+			border-color 0.15s ease;
+	}
+
+	.jd-sample-btn:hover {
+		background: rgba(6, 182, 212, 0.12);
+		border-color: rgba(6, 182, 212, 0.35);
 	}
 
 	.jd-status {
