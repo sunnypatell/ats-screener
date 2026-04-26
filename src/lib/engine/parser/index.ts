@@ -1,5 +1,3 @@
-import { parsePDF } from './pdf-parser';
-import { parseDOCX } from './docx-parser';
 import { detectSections } from './section-detector';
 import { extractContact } from './contact-extractor';
 import { extractDateRanges, extractFirstDateRange } from './date-extractor';
@@ -36,7 +34,11 @@ export async function parseResume(file: File): Promise<ParseResult> {
 		let hasTables = false;
 		let hasImages = false;
 
+		// dynamic-import the per-format parser so pdfjs (~700kb) and mammoth
+		// (~250kb) end up in separate chunks. a user uploading a PDF never
+		// loads mammoth, and a DOCX-only user never loads pdfjs.
 		if (fileType === 'pdf') {
+			const { parsePDF } = await import('./pdf-parser');
 			const result = await parsePDF(file);
 			text = result.text;
 			lines = result.lines;
@@ -45,6 +47,7 @@ export async function parseResume(file: File): Promise<ParseResult> {
 			hasTables = result.hasTables;
 			hasImages = result.hasImages;
 		} else {
+			const { parseDOCX } = await import('./docx-parser');
 			const result = await parseDOCX(file);
 			text = result.text;
 			lines = result.lines;
@@ -508,8 +511,10 @@ function splitIntoEntries(content: string): string[] {
 	return entries.filter((e) => e.trim().length > 0);
 }
 
-export { parsePDF } from './pdf-parser';
-export { parseDOCX } from './docx-parser';
+// note: parsePDF and parseDOCX are NOT re-exported here. they are loaded
+// only via dynamic import inside parseResume so the bundler can split
+// pdfjs and mammoth into per-format chunks. external code that needs
+// them directly should import from './pdf-parser' or './docx-parser'.
 export { detectSections } from './section-detector';
 export { extractContact } from './contact-extractor';
 export { extractDateRanges, extractFirstDateRange } from './date-extractor';
