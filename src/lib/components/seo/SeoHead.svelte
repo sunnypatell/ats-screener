@@ -7,6 +7,7 @@
 		title: string;
 		description: string;
 		ogImage?: string;
+		ogImageAlt?: string;
 		ogType?: 'website' | 'article';
 		canonical?: string;
 		noIndex?: boolean;
@@ -16,6 +17,7 @@
 		title,
 		description,
 		ogImage = '/og-image.png',
+		ogImageAlt = 'ATS Screener: free open-source resume scoring against 6 real ATS platforms.',
 		ogType = 'website',
 		canonical,
 		noIndex = false
@@ -44,9 +46,11 @@
 	<meta property="og:image" content={resolvedOgImage} />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
+	<meta property="og:image:alt" content={ogImageAlt} />
 
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content={title} />
 	<meta name="twitter:description" content={description} />
 	<meta name="twitter:image" content={resolvedOgImage} />
+	<meta name="twitter:image:alt" content={ogImageAlt} />
 </svelte:head>

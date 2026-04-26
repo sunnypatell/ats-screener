@@ -5,6 +5,14 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="theme-color" content="#0a0a1a" />
 		<meta name="author" content="Sunny Patel" />
+		<!-- iOS standalone-PWA polish: keep the dark theme through the status
+		     bar, set a short title for the home-screen icon, opt into
+		     standalone mode (apple-prefixed for safari, generic for others). -->
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-title" content="ATS Screener" />
+		<meta name="application-name" content="ATS Screener" />
 		<!-- per-route robots/og/twitter/title/description/canonical are emitted by
 		     SeoHead. avoid a static robots tag here so noIndex pages don't ship
 		     conflicting directives ("index, follow" + "noindex, nofollow") -->
