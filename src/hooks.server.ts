@@ -7,7 +7,8 @@ import type { Handle } from '@sveltejs/kit';
 const SECURITY_HEADERS: Record<string, string> = {
 	'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
 	'Referrer-Policy': 'strict-origin-when-cross-origin',
-	'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+	'Permissions-Policy':
+		'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=(), browsing-topics=()',
 	'X-Content-Type-Options': 'nosniff',
 	'X-Frame-Options': 'DENY'
 };
