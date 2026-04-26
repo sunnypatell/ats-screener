@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in ATS Screener, please report it responsibly.
+If you discover a security vulnerability in ATS Screener, please report it responsibly. The canonical disclosure channel is also published as a [`/.well-known/security.txt`](https://ats-screener.vercel.app/.well-known/security.txt) per [RFC 9116](https://www.rfc-editor.org/rfc/rfc9116).
 
 **Do not open a public issue.**
 
@@ -26,7 +26,7 @@ This project has both client-side and server-side components. Security considera
 - **API key protection**: Server-side API keys (Gemini, etc.) are stored as environment variables and never exposed to the client.
 - **Rate limiting**: The LLM proxy endpoint implements per-IP rate limiting (10 RPM, 200 RPD) and emits a standard `Retry-After` header on `429`. The cleanup sweep is throttled so an over-threshold map cannot stall request handling.
 - **Input sanitization**: All user inputs (resume text, job descriptions, OG / share query params) are validated and length-capped before processing. Tampered share parameters are clamped (e.g. `pass <= total`) so a crafted URL cannot render impossible state.
-- **Security headers**: All responses set HSTS (1y, includeSubDomains, preload), `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` opting out of camera/microphone/geolocation/payment/usb, `X-Content-Type-Options: nosniff`, and `X-Frame-Options: DENY`.
+- **Security headers**: All responses set HSTS (1y, includeSubDomains, preload), `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` opting out of `camera`, `microphone`, `geolocation`, `payment`, `usb`, plus `interest-cohort` (FLoC) and `browsing-topics` (Topics API), `X-Content-Type-Options: nosniff`, and `X-Frame-Options: DENY`.
 - **Content Security Policy**: Currently shipped in `Content-Security-Policy-Report-Only` mode with violations posted to `/api/csp-report` (logged to Vercel logs only, no persistent storage). The directives cover SvelteKit hydration, Google Fonts, Firebase Auth + Firestore, and the LLM proxies.
 - **Static-file path traversal**: The `/docs/[...slug]` catchall validates that every resolved file path stays under `static/docs/` (resolve + `startsWith` check, plus `realpath` check against symlink escapes).
 
