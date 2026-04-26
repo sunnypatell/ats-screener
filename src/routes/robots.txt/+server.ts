@@ -9,6 +9,7 @@ Disallow: /history
 Disallow: /login
 
 Sitemap: ${url.origin}/sitemap.xml
+Sitemap: ${url.origin}/docs/sitemap-index.xml
 `;
 
 	return new Response(body, {
