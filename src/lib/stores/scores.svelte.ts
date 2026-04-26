@@ -4,6 +4,7 @@ import type { ScoreResult } from '$engine/scorer/types';
 import type { LLMAnalysis } from '$engine/llm/types';
 import type { ParsedJobDescription } from '$engine/job-parser/types';
 import { getFirebase } from '$lib/firebase';
+import { logger } from '$lib/log';
 import { parseSampleRate, shouldSample } from '$lib/sampling';
 import { authStore } from './auth.svelte';
 
@@ -144,7 +145,9 @@ class ScoresStore {
 				...(d.data() as Omit<ScanHistoryEntry, 'id'>)
 			}));
 		} catch (err) {
-			console.warn('failed to load scan history:', err);
+			logger.warn('history.load_failed', {
+				error: err instanceof Error ? err.message : String(err)
+			});
 			this.scanHistory = [];
 		} finally {
 			this.historyLoading = false;
@@ -155,7 +158,7 @@ class ScoresStore {
 	private async saveToHistory(results: ScoreResult[], fileName?: string) {
 		if (!browser || results.length === 0) return;
 		if (!authStore.isAuthenticated || !authStore.user) {
-			console.warn('[scores] skipping history save: user not authenticated');
+			logger.info('history.skip_save', { reason: 'unauthenticated' });
 			return;
 		}
 
@@ -179,7 +182,7 @@ class ScoresStore {
 			const sanitized = JSON.parse(JSON.stringify(entry));
 
 			const docRef = await addDoc(scansRef, sanitized);
-			console.warn('[scores] saved scan to history:', docRef.id);
+			logger.info('history.saved', { docId: docRef.id });
 
 			// write to top-level scan_logs for admin visibility
 			this.writeScanLog(sanitized, uid);
@@ -201,7 +204,9 @@ class ScoresStore {
 			const newEntry: ScanHistoryEntry = { id: docRef.id, ...sanitized };
 			this.scanHistory = [newEntry, ...this.scanHistory].slice(0, MAX_HISTORY);
 		} catch (err) {
-			console.error('[scores] failed to save scan to history:', err);
+			logger.error('history.save_failed', {
+				error: err instanceof Error ? err.message : String(err)
+			});
 		}
 	}
 
@@ -247,7 +252,9 @@ class ScoresStore {
 			}
 			this.scanHistory = [];
 		} catch (err) {
-			console.warn('failed to clear history:', err);
+			logger.warn('history.clear_failed', {
+				error: err instanceof Error ? err.message : String(err)
+			});
 		}
 	}
 
