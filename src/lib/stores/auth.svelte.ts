@@ -1,6 +1,7 @@
 import { browser } from '$app/environment';
 import type { User } from 'firebase/auth';
 import { getFirebase } from '$lib/firebase';
+import { logger } from '$lib/log';
 
 class AuthStore {
 	user = $state<User | null>(null);
@@ -74,7 +75,9 @@ class AuthStore {
 			// fall back to redirect-based sign-in
 			const code = (err as { code?: string })?.code;
 			if (!code || err instanceof TypeError) {
-				console.warn('[auth] popup failed with internal error, trying redirect', err);
+				logger.warn('auth.popup_fallback_to_redirect', {
+					error: err instanceof Error ? err.message : String(err)
+				});
 				try {
 					await signInWithRedirect(auth, provider);
 					return; // redirect navigates away
@@ -112,7 +115,9 @@ class AuthStore {
 			}
 			// send verification email (non-blocking, don't fail signup if this errors)
 			sendEmailVerification(credential.user).catch((err) => {
-				console.warn('[auth] failed to send verification email:', err);
+				logger.warn('auth.verification_email_failed', {
+					error: err instanceof Error ? err.message : String(err)
+				});
 			});
 			// new email sign-up is always a new user
 			this.incrementUserCount();
@@ -186,7 +191,10 @@ class AuthStore {
 			case 'auth/internal-error':
 				return 'Firebase internal error. Check that Google sign-in is enabled in Firebase Console.';
 			default:
-				console.error('[auth] unhandled error code:', code, err);
+				logger.error('auth.unhandled_error', {
+					code: code || 'unknown',
+					error: err instanceof Error ? err.message : String(err)
+				});
 				return `Authentication error (${code || 'unknown'}). Please try again.`;
 		}
 	}
