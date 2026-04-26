@@ -1,0 +1,15 @@
+# RFC 9116 security disclosure file for ATS Screener.
+# https://www.rfc-editor.org/rfc/rfc9116
+
+Contact: mailto:sunnypatel124555@gmail.com
+Expires: 2027-04-26T00:00:00Z
+Preferred-Languages: en
+Canonical: https://ats-screener.vercel.app/.well-known/security.txt
+Policy: https://github.com/sunnypatell/ats-screener/blob/main/SECURITY.md
+Acknowledgments: https://github.com/sunnypatell/ats-screener/blob/main/SECURITY.md
+
+# notes
+# this is a non-commercial student portfolio project. responsible disclosure
+# is appreciated and will be acknowledged in the SECURITY.md policy file
+# above. there is no bug bounty program. report scope is limited to the
+# code in https://github.com/sunnypatell/ats-screener.
