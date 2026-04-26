@@ -43,6 +43,37 @@
 
 	const color = $derived(getScoreColor(score));
 	const verdict = $derived(getScoreLabel(score));
+
+	let canShare = $state(false);
+	let copied = $state(false);
+
+	$effect(() => {
+		// detect Web Share API availability on the client. SSR is false.
+		if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+			canShare = true;
+		}
+	});
+
+	async function handleNativeShare() {
+		const shareUrl = page.url.toString();
+		try {
+			await navigator.share({ title, text: description, url: shareUrl });
+		} catch {
+			// user cancelled the share sheet, or the platform aborted; not an error.
+		}
+	}
+
+	async function handleCopyLink() {
+		const shareUrl = page.url.toString();
+		try {
+			await navigator.clipboard.writeText(shareUrl);
+			copied = true;
+			setTimeout(() => (copied = false), 1800);
+		} catch {
+			// clipboard API blocked; fall back to a prompt
+			window.prompt('Copy this URL', shareUrl);
+		}
+	}
 </script>
 
 <SeoHead {title} {description} {ogImage} ogType="article" />
@@ -70,6 +101,38 @@
 
 		<div class="cta">
 			<a href="/scanner" class="cta-btn">Scan your resume free</a>
+		</div>
+
+		<div class="share-actions">
+			{#if canShare}
+				<button type="button" class="share-action-btn" onclick={handleNativeShare}>
+					<svg
+						width="14"
+						height="14"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<circle cx="18" cy="5" r="3" />
+						<circle cx="6" cy="12" r="3" />
+						<circle cx="18" cy="19" r="3" />
+						<line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+						<line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+					</svg>
+					Share
+				</button>
+			{/if}
+			<button type="button" class="share-action-btn" onclick={handleCopyLink}>
+				{#if copied}
+					Link copied
+				{:else}
+					Copy link
+				{/if}
+			</button>
 		</div>
 
 		<p class="footnote">
@@ -217,6 +280,38 @@
 	.cta-btn:hover {
 		transform: translateY(-1px);
 		box-shadow: 0 0 24px rgba(6, 182, 212, 0.3);
+	}
+
+	.share-actions {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.6rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.share-action-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.45rem 0.95rem;
+		background: var(--glass-bg);
+		color: var(--text-secondary);
+		border: 1px solid var(--glass-border);
+		border-radius: var(--radius-full);
+		font-size: 0.82rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition:
+			color 0.15s ease,
+			border-color 0.15s ease,
+			background 0.15s ease;
+	}
+
+	.share-action-btn:hover {
+		color: var(--accent-cyan);
+		border-color: rgba(6, 182, 212, 0.3);
+		background: rgba(6, 182, 212, 0.05);
 	}
 
 	.footnote {
