@@ -87,13 +87,20 @@
 	// ATS system names for the FlipWords component (short names only to prevent layout shift)
 	const systems = ['Workday', 'Taleo', 'iCIMS', 'Greenhouse', 'Lever', 'SAP SF'];
 
-	// randomize mock scores on each page load so they don't look predetermined
+	// randomize mock scores on each page load so they don't look predetermined.
+	// initialized to fixed defaults so SSR and the initial client render match;
+	// $effect re-rolls on the client after hydration.
 	function randScore(min: number, max: number): number {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	}
-	const mockWorkday = randScore(82, 96);
-	const mockTaleo = randScore(62, 78);
-	const mockGreenhouse = randScore(78, 92);
+	let mockWorkday = $state(89);
+	let mockTaleo = $state(71);
+	let mockGreenhouse = $state(85);
+	$effect(() => {
+		mockWorkday = randScore(82, 96);
+		mockTaleo = randScore(62, 78);
+		mockGreenhouse = randScore(78, 92);
+	});
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->

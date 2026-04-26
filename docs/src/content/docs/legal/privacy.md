@@ -10,7 +10,7 @@ Plain language. No legalese. The author is not a lawyer. Last updated 2026-04-25
 
 ## What this is (and what it is not)
 
-ATS Screener is a personal student portfolio project run by [Sunny Patel](https://sunnypatel.net) from Richmond Hill, Ontario, Canada. It is open source under the MIT license and free to use:
+ATS Screener is a personal student portfolio project run by [Sunny Patel](https://sunnypatel.net) from Ontario, Canada. It is open source under the MIT license and free to use:
 
 - No ads.
 - No premium tier or paid features.
@@ -118,6 +118,6 @@ If something material changes, we will update the "Last updated" date at the top
 
 ## Contact
 
-Email [sunnypatel124555@gmail.com](mailto:sunnypatel124555@gmail.com) for any privacy question, data access request, correction, or deletion request. The author is based in Richmond Hill, Ontario, Canada.
+Email [sunnypatel124555@gmail.com](mailto:sunnypatel124555@gmail.com) for any privacy question, data access request, correction, or deletion request. The author is based in Ontario, Canada.
 
 This document is written in plain language because legalese hides accountability. If anything here is unclear or seems wrong, write in.

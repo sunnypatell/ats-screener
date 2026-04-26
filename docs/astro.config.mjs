@@ -108,7 +108,6 @@ export default defineConfig({
 				{
 					label: 'Project',
 					items: [
-						{ label: 'Public Roadmap', slug: 'roadmap' },
 						{
 							label: 'Changelog',
 							link: 'https://github.com/sunnypatell/ats-screener/blob/main/CHANGELOG.md',

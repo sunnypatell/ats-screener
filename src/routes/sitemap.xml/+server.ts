@@ -14,7 +14,6 @@ const ROUTES: { path: string; changefreq: string; priority: number }[] = [
 	{ path: '/docs/getting-started/introduction/', changefreq: 'monthly', priority: 0.6 },
 	{ path: '/docs/scoring/methodology/', changefreq: 'monthly', priority: 0.6 },
 	{ path: '/docs/platforms/overview/', changefreq: 'monthly', priority: 0.6 },
-	{ path: '/docs/roadmap/', changefreq: 'weekly', priority: 0.5 },
 	{ path: '/docs/legal/privacy/', changefreq: 'monthly', priority: 0.4 }
 ];
 

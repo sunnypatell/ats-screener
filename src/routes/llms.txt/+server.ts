@@ -35,7 +35,6 @@ export const GET: RequestHandler = ({ url }) => {
 
 ## Project
 
-- [Public Roadmap](${origin}/docs/roadmap/): what is shipped, in flight, on deck
 - [Changelog](https://github.com/sunnypatell/ats-screener/blob/main/CHANGELOG.md): versioned release notes
 - [Source code](https://github.com/sunnypatell/ats-screener): MIT-licensed repository
 - [Issue tracker](https://github.com/sunnypatell/ats-screener/issues): bug reports and feature requests

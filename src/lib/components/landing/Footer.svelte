@@ -1,6 +1,10 @@
 <script lang="ts">
 	import Logo from '$components/ui/Logo.svelte';
-	import { version as APP_VERSION } from '../../../../package.json';
+
+	// version is injected at build time via vite's `define` from package.json
+	// importing package.json directly causes a 403 in dev (vite blocks fs access)
+	// and would inline the full manifest into the client bundle in prod
+	const APP_VERSION = __APP_VERSION__;
 </script>
 
 <footer class="footer">
@@ -129,7 +133,6 @@
 			<div class="footer-col">
 				<h4 class="col-title">Resources</h4>
 				<a href="/docs" class="footer-link">Documentation</a>
-				<a href="/docs/roadmap/" class="footer-link">Roadmap</a>
 				<a
 					href="https://github.com/sunnypatell/ats-screener/blob/main/CHANGELOG.md"
 					target="_blank"

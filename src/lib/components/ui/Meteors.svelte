@@ -7,15 +7,28 @@
 		color?: string;
 	} = $props();
 
-	const meteors = $derived(
-		Array.from({ length: count }, () => ({
+	type Meteor = {
+		left: number;
+		delay: number;
+		duration: number;
+		size: number;
+		top: number;
+		tailHeight: number;
+	};
+	// generated in $effect so SSR and the initial client render match. inline
+	// random calls in the template (e.g. tail height) would also diverge, so
+	// every random value is precomputed once per meteor here.
+	let meteors = $state<Meteor[]>([]);
+	$effect(() => {
+		meteors = Array.from({ length: count }, () => ({
 			left: Math.random() * 100,
 			delay: Math.random() * 10,
 			duration: 1.5 + Math.random() * 3,
 			size: 1 + Math.random() * 1.5,
-			top: -10 - Math.random() * 30
-		}))
-	);
+			top: -10 - Math.random() * 30,
+			tailHeight: 60 + Math.random() * 80
+		}));
+	});
 </script>
 
 <div class="meteors-container" aria-hidden="true">
@@ -28,7 +41,7 @@
 				animation-delay: {meteor.delay}s;
 				animation-duration: {meteor.duration}s;
 				width: {meteor.size}px;
-				height: {60 + Math.random() * 80}px;
+				height: {meteor.tailHeight}px;
 			"
 		>
 			<div
