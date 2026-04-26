@@ -59,10 +59,30 @@
 		{/if}
 
 		<div class="nav-links" class:open={mobileOpen}>
-			<a href="/" class="nav-link" class:active={currentPath === '/'}>Home</a>
-			<a href="/scanner" class="nav-link" class:active={currentPath === '/scanner'}>Scanner</a>
-			<a href="/about" class="nav-link" class:active={currentPath === '/about'}>About</a>
-			<a href="/docs" class="nav-link" class:active={currentPath.startsWith('/docs')}>Docs</a>
+			<a
+				href="/"
+				class="nav-link"
+				class:active={currentPath === '/'}
+				aria-current={currentPath === '/' ? 'page' : undefined}>Home</a
+			>
+			<a
+				href="/scanner"
+				class="nav-link"
+				class:active={currentPath === '/scanner'}
+				aria-current={currentPath === '/scanner' ? 'page' : undefined}>Scanner</a
+			>
+			<a
+				href="/about"
+				class="nav-link"
+				class:active={currentPath === '/about'}
+				aria-current={currentPath === '/about' ? 'page' : undefined}>About</a
+			>
+			<a
+				href="/docs"
+				class="nav-link"
+				class:active={currentPath.startsWith('/docs')}
+				aria-current={currentPath.startsWith('/docs') ? 'page' : undefined}>Docs</a
+			>
 			<a
 				href="https://github.com/sunnypatell/ats-screener"
 				target="_blank"
