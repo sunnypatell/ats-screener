@@ -1,11 +1,30 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 
+	// minimal pagefind shape we depend on. pagefind itself is a dynamic
+	// runtime import (not bundled by vite), so we cannot import its
+	// official types here. typing only the surface we touch keeps the
+	// component honest without pulling pagefind into the bundle graph.
+	interface PagefindSearchResult {
+		data: () => Promise<{
+			url: string;
+			meta?: { title?: string };
+			excerpt?: string;
+		}>;
+	}
+	interface PagefindSearchResponse {
+		results: PagefindSearchResult[];
+	}
+	interface PagefindModule {
+		init: () => Promise<void>;
+		search: (q: string) => Promise<PagefindSearchResponse>;
+	}
+
 	let open = $state(false);
 	let query = $state('');
 	let results = $state<Array<{ url: string; title: string; excerpt: string }>>([]);
 	let loading = $state(false);
-	let pagefind: any = null;
+	let pagefind: PagefindModule | null = null;
 	let inputEl: HTMLInputElement | undefined = $state();
 
 	const isMac = $derived(browser ? navigator.platform.toUpperCase().includes('MAC') : true);
@@ -15,7 +34,7 @@
 		try {
 			// load pagefind at runtime (not bundled by vite)
 			const url = '/docs/pagefind/pagefind.js';
-			pagefind = await new Function('return import("' + url + '")')();
+			pagefind = (await new Function('return import("' + url + '")')()) as PagefindModule;
 			await pagefind.init();
 		} catch (err) {
 			console.warn('[search] failed to load pagefind:', err);
@@ -30,8 +49,8 @@
 		loading = true;
 		try {
 			const search = await pagefind.search(query);
-			const loaded = await Promise.all(search.results.slice(0, 8).map((r: any) => r.data()));
-			results = loaded.map((r: any) => ({
+			const loaded = await Promise.all(search.results.slice(0, 8).map((r) => r.data()));
+			results = loaded.map((r) => ({
 				url: r.url,
 				title: r.meta?.title ?? r.url,
 				excerpt: r.excerpt ?? ''
