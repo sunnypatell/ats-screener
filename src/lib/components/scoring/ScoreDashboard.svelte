@@ -9,6 +9,7 @@
 	import { generatePDF } from '$engine/scorer/report';
 	import { getScoreColor, getScoreLabel } from '$engine/scorer/classification';
 	import { computeScanComparison } from '$engine/scorer/comparison';
+	import { pickQuickWins } from '$engine/scorer/quick-wins';
 	import { getExampleFor } from '$engine/suggestions/templates';
 	import type { Suggestion, StructuredSuggestion } from '$engine/scorer/types';
 
@@ -16,6 +17,12 @@
 	const avgScore = $derived(scoresStore.averageScore);
 	const passCount = $derived(scoresStore.passingCount);
 	const totalCount = $derived(scoresStore.results.length);
+
+	// top 3 highest-impact suggestions across all platforms, deduplicated
+	// by summary text. surfaces in the Quick Wins band so users see what
+	// to fix first without scrolling through every per-platform tab.
+	// reuses the existing impactColorMap declared further down.
+	const quickWins = $derived(pickQuickWins(scoresStore.results, 3));
 
 	// toggle between grid cards and detailed breakdown view
 	let activeView = $state<'cards' | 'detailed'>('cards');
@@ -415,6 +422,49 @@
 				</div>
 			{/if}
 		</div>
+
+		<!--
+			quick wins band: top 3 highest-impact suggestions across all
+			platforms (deduplicated). surfaces what to fix first without
+			users having to scroll through every per-platform tab. only
+			renders when there is at least one structured suggestion.
+		-->
+		{#if quickWins.length > 0}
+			<div class="quick-wins-band">
+				<div class="quick-wins-header">
+					<svg
+						class="quick-wins-icon"
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+					</svg>
+					<span>Quick Wins</span>
+					<span class="quick-wins-subtle">Fix these first</span>
+				</div>
+				<ol class="quick-wins-list">
+					{#each quickWins as win, i (win.summary)}
+						<li class="quick-wins-item">
+							<span class="quick-wins-rank">{i + 1}</span>
+							<span class="quick-wins-summary">{win.summary}</span>
+							<span
+								class="quick-wins-impact"
+								style="color: {impactColorMap[win.impact] ?? '#a1a1aa'};"
+							>
+								{win.impact}
+							</span>
+						</li>
+					{/each}
+				</ol>
+			</div>
+		{/if}
 
 		<!-- view toggle + export -->
 		<div class="toolbar">
@@ -1144,6 +1194,93 @@
 		background: rgba(219, 39, 119, 0.18);
 		border-color: rgba(219, 39, 119, 0.5);
 		box-shadow: 0 0 14px rgba(219, 39, 119, 0.08);
+	}
+
+	/* quick wins band: surfaces top 3 highest-impact suggestions before
+	   the user dives into per-platform detail. visually weighted between
+	   the dashboard-header and the toolbar so it feels like a primary
+	   recommendation, not a secondary chip. */
+	.quick-wins-band {
+		margin-bottom: 1.5rem;
+		padding: 1.1rem 1.25rem;
+		background:
+			linear-gradient(135deg, rgba(6, 182, 212, 0.04), rgba(139, 92, 246, 0.03)), var(--glass-bg);
+		border: 1px solid rgba(6, 182, 212, 0.18);
+		border-radius: var(--radius-lg, 14px);
+	}
+
+	.quick-wins-header {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-bottom: 0.85rem;
+		font-size: 0.85rem;
+		font-weight: 600;
+		color: var(--text-primary);
+		letter-spacing: 0.02em;
+	}
+
+	.quick-wins-icon {
+		color: var(--accent-cyan);
+		flex-shrink: 0;
+	}
+
+	.quick-wins-subtle {
+		margin-left: auto;
+		font-size: 0.72rem;
+		font-weight: 500;
+		color: var(--text-tertiary);
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+
+	.quick-wins-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.quick-wins-item {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 0.55rem 0.75rem;
+		background: rgba(255, 255, 255, 0.02);
+		border: 1px solid rgba(255, 255, 255, 0.05);
+		border-radius: var(--radius-md, 8px);
+	}
+
+	.quick-wins-rank {
+		flex-shrink: 0;
+		width: 22px;
+		height: 22px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 0.72rem;
+		font-weight: 700;
+		color: var(--accent-cyan);
+		background: rgba(6, 182, 212, 0.1);
+		border: 1px solid rgba(6, 182, 212, 0.25);
+		border-radius: 50%;
+	}
+
+	.quick-wins-summary {
+		flex: 1;
+		font-size: 0.88rem;
+		color: var(--text-primary);
+		line-height: 1.5;
+	}
+
+	.quick-wins-impact {
+		flex-shrink: 0;
+		font-size: 0.7rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 	}
 
 	/* toolbar: toggle + export */
