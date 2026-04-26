@@ -5,6 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Anonymous one-scan trial**: visitors can now run a single scan without signing in. The first scan in a browser session is free; signing in unlocks repeat scans, scan history, and trend tracking. Soft localStorage-based gate, not a hard auth boundary.
+- **Paste-and-scan flow**: a textarea below the file uploader accepts pasted resume text directly. Same scoring runs whether you upload a PDF, a DOCX, or paste raw text. New `parseResumeText` parser entry runs the same downstream extraction (sections, contact, experience, education, skills) as the file path. 15 unit tests cover empty input, structural extraction, metadata defaults, CRLF normalization, and result-shape compatibility.
+- **Try-a-sample-resume**: a one-click button on the scanner loads a fictional but representative resume, so casual visitors can experience the full scoring flow without uploading anything personal.
+- **Privacy notice**: lives at `/docs/legal/privacy/` (Starlight). Plain-language coverage of what is collected (account info, capped scan history), what is not (raw resume text, full job description, file binaries), how scoring requests flow through the serverless function, third-party providers, retention, and your practical rights regardless of jurisdiction. Includes a per-statute reading on whether PIPEDA, CCPA, and GDPR formally apply to a non-commercial student portfolio project that accepts voluntary donations.
+- **Public roadmap**: hand-curated marketing-toned view at `/docs/roadmap/` with sections for Recently shipped, In flight, On deck, Stretch goals, and Not planned.
+- **FAQ + FAQPage JSON-LD on /about**: 7 author-curated Q&As covering free/open-source, anonymous trial, paste-and-scan, no vendor affiliation, server-side data flow, score interpretation, and how to support. Visible UI uses native `<details>` elements; structured data mirrors visible content per Google's rich-result rules.
+- **`/llms.txt`** at the site root for AI-crawler discoverability (Anthropic, OpenAI, Perplexity standard).
+- **`/.well-known/security.txt`** per RFC 9116, listing Contact, Expires, Canonical, and Policy fields for responsible disclosure.
+- **PWA manifest** at `/manifest.webmanifest` with start_url, display, theme color, and icons. App is now installable from supported browsers.
+- **RSS 2.0 feed** at `/releases.xml` parsed from `CHANGELOG.md`, with ETag round-trip and CDN caching.
+- **Footer Resources** column gains a Roadmap link (Changelog points straight at the GitHub CHANGELOG.md to keep one source of truth).
+- **`/api/version`** endpoint returning `{ version, commit, branch, env }` for ops.
+- **`/api/log-error`** sampled client-error reporter with a 60/min rolling cap.
+- **`/api/vitals`** sampled web-vitals collector (LCP and CLS) using native PerformanceObserver and `navigator.sendBeacon`.
+- **`/api/admin/rate-limit-stats`** with token gate (503 fail-closed when no token configured).
+- **noscript fallback** with key links so JS-disabled visitors and bots see meaningful content.
+- **Skip-to-content link** in the root layout.
+- **ARIA live region** on the scanner announcing scan state to screen readers.
+- **aria-current=page** on Navbar links.
+- **og:image:alt + twitter:image:alt** for social-share accessibility.
+- **iOS PWA polish** meta tags (apple-mobile-web-app-capable, status-bar-style, application-name).
+- **`color-scheme=dark`** so native form controls render in dark mode instead of flashing white.
+- **`format-detection=telephone=no`** so mobile browsers stop auto-linking numeric strings as phone numbers.
+- **Native Web Share + Copy Link** buttons on the `/share` landing page.
+
+### Changed
+
+- **Permissions-Policy** extended with `interest-cohort=()` and `browsing-topics=()` to opt out of FLoC and the Topics API.
+- **Sitemap and robots.txt**: main sitemap grew from 3 entries to 9 (now includes key docs landings); robots.txt references both the main sitemap and the docs sitemap-index for full crawl coverage.
+- **Lazy-loaded resume parser**: pdfjs and mammoth now ship in separate chunks, so a PDF-only user no longer loads mammoth and vice versa. Prior 880KB combined parser chunk eliminated.
+- **CDN caching** on `/sitemap.xml`, `/robots.txt`, `/llms.txt`, `/releases.xml`, `/api/og`, and `/privacy` page (where applicable). All key static-ish endpoints serve from edge cache with stale-while-revalidate.
+- **`/api/og` function-level memo** (in addition to existing CDN cache) defends against cache-bypass headers.
+- **og-image.png** recompressed from 640KB to 247KB (61% smaller) via sharp palette mode.
+- **Auto-noindex preview deploys**: any `*.vercel.app` host that is not the production hostname now emits `meta robots="noindex, nofollow"` automatically.
+- **PR template** rewritten as a clean four-section scaffold (What changes / Why / Verification / Notes) for external contributors.
+- **PR #10 followup fix**: `loadFromHistory` now aborts in-flight scans before swapping results, and clears stale `llmAnalysis` from prior sessions.
+
+### Fixed
+
+- **Critical CVEs**: `jspdf` 4.2.0 -> 4.2.1 (HTML injection) and transitive `protobufjs` -> 7.5.5 via `firebase` bump (arbitrary code execution).
+- **Focus indicators** restored on previously-suppressed inputs (SearchModal search-input, login `.field-input`, uploader privacy-link).
+- **`prefers-reduced-motion`** now also kills `animation-delay`, `transition-delay`, and document-level `scroll-behavior`. JS-driven smooth-scroll opt-in via new `$lib/a11y.ts`.
+- **`scan_logs` writes** are now sampled via deterministic hash (`PUBLIC_SCAN_LOG_SAMPLE_RATE`, default 1.0) so high-traffic deployments can dial the rate down without redeploying.
+- **Skip post-save `loadHistory` reload**: `saveToHistory` now mutates `scanHistory` locally, eliminating one Firestore read query per scan.
+
+### Tests
+
+- 223 tests passing (up from 184). Added coverage for sampling, CSP throttle, no-raw-html guard, `parseResumeText`, and rate-limit stats.
+
 ## [0.2.0] - 2026-04-25
 
 ### Added
