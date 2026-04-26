@@ -11,6 +11,7 @@
 	import { computeScanComparison } from '$engine/scorer/comparison';
 	import { pickQuickWins } from '$engine/scorer/quick-wins';
 	import { getExampleFor } from '$engine/suggestions/templates';
+	import { logger } from '$lib/log';
 	import type { Suggestion, StructuredSuggestion } from '$engine/scorer/types';
 
 	// derived stats for the summary card header
@@ -72,7 +73,9 @@
 		try {
 			await generatePDF();
 		} catch (err) {
-			console.error('[export] pdf generation failed:', err);
+			logger.error('export.pdf_failed', {
+				error: err instanceof Error ? err.message : String(err)
+			});
 		} finally {
 			isExporting = false;
 		}

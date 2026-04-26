@@ -1,4 +1,5 @@
 import type { RequestHandler } from './$types';
+import { logger } from '$lib/log';
 import { isExtensionNoise, reportKey, shouldLogReport } from './throttle';
 
 // receives violation reports from the Content-Security-Policy-Report-Only
@@ -16,7 +17,10 @@ export const POST: RequestHandler = async ({ request }) => {
 		// drop browser-extension noise before the throttle so its rate-cap
 		// budget is reserved for genuine CSP violations from our own code.
 		if (body && !isExtensionNoise(body) && shouldLogReport(reportKey(body))) {
-			console.warn('[csp-violation]', ct, JSON.stringify(body).slice(0, 1000));
+			logger.warn('csp.violation', {
+				contentType: ct,
+				body: JSON.stringify(body).slice(0, 1000)
+			});
 		}
 	} catch {
 		// swallow; reporting must never break the request path

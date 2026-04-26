@@ -1,9 +1,10 @@
 import type { RequestHandler } from './$types';
+import { logger } from '$lib/log';
 
 // receives sampled core-web-vitals reports from $lib/web-vitals.
-// console.warn only, no storage. mirrors the /api/log-error pattern so
-// vercel log aggregation surfaces the trickle without spending a
-// firestore write or a paid telemetry seat.
+// emits structured logs only (via $lib/log), no storage. mirrors the
+// /api/log-error pattern so vercel log aggregation surfaces the trickle
+// without spending a firestore write or a paid telemetry seat.
 //
 // the client samples before posting; we focus on shape clamping plus a
 // per-instance hard cap so a runaway client cannot flood logs.
@@ -46,7 +47,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	try {
 		const body = (await request.json().catch(() => null)) as VitalsReport | null;
 		if (body && shouldLog(Date.now())) {
-			console.warn('[vitals]', {
+			logger.info('vitals.report', {
 				// LCP is wall-clock ms since navigation start; cap at 60s to
 				// drop pathological outliers (a wedged page that never resolved).
 				lcp: clipNumber(body.lcp, 60_000),

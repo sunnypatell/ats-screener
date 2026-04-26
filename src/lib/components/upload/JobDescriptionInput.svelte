@@ -2,6 +2,7 @@
 	import { scoresStore } from '$stores/scores.svelte';
 	import { resumeStore } from '$stores/resume.svelte';
 	import { SAMPLE_JD } from '$lib/sample-resume';
+	import { logger } from '$lib/log';
 
 	let expanded = $state(false);
 
@@ -54,7 +55,9 @@
 				// preview is best-effort - if the parser throws (corrupt input,
 				// transient import failure), keep the previous parsed state and
 				// log so it's grep-able in console without breaking the scan flow
-				console.warn('[jd-preview] parse failed:', err);
+				logger.warn('jd_preview.parse_failed', {
+					error: err instanceof Error ? err.message : String(err)
+				});
 			}
 		})();
 		return () => {

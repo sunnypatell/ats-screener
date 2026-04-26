@@ -1,4 +1,5 @@
 import type { RequestHandler } from './$types';
+import { logger } from '$lib/log';
 
 // receives sampled client-side error reports from $lib/error-reporter.
 // logs to stdout only (no storage), so vercel log aggregation surfaces
@@ -46,7 +47,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			// load-bearing fields; url/ua/source/line/col help triage; everything
 			// else is dropped to keep log lines small and out of the way of
 			// other diagnostics.
-			console.warn('[client-error]', {
+			logger.warn('client.error', {
 				message: clip(body.message, 500),
 				source: clip(body.source, 200),
 				line: typeof body.line === 'number' ? body.line : null,

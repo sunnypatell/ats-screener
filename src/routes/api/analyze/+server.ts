@@ -2,6 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
 import { buildFullScoringPrompt, buildJDAnalysisPrompt } from '$engine/llm/prompts';
+import { logger } from '$lib/log';
 import { hashPrompt, getCached, setCached } from './cache';
 import { checkRateLimit } from './rate-limiter';
 
@@ -111,7 +112,11 @@ async function callLLM(
 
 			if (!response.ok) {
 				const errBody = await response.text().catch(() => '');
-				console.warn(`${provider.name} returned ${response.status}: ${errBody.slice(0, 300)}`);
+				logger.warn('llm.provider_http_error', {
+					provider: provider.name,
+					status: response.status,
+					errorPreview: errBody.slice(0, 300)
+				});
 				continue;
 			}
 
@@ -119,24 +124,24 @@ async function callLLM(
 			const text = provider.extractText(data);
 
 			if (!text) {
-				console.warn(`${provider.name} returned empty text, trying next provider`);
+				logger.warn('llm.provider_empty_text', { provider: provider.name });
 				continue;
 			}
 
 			// validate JSON before accepting this provider's response
 			const parsed = extractJSON(text);
 			if (!parsed || typeof parsed !== 'object') {
-				console.warn(`${provider.name} returned unparseable JSON, trying next provider`);
+				logger.warn('llm.provider_unparseable_json', { provider: provider.name });
 				continue;
 			}
 
 			return { parsed: parsed as Record<string, unknown>, provider: provider.name };
 		} catch (err) {
 			const isTimeout = err instanceof DOMException && err.name === 'AbortError';
-			console.warn(
-				`${provider.name} ${isTimeout ? 'timed out' : 'failed'}:`,
-				isTimeout ? `exceeded ${timeoutMs}ms` : err
-			);
+			logger.warn(isTimeout ? 'llm.provider_timeout' : 'llm.provider_failed', {
+				provider: provider.name,
+				...(isTimeout ? { timeoutMs } : { error: err instanceof Error ? err.message : String(err) })
+			});
 			continue;
 		}
 	}

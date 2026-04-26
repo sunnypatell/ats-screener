@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import { logger } from '$lib/log';
 
 	// minimal pagefind shape we depend on. pagefind itself is a dynamic
 	// runtime import (not bundled by vite), so we cannot import its
@@ -37,7 +38,9 @@
 			pagefind = (await new Function('return import("' + url + '")')()) as PagefindModule;
 			await pagefind.init();
 		} catch (err) {
-			console.warn('[search] failed to load pagefind:', err);
+			logger.warn('search.pagefind_load_failed', {
+				error: err instanceof Error ? err.message : String(err)
+			});
 		}
 	}
 

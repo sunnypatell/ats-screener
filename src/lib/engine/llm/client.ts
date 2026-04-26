@@ -1,6 +1,7 @@
 import type { ScoreResult, Suggestion, StructuredSuggestion } from '$engine/scorer/types';
 import type { LLMAnalysis, LLMRequestPayload, LLMResponse } from './types';
 import { generateFallbackAnalysis } from './fallback';
+import { logger } from '$lib/log';
 
 const CLIENT_TIMEOUT_MS = 65_000;
 
@@ -43,7 +44,10 @@ export async function scoreLLM(
 
 		if (!response.ok) {
 			const data = await response.json().catch(() => ({}));
-			console.warn('[scoreLLM] API returned', response.status, data.error ?? 'unknown error');
+			logger.warn('llm.api_error', {
+				status: response.status,
+				error: data.error ?? 'unknown error'
+			});
 			if (response.status === 429) {
 				const headerVal = response.headers.get('Retry-After');
 				const retryAfterSec =
@@ -60,9 +64,9 @@ export async function scoreLLM(
 		const data = await response.json();
 
 		if (data._fallback || !data.results || !Array.isArray(data.results)) {
-			console.warn(
-				'[scoreLLM] response missing results or is fallback, falling back to rule-based'
-			);
+			logger.warn('llm.fallback_to_rule_based', {
+				reason: 'response missing results or fallback flag'
+			});
 			return { status: 'error' };
 		}
 
@@ -80,7 +84,7 @@ export async function scoreLLM(
 	} catch (err) {
 		if (err instanceof DOMException && err.name === 'AbortError') {
 			if (external?.aborted) return { status: 'cancelled' };
-			console.warn('LLM scoring timed out after', CLIENT_TIMEOUT_MS, 'ms');
+			logger.warn('llm.client_timeout', { timeoutMs: CLIENT_TIMEOUT_MS });
 		}
 		return { status: 'error' };
 	} finally {
