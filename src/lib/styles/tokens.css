@@ -35,7 +35,7 @@
 	/* text */
 	--text-primary: rgba(255, 255, 255, 0.95);
 	--text-secondary: rgba(255, 255, 255, 0.65);
-	--text-tertiary: rgba(255, 255, 255, 0.4);
+	--text-tertiary: rgba(255, 255, 255, 0.5);
 	--text-accent: var(--accent-cyan);
 
 	/* === typography === */

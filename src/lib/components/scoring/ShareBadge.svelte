@@ -830,7 +830,7 @@
 	.action-btn.linkedin {
 		background: rgba(10, 102, 194, 0.15);
 		border-color: rgba(10, 102, 194, 0.3);
-		color: #0a66c2;
+		color: var(--accent-blue);
 	}
 
 	.action-btn.linkedin:hover {
