@@ -10,12 +10,20 @@
 			a: 'Yes. The app is free, open source under the MIT license, and has no paywall, no premium tier, and no ads. It is funded as a personal student project, not a business.'
 		},
 		{
+			q: 'Do I have to create an account to scan my resume?',
+			a: 'No. You can run one anonymous scan without signing in to try the tool. After the first scan, signing in unlocks repeat scans, scan history, and trend tracking across multiple uploads. Anonymous scans are not saved on our servers.'
+		},
+		{
+			q: 'Can I paste resume text instead of uploading a file?',
+			a: 'Yes. The scanner page has a paste-text option below the file upload area. Plain text works best, especially when section headings (Experience, Education, Skills) are clearly marked. The same scoring runs whether you upload a PDF, a DOCX, or paste raw text.'
+		},
+		{
 			q: 'Is ATS Screener affiliated with Workday, Taleo, iCIMS, Greenhouse, Lever, or SuccessFactors?',
 			a: 'No. The scoring simulates these platforms based on publicly documented behaviour, independent research, and community knowledge. No proprietary algorithms or trade secrets are reverse engineered or used.'
 		},
 		{
 			q: 'Is my resume uploaded to your servers?',
-			a: 'PDF and DOCX parsing happens entirely inside your browser. The extracted text is sent over TLS to AI scoring providers, but it is never stored on our servers as durable data. The full privacy notice covers retention, third parties, and your rights under PIPEDA.'
+			a: 'PDF and DOCX parsing happens entirely inside your browser. The extracted text is sent over TLS to AI scoring providers, but it is never stored on our servers as durable data. The full privacy notice covers retention, third parties, and your rights.'
 		},
 		{
 			q: 'Can I trust the scores I see?',
