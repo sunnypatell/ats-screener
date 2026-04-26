@@ -66,6 +66,35 @@ export function shouldLogReport(
 	return true;
 }
 
+// browser-extension prefixes that almost always indicate user-installed
+// extensions firing CSP violations against our pages, not real problems
+// with our own code. dropping these stops the log channel from filling
+// up with noise from popular extensions (ad blockers, password managers,
+// dev tools that inject content scripts).
+const EXTENSION_PREFIXES = [
+	'chrome-extension://',
+	'moz-extension://',
+	'safari-extension://',
+	'safari-web-extension://'
+];
+
+// returns true if the report should be silently dropped before throttling.
+// runs ahead of shouldLogReport so dropped reports do not consume any of the
+// per-minute cap, leaving room for genuine violations.
+export function isExtensionNoise(body: unknown): boolean {
+	const r = extractReport(body);
+	if (!r) return false;
+	const sources = [r['blocked-uri'], r['source-file'], r['document-uri']];
+	for (const s of sources) {
+		if (typeof s === 'string') {
+			for (const prefix of EXTENSION_PREFIXES) {
+				if (s.startsWith(prefix)) return true;
+			}
+		}
+	}
+	return false;
+}
+
 // derive the dedupe key from a parsed csp report body. accepts both the
 // legacy {csp-report: {...}} shape and the modern reporting api list shape.
 export function reportKey(body: unknown): string {

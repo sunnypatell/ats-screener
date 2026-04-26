@@ -1,5 +1,5 @@
 import type { RequestHandler } from './$types';
-import { reportKey, shouldLogReport } from './throttle';
+import { isExtensionNoise, reportKey, shouldLogReport } from './throttle';
 
 // receives violation reports from the Content-Security-Policy-Report-Only
 // header in src/hooks.server.ts. logs to stdout only (no storage) so
@@ -13,7 +13,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		// browsers send either Content-Type: application/csp-report (legacy)
 		// or application/reports+json (modern Reporting API)
 		const body = await request.json().catch(() => null);
-		if (body && shouldLogReport(reportKey(body))) {
+		// drop browser-extension noise before the throttle so its rate-cap
+		// budget is reserved for genuine CSP violations from our own code.
+		if (body && !isExtensionNoise(body) && shouldLogReport(reportKey(body))) {
 			console.warn('[csp-violation]', ct, JSON.stringify(body).slice(0, 1000));
 		}
 	} catch {

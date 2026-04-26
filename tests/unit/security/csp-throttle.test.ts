@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	createThrottle,
+	isExtensionNoise,
 	reportKey,
 	shouldLogReport
 } from '../../../src/routes/api/csp-report/throttle';
@@ -32,6 +33,56 @@ describe('reportKey', () => {
 	it('falls back to "unknown" when fields are missing', () => {
 		expect(reportKey({})).toBe('unknown|unknown');
 		expect(reportKey(null)).toBe('unknown|unknown');
+	});
+});
+
+describe('isExtensionNoise', () => {
+	it('flags chrome-extension blocked-uri', () => {
+		const body = {
+			'csp-report': {
+				'violated-directive': 'script-src',
+				'blocked-uri': 'chrome-extension://abc/script.js'
+			}
+		};
+		expect(isExtensionNoise(body)).toBe(true);
+	});
+
+	it('flags moz-extension source-file', () => {
+		const body = {
+			'csp-report': {
+				'violated-directive': 'script-src',
+				'blocked-uri': 'inline',
+				'source-file': 'moz-extension://xyz/inject.js'
+			}
+		};
+		expect(isExtensionNoise(body)).toBe(true);
+	});
+
+	it('flags safari-web-extension document-uri', () => {
+		const body = {
+			'csp-report': {
+				'violated-directive': 'connect-src',
+				'blocked-uri': 'https://x',
+				'document-uri': 'safari-web-extension://abc/page.html'
+			}
+		};
+		expect(isExtensionNoise(body)).toBe(true);
+	});
+
+	it('lets a real https violation through', () => {
+		const body = {
+			'csp-report': {
+				'violated-directive': 'script-src',
+				'blocked-uri': 'https://evil.example/inject.js',
+				'document-uri': 'https://ats-screener.vercel.app/scanner'
+			}
+		};
+		expect(isExtensionNoise(body)).toBe(false);
+	});
+
+	it('returns false for an empty body', () => {
+		expect(isExtensionNoise({})).toBe(false);
+		expect(isExtensionNoise(null)).toBe(false);
 	});
 });
 
