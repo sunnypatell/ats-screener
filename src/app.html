@@ -31,6 +31,15 @@
 		/>
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<!-- dns-prefetch (not preconnect) for firebase auth hosts. lighter
+		     than preconnect, warms the DNS resolver for visitors who end up
+		     signing in without paying the TLS-handshake cost up front for
+		     visitors who never do. -->
+		<link rel="dns-prefetch" href="//accounts.google.com" />
+		<link rel="dns-prefetch" href="//apis.google.com" />
+		<link rel="dns-prefetch" href="//securetoken.googleapis.com" />
+		<link rel="dns-prefetch" href="//identitytoolkit.googleapis.com" />
+		<link rel="dns-prefetch" href="//firestore.googleapis.com" />
 		<link
 			href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
 			rel="stylesheet"
