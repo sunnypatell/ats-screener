@@ -106,8 +106,15 @@ export default defineConfig({
 					]
 				},
 				{
-					label: 'Release Notes',
-					items: [{ label: 'Changelog', slug: 'release-notes/changelog' }]
+					label: 'Project',
+					items: [
+						{ label: 'Public Roadmap', slug: 'roadmap' },
+						{
+							label: 'Changelog',
+							link: 'https://github.com/sunnypatell/ats-screener/blob/main/CHANGELOG.md',
+							attrs: { target: '_blank', rel: 'noopener' }
+						}
+					]
 				},
 				{
 					label: 'Legal',
