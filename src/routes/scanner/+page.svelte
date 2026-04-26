@@ -91,12 +91,6 @@
 			if (llmResult.status === 'cancelled' || signal.aborted) return;
 
 			if (llmResult.status === 'ok' && llmResult.results.length > 0) {
-				console.log(
-					'[scan] LLM scoring complete:',
-					llmResult.results.length,
-					'results from',
-					llmResult.provider
-				);
 				scoresStore.finishScoring(llmResult.results, resumeStore.file?.name);
 				scoresStore.finishAnalyzing(null, false);
 				// burn the anonymous-trial token on first successful scan so the
@@ -106,12 +100,10 @@
 			}
 
 			// all LLM providers failed (or rate-limited), fall back to deterministic rule-based scoring
-			console.log('[scan] LLM unavailable, using rule-based scoring');
 			const { scoreResume } = await import('$engine/scorer/engine');
 			const input = buildScoringInput();
 			const results = scoreResume(input);
 			if (signal.aborted) return;
-			console.log('[scan] rule-based scoring complete:', results.length, 'results');
 			scoresStore.finishScoring(results, resumeStore.file?.name);
 			// rule-based fallback still counts as a completed anonymous scan
 			if (!authStore.isAuthenticated) anonTrial.markUsed();
