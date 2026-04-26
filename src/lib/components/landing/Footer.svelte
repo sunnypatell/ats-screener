@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Logo from '$components/ui/Logo.svelte';
+	import { version as APP_VERSION } from '../../../../package.json';
 </script>
 
 <footer class="footer">
@@ -185,7 +186,19 @@
 			<p class="copyright">
 				&copy; {new Date().getFullYear()} Sunny Patel. Open source under MIT License.
 			</p>
-			<p class="tech-stack">Built with SvelteKit 5, TypeScript, and open source.</p>
+			<p class="tech-stack">
+				<a
+					href="https://github.com/sunnypatell/ats-screener/blob/main/CHANGELOG.md"
+					target="_blank"
+					rel="noopener"
+					class="version-badge"
+					title="Open the changelog on GitHub"
+				>
+					v{APP_VERSION}
+				</a>
+				<span class="tech-stack-divider" aria-hidden="true">·</span>
+				Built with SvelteKit 5, TypeScript, and open source.
+			</p>
 		</div>
 	</div>
 </footer>
@@ -351,6 +364,35 @@
 		font-size: 0.8rem;
 		color: var(--text-tertiary);
 		opacity: 0.6;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		flex-wrap: wrap;
+	}
+
+	.version-badge {
+		display: inline-block;
+		padding: 0.05rem 0.45rem;
+		font-family: var(--font-mono, ui-monospace, monospace);
+		font-size: 0.72rem;
+		color: var(--accent-cyan);
+		background: rgba(6, 182, 212, 0.08);
+		border: 1px solid rgba(6, 182, 212, 0.18);
+		border-radius: var(--radius-sm, 4px);
+		text-decoration: none;
+		transition:
+			border-color 0.15s ease,
+			background 0.15s ease;
+	}
+
+	.version-badge:hover,
+	.version-badge:focus-visible {
+		border-color: rgba(6, 182, 212, 0.4);
+		background: rgba(6, 182, 212, 0.14);
+	}
+
+	.tech-stack-divider {
+		opacity: 0.5;
 	}
 
 	@media (max-width: 768px) {
