@@ -25,7 +25,8 @@
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage",
 		"test:e2e": "playwright test",
-		"validate": "pnpm check && pnpm lint && pnpm test"
+		"validate": "pnpm check && pnpm lint && pnpm format:check && pnpm test && pnpm build",
+		"gate": "pnpm validate"
 	},
 	"dependencies": {
 		"@number-flow/svelte": "^0.3.11",
