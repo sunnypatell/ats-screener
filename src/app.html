@@ -5,6 +5,13 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="theme-color" content="#0a0a1a" />
 		<meta name="author" content="Sunny Patel" />
+		<!-- the app is dark-only. tells the browser to render native form controls
+		     (autocomplete dropdowns, scrollbars, date pickers, autofill yellow,
+		     etc.) in dark mode so they do not flash light against the dark UI. -->
+		<meta name="color-scheme" content="dark" />
+		<!-- prevents mobile browsers from auto-linking numeric strings as phone
+		     numbers (e.g. "10+ years" misread, scan scores misread). -->
+		<meta name="format-detection" content="telephone=no" />
 		<!-- iOS standalone-PWA polish: keep the dark theme through the status
 		     bar, set a short title for the home-screen icon, opt into
 		     standalone mode (apple-prefixed for safari, generic for others). -->
