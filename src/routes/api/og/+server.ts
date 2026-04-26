@@ -1,4 +1,5 @@
 import { ImageResponse } from '@vercel/og';
+import { clamp, parseInt0 } from '$lib/clamp';
 import type { RequestHandler } from './$types';
 
 // runs on the default (node) serverless runtime - the deprecated `runtime: 'edge'`
@@ -23,15 +24,6 @@ function tierLabel(score: number): string {
 	if (score >= 60) return 'GOOD';
 	if (score >= 40) return 'NEEDS WORK';
 	return 'POOR';
-}
-
-function clamp(n: number, min: number, max: number): number {
-	return Math.max(min, Math.min(max, n));
-}
-
-function parseInt0(v: string | null, fallback: number, min: number, max: number): number {
-	const n = v ? Number.parseInt(v, 10) : NaN;
-	return Number.isFinite(n) ? clamp(n, min, max) : fallback;
 }
 
 // function-level LRU memo of rendered PNG bytes. the vercel cdn cache

@@ -2,23 +2,15 @@
 	import { page } from '$app/state';
 	import SeoHead from '$components/seo/SeoHead.svelte';
 	import { getScoreColor, getScoreLabel } from '$engine/scorer/classification';
+	import { parseInt0 } from '$lib/clamp';
 
-	function clamp(n: number, min: number, max: number): number {
-		return Math.max(min, Math.min(max, n));
-	}
-
-	function parseIntSafe(v: string | null, fallback: number, min: number, max: number): number {
-		const n = v ? Number.parseInt(v, 10) : NaN;
-		return Number.isFinite(n) ? clamp(n, min, max) : fallback;
-	}
-
-	const score = $derived(parseIntSafe(page.url.searchParams.get('score'), 0, 0, 100));
+	const score = $derived(parseInt0(page.url.searchParams.get('score'), 0, 0, 100));
 	// derive total first, then cap pass at total so a tampered URL like
 	// ?pass=6&total=1 cannot render "6 of 1 ATS systems passed"
-	const total = $derived(parseIntSafe(page.url.searchParams.get('total'), 6, 1, 6));
-	const pass = $derived(Math.min(parseIntSafe(page.url.searchParams.get('pass'), 0, 0, 6), total));
+	const total = $derived(parseInt0(page.url.searchParams.get('total'), 6, 1, 6));
+	const pass = $derived(Math.min(parseInt0(page.url.searchParams.get('pass'), 0, 0, 6), total));
 	const hasDelta = $derived(page.url.searchParams.has('delta'));
-	const delta = $derived(parseIntSafe(page.url.searchParams.get('delta'), 0, -100, 100));
+	const delta = $derived(parseInt0(page.url.searchParams.get('delta'), 0, -100, 100));
 
 	// og:image points at the dynamic edge endpoint with the same query, so when
 	// LinkedIn/Twitter fetches this page they get a per-share PNG preview
