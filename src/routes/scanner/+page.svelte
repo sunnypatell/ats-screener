@@ -10,6 +10,7 @@
 	import { scoresStore } from '$stores/scores.svelte';
 	import { authStore } from '$stores/auth.svelte';
 	import { anonTrial } from '$stores/anon-trial.svelte';
+	import { SAMPLE_RESUME } from '$lib/sample-resume';
 	import type { ScoringInput } from '$engine/scorer/types';
 
 	// load history when auth state is ready
@@ -272,6 +273,20 @@
 				<section class="upload-section">
 					<ResumeUploader />
 
+					<!-- sample-resume affordance: lets a casual visitor experience the
+					     full scoring pipeline without uploading anything personal.
+					     loads a fictional realistic resume into the parser via setText. -->
+					<div class="sample-row">
+						<button
+							type="button"
+							class="sample-btn"
+							onclick={() => resumeStore.setText(SAMPLE_RESUME)}
+						>
+							Try with a sample resume
+						</button>
+						<span class="sample-hint">No upload needed. Just see how scoring works.</span>
+					</div>
+
 					<!--
 						alternate input: paste resume text directly. closed by default
 						so the file uploader stays the primary affordance. textarea
@@ -532,6 +547,39 @@
 
 	.upload-section {
 		max-width: 760px;
+	}
+
+	.sample-row {
+		margin-top: 0.75rem;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.sample-btn {
+		padding: 0.5rem 0.95rem;
+		background: rgba(6, 182, 212, 0.08);
+		color: var(--accent-cyan);
+		border: 1px solid rgba(6, 182, 212, 0.25);
+		border-radius: var(--radius-md, 8px);
+		font-weight: 500;
+		font-size: 0.85rem;
+		cursor: pointer;
+		transition:
+			background 0.15s ease,
+			border-color 0.15s ease;
+	}
+
+	.sample-btn:hover {
+		background: rgba(6, 182, 212, 0.14);
+		border-color: rgba(6, 182, 212, 0.4);
+	}
+
+	.sample-hint {
+		font-size: 0.78rem;
+		color: var(--text-tertiary);
+		opacity: 0.8;
 	}
 
 	.paste-block {
