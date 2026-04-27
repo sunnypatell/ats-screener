@@ -62,7 +62,14 @@ export const GET: RequestHandler = async ({ url }) => {
 			headers: {
 				'Content-Type': 'image/png',
 				'Cache-Control':
-					'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800, immutable'
+					'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800, immutable',
+				// override the global same-origin CORP set in hooks.server.ts:
+				// social platforms (LinkedIn, Twitter, Facebook, Slack) fetch og images
+				// from their own origin when generating link previews. same-origin would
+				// block those cross-origin fetches and break every social share card.
+				// cross-origin is safe here because this endpoint only serves a static
+				// pre-rendered PNG with no user-sensitive data.
+				'Cross-Origin-Resource-Policy': 'cross-origin'
 			}
 		});
 	}
@@ -259,7 +266,14 @@ export const GET: RequestHandler = async ({ url }) => {
 			// s-maxage = vercel cdn TTL (1d), max-age = browser TTL (1h),
 			// stale-while-revalidate keeps serving stale up to 7d while refreshing
 			'Cache-Control':
-				'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800, immutable'
+				'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800, immutable',
+			// override the global same-origin CORP set in hooks.server.ts:
+			// social platforms (LinkedIn, Twitter, Facebook, Slack) fetch og images
+			// from their own origin when generating link previews. same-origin would
+			// block those cross-origin fetches and break every social share card.
+			// cross-origin is safe here because this endpoint only serves a static
+			// pre-rendered PNG with no user-sensitive data.
+			'Cross-Origin-Resource-Policy': 'cross-origin'
 		}
 	});
 };
