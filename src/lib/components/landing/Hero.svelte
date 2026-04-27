@@ -21,18 +21,34 @@
 	let hasAnimated = false;
 	let statsEl = $state<HTMLElement | null>(null);
 
-	// observe stats strip for scroll-triggered animation
-	// must be a $effect (not onMount) because bind:this resolves after onMount in svelte 5
+	// observe stats strip for scroll-triggered animation.
+	// threshold 0.1: only 10% of the strip needs to be visible to fire,
+	// which is reliable on all viewport sizes and avoids the strip being
+	// counted as "never visible" on short screens where 50% is off-screen.
+	// must be a $effect (not onMount) because bind:this resolves after onMount in svelte 5.
 	$effect(() => {
 		if (!statsEl) return;
 		const observer = new IntersectionObserver(
 			(entries) => {
 				if (entries[0].isIntersecting) isVisible = true;
 			},
-			{ threshold: 0.5 }
+			{ threshold: 0.1 }
 		);
 		observer.observe(statsEl);
-		return () => observer.disconnect();
+
+		// safety net: if the user deep-linked or fast-scrolled past the strip
+		// before the observer fires, trigger the animation after 1500ms anyway
+		// (only when a count has already loaded).
+		const safetyTimer = setTimeout(() => {
+			if (userCount > 0 && !hasAnimated) {
+				isVisible = true;
+			}
+		}, 1500);
+
+		return () => {
+			observer.disconnect();
+			clearTimeout(safetyTimer);
+		};
 	});
 
 	// trigger count-up animation when both visible and count is loaded

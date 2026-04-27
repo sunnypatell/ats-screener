@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`color-scheme=dark`** so native form controls render in dark mode instead of flashing white.
 - **`format-detection=telephone=no`** so mobile browsers stop auto-linking numeric strings as phone numbers.
 - **Native Web Share + Copy Link** buttons on the `/share` landing page.
+- **Themed 404 page**: `+error.svelte` now branches on `page.status === 404`. The 404 branch renders giant Geist Mono glitch numerals with a CSS `conic-gradient` scramble animation, mouse-parallax cyan/purple orbs, and four suggested-navigation chips (Home, Scanner, Docs, About). All motion disabled under `prefers-reduced-motion`. Other status codes (429, 500) retain the existing professional card.
 
 ### Changed
 
@@ -45,8 +46,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **PR template** rewritten as a clean four-section scaffold (What changes / Why / Verification / Notes) for external contributors.
 - **PR #10 followup fix**: `loadFromHistory` now aborts in-flight scans before swapping results, and clears stale `llmAnalysis` from prior sessions.
 
+### Changed (continued)
+
+- **"Quick Wins" band renamed to "Highest-impact fixes"** in `ScoreDashboard.svelte`. The internal symbol `pickQuickWins` and the CSS class prefix `quick-wins-*` are unchanged (internal only). Only the user-visible heading was replaced to avoid marketing-copy tone.
+
 ### Fixed
 
+- **Users-served counter not animating**: `IntersectionObserver` threshold on the hero stats strip lowered from `0.5` to `0.1` so 10% visibility suffices on any viewport. Added a 1500ms safety fallback that sets `isVisible = true` when the count has loaded but the observer still hasn't fired (deep-link or fast-scroll case).
 - **Critical CVEs**: `jspdf` 4.2.0 -> 4.2.1 (HTML injection) and transitive `protobufjs` -> 7.5.5 via `firebase` bump (arbitrary code execution).
 - **Focus indicators** restored on previously-suppressed inputs (SearchModal search-input, login `.field-input`, uploader privacy-link).
 - **`prefers-reduced-motion`** now also kills `animation-delay`, `transition-delay`, and document-level `scroll-behavior`. JS-driven smooth-scroll opt-in via new `$lib/a11y.ts`.
