@@ -570,21 +570,31 @@
 
 	.paste-block {
 		margin-top: 1rem;
-		background: var(--glass-bg);
-		border: 1px solid var(--glass-border);
+		background: transparent;
+		border: 1px dashed var(--glass-border);
 		border-radius: var(--radius-md, 10px);
 		overflow: hidden;
+		transition:
+			border-color 0.2s ease,
+			background 0.2s ease;
+	}
+
+	.paste-block:hover,
+	.paste-block[open] {
+		border-color: rgba(6, 182, 212, 0.4);
+		background: rgba(6, 182, 212, 0.04);
 	}
 
 	.paste-toggle {
-		padding: 0.7rem 1rem;
+		padding: 0.75rem 1rem;
 		font-size: 0.85rem;
-		color: var(--text-tertiary);
+		font-weight: 500;
+		color: var(--text-secondary);
 		cursor: pointer;
 		list-style: none;
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.55rem;
 		transition: color 0.15s ease;
 	}
 
@@ -595,8 +605,9 @@
 	.paste-toggle::before {
 		content: '+';
 		color: var(--accent-cyan);
-		font-weight: 400;
-		font-size: 1.1rem;
+		font-weight: 600;
+		font-size: 1.05rem;
+		transition: transform 0.2s ease;
 	}
 
 	.paste-block[open] .paste-toggle::before {
@@ -604,7 +615,7 @@
 	}
 
 	.paste-toggle:hover {
-		color: var(--text-secondary);
+		color: var(--text-primary);
 	}
 
 	.paste-textarea {
