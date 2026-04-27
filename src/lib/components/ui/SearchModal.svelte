@@ -148,11 +148,11 @@
 
 			<div class="search-footer">
 				<span class="footer-hint">
-					<!-- mac: ⌘K (glyph + letter, no separator); win/linux: Ctrl+K (word + plus) -->
+					<!-- spaces around the plus on both platforms for legibility. -->
 					{#if isMac}
-						<kbd>⌘K</kbd>
+						<kbd>⌘ + K</kbd>
 					{:else}
-						<kbd>Ctrl+K</kbd>
+						<kbd>Ctrl + K</kbd>
 					{/if} to toggle
 				</span>
 				<span class="footer-hint">

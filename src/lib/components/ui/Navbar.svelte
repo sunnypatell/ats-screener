@@ -54,9 +54,9 @@
 					<path d="m21 21-4.35-4.35" />
 				</svg>
 				<span class="search-placeholder">Search Docs</span>
-				<!-- mac: ⌘K (glyph + letter, no separator — matches macOS/VSCode/Slack/Linear convention)
-				     win/linux: Ctrl+K (word + plus — matches Windows keyboard shortcut convention) -->
-				<kbd class="search-kbd">{isMac ? '⌘K' : 'Ctrl+K'}</kbd>
+				<!-- mac shows the command glyph plus K with a thin space around the plus.
+				     other platforms show "Ctrl + K". both styles use spaces around the plus. -->
+				<kbd class="search-kbd">{isMac ? '⌘ + K' : 'Ctrl + K'}</kbd>
 			</button>
 		{/if}
 

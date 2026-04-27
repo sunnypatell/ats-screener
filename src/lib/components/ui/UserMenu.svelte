@@ -155,6 +155,29 @@
 		}
 	}
 
+	/* mobile: when the avatar lives inside the hamburger menu column,
+	   center the dropdown under the avatar instead of right-anchoring it. */
+	@media (max-width: 768px) {
+		.dropdown {
+			right: auto;
+			left: 50%;
+			transform: translateX(-50%);
+			min-width: min(260px, calc(100vw - 2rem));
+			animation: dropdown-in-centered 0.15s ease;
+		}
+	}
+
+	@keyframes dropdown-in-centered {
+		from {
+			opacity: 0;
+			transform: translate(-50%, -6px);
+		}
+		to {
+			opacity: 1;
+			transform: translate(-50%, 0);
+		}
+	}
+
 	.dropdown-header {
 		padding: 0.85rem 1rem;
 		display: flex;

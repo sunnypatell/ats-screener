@@ -1725,6 +1725,25 @@
 
 		.summary-center {
 			max-width: 100%;
+			width: 100%;
+		}
+
+		/* mini bars on mobile: bigger labels, taller tracks, fill the column.
+		   without these the bars look invisible because the row gaps and
+		   the 80px right-aligned label leave the track squeezed thin. */
+		.mini-bars {
+			gap: 0.55rem;
+		}
+		.mini-bar-item {
+			gap: 0.75rem;
+		}
+		.mini-bar-track {
+			height: 6px;
+		}
+		.mini-bar-label {
+			width: 110px;
+			font-size: 0.72rem;
+			text-align: left;
 		}
 
 		.summary-right {
@@ -1808,6 +1827,17 @@
 			-webkit-line-clamp: 2;
 			line-clamp: 2;
 			-webkit-box-orient: vertical;
+		}
+
+		/* when the card is expanded on mobile, drop the clamp so the full
+		   suggestion text is visible inside the open accordion. */
+		.suggestion-card.expanded .suggestion-summary {
+			display: block;
+			-webkit-line-clamp: unset;
+			line-clamp: unset;
+			-webkit-box-orient: unset;
+			overflow: visible;
+			text-overflow: clip;
 		}
 
 		/* hide platform chips on very small viewports to reclaim space */

@@ -67,7 +67,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
 	// the network; caching them would silently drop side effects.
 	if (request.method !== 'GET') return;
 
-	// never cache /api/* — LLM responses are user-specific and must be fresh.
+	// never cache /api/*: LLM responses are user-specific and must be fresh.
 	// caching even one result would serve stale scores to subsequent visitors.
 	if (url.pathname.startsWith('/api/')) return;
 

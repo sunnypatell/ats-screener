@@ -80,7 +80,7 @@
 </script>
 
 <SeoHead
-	title="404 — Page not found | ATS Screener"
+	title="404, page not found | ATS Screener"
 	description="The page you're looking for doesn't exist or has moved."
 	noIndex
 />
@@ -117,6 +117,19 @@
 
 		<!-- grid overlay for depth -->
 		<div class="grid-overlay" aria-hidden="true"></div>
+
+		<!-- thinking bitmoji parked in the corner, gentle bob, hidden for reduced motion -->
+		<img
+			src="/thinking-bitmoji.png"
+			alt=""
+			width="180"
+			height="180"
+			class="bitmoji"
+			class:still={reducedMotion}
+			aria-hidden="true"
+			decoding="async"
+			loading="lazy"
+		/>
 
 		<div class="content">
 			<!-- giant glitch numerals -->
@@ -296,6 +309,49 @@
 		background-size: 56px 56px;
 		mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black, transparent);
 		pointer-events: none;
+	}
+
+	/* thinking bitmoji parked in the bottom-right corner with a slow bob.
+	   stays out of the click area on the suggested-nav chips. */
+	.bitmoji {
+		position: absolute;
+		right: clamp(1rem, 4vw, 3rem);
+		bottom: clamp(1rem, 4vw, 3rem);
+		width: clamp(120px, 18vw, 200px);
+		height: auto;
+		filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.45));
+		animation: bitmoji-bob 4s ease-in-out infinite;
+		pointer-events: none;
+		user-select: none;
+		z-index: 1;
+	}
+
+	.bitmoji.still {
+		animation: none;
+	}
+
+	@keyframes bitmoji-bob {
+		0%,
+		100% {
+			transform: translateY(0) rotate(-2deg);
+		}
+		50% {
+			transform: translateY(-10px) rotate(2deg);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.bitmoji {
+			animation: none;
+		}
+	}
+
+	@media (max-width: 640px) {
+		.bitmoji {
+			right: 0.75rem;
+			bottom: 0.75rem;
+			opacity: 0.85;
+		}
 	}
 
 	.content {
