@@ -23,7 +23,15 @@
 <div class="user-menu">
 	<button class="avatar-btn" onclick={() => (open = !open)} aria-label="User menu">
 		{#if authStore.photoURL}
-			<img src={authStore.photoURL} alt={authStore.displayName} class="avatar-img" />
+			<img
+				src={authStore.photoURL}
+				alt={authStore.displayName}
+				class="avatar-img"
+				width="36"
+				height="36"
+				loading="lazy"
+				decoding="async"
+			/>
 		{:else}
 			<span class="avatar-initials">{authStore.initials}</span>
 		{/if}

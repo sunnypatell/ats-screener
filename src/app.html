@@ -47,10 +47,22 @@
 		/>
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<!-- preload the Google Fonts stylesheet so the browser starts the
+		     fonts.gstatic.com connection and downloads the @font-face rules
+		     as early as possible, reducing LCP font-swap jank. the stylesheet
+		     already includes display=swap so the browser renders a system
+		     fallback immediately and swaps to Geist when it arrives. -->
+		<link
+			rel="preload"
+			as="style"
+			href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
+		/>
 		<!-- dns-prefetch (not preconnect) for firebase auth hosts. lighter
 		     than preconnect, warms the DNS resolver for visitors who end up
 		     signing in without paying the TLS-handshake cost up front for
-		     visitors who never do. -->
+		     visitors who never do. firebase auth is never needed before the
+		     first user interaction on the landing page, so the full TLS
+		     handshake cost of preconnect is not justified here. -->
 		<link rel="dns-prefetch" href="//accounts.google.com" />
 		<link rel="dns-prefetch" href="//apis.google.com" />
 		<link rel="dns-prefetch" href="//securetoken.googleapis.com" />
