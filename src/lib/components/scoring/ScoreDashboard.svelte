@@ -1383,7 +1383,9 @@
 
 	.scores-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+		/* 280px min lets 5 columns fit at ~1400px container width, reducing dead
+		   side-space vs the old 340px min that produced only 4 columns */
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 		gap: 1.5rem;
 	}
 

@@ -148,7 +148,12 @@
 
 			<div class="search-footer">
 				<span class="footer-hint">
-					<kbd>{isMac ? '⌘' : 'Ctrl'}</kbd><kbd>K</kbd> to toggle
+					<!-- mac: ⌘K (glyph + letter, no separator); win/linux: Ctrl+K (word + plus) -->
+					{#if isMac}
+						<kbd>⌘K</kbd>
+					{:else}
+						<kbd>Ctrl+K</kbd>
+					{/if} to toggle
 				</span>
 				<span class="footer-hint">
 					<kbd>Esc</kbd> to close
