@@ -25,17 +25,20 @@ pnpm dev
 
 ### Available Scripts
 
-| Command         | Description                           |
-| --------------- | ------------------------------------- |
-| `pnpm dev`      | Start development server              |
-| `pnpm build`    | Build for production                  |
-| `pnpm preview`  | Preview production build              |
-| `pnpm check`    | Run svelte-check type checking        |
-| `pnpm lint`     | Run ESLint                            |
-| `pnpm format`   | Format code with Prettier             |
-| `pnpm test`     | Run unit tests (106 tests)            |
-| `pnpm test:e2e` | Run end-to-end tests with Playwright  |
-| `pnpm validate` | Run all checks (types + lint + tests) |
+| Command             | Description                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------ |
+| `pnpm dev`          | Start development server                                                             |
+| `pnpm build`        | Build for production (also runs the docs site)                                       |
+| `pnpm preview`      | Preview production build                                                             |
+| `pnpm check`        | Run svelte-check type checking                                                       |
+| `pnpm lint`         | Run ESLint                                                                           |
+| `pnpm format`       | Format code with Prettier                                                            |
+| `pnpm format:check` | Verify formatting without writing                                                    |
+| `pnpm test`         | Run unit tests                                                                       |
+| `pnpm test:watch`   | Run unit tests in watch mode                                                         |
+| `pnpm test:e2e`     | Run end-to-end tests with Playwright                                                 |
+| `pnpm validate`     | Full quality gate: check + lint + format:check + test + build                        |
+| `pnpm gate`         | Alias for `pnpm validate`. Run this before opening a PR; CI runs the same five steps |
 
 ## Architecture Overview
 

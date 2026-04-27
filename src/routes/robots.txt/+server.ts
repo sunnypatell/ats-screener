@@ -9,12 +9,16 @@ Disallow: /history
 Disallow: /login
 
 Sitemap: ${url.origin}/sitemap.xml
+Sitemap: ${url.origin}/docs/sitemap-index.xml
 `;
 
 	return new Response(body, {
 		headers: {
 			'Content-Type': 'text/plain; charset=utf-8',
-			'Cache-Control': 'public, max-age=3600'
+			// browser holds for 1h; vercel cdn holds for 1d so badly-behaved
+			// crawlers cannot keep waking the function. stale-while-revalidate
+			// lets the cdn serve a cached copy for up to 7d while it refreshes.
+			'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800'
 		}
 	});
 };

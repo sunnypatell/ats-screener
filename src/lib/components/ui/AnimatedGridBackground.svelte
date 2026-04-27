@@ -11,12 +11,18 @@
 
 	// randomly highlight some grid cells for a subtle pulse effect
 	const highlightCount = 8;
-	const highlights = Array.from({ length: highlightCount }, () => ({
-		x: Math.random() * 100,
-		y: Math.random() * 100,
-		delay: Math.random() * 5,
-		duration: 3 + Math.random() * 4
-	}));
+	type Highlight = { x: number; y: number; delay: number; duration: number };
+	// generated in $effect so SSR and the initial client render match;
+	// otherwise random coords diverge and svelte logs a hydration_mismatch.
+	let highlights = $state<Highlight[]>([]);
+	$effect(() => {
+		highlights = Array.from({ length: highlightCount }, () => ({
+			x: Math.random() * 100,
+			y: Math.random() * 100,
+			delay: Math.random() * 5,
+			duration: 3 + Math.random() * 4
+		}));
+	});
 </script>
 
 <div class="grid-background" aria-hidden="true">

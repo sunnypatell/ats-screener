@@ -21,6 +21,9 @@
 	// tracks whether results should be visible (scan clicked or loaded from history)
 	let hasScanned = $state(false);
 
+	// component-local buffer for the paste-resume-text textarea
+	let pastedText = $state('');
+
 	// if results are loaded from history, show the dashboard
 	$effect(() => {
 		if (scoresStore.hasResults) hasScanned = true;
@@ -86,24 +89,16 @@
 			if (llmResult.status === 'cancelled' || signal.aborted) return;
 
 			if (llmResult.status === 'ok' && llmResult.results.length > 0) {
-				console.log(
-					'[scan] LLM scoring complete:',
-					llmResult.results.length,
-					'results from',
-					llmResult.provider
-				);
 				scoresStore.finishScoring(llmResult.results, resumeStore.file?.name);
 				scoresStore.finishAnalyzing(null, false);
 				return;
 			}
 
 			// all LLM providers failed (or rate-limited), fall back to deterministic rule-based scoring
-			console.log('[scan] LLM unavailable, using rule-based scoring');
 			const { scoreResume } = await import('$engine/scorer/engine');
 			const input = buildScoringInput();
 			const results = scoreResume(input);
 			if (signal.aborted) return;
-			console.log('[scan] rule-based scoring complete:', results.length, 'results');
 			scoresStore.finishScoring(results, resumeStore.file?.name);
 			// when rate-limited, surface the retry timestamp so the toast can show a countdown
 			const retryAtMs =
@@ -129,6 +124,22 @@
 			handleFileReady();
 		}
 	});
+
+	// screen-reader-only live announcement of scoring state. polite priority
+	// so it does not interrupt other speech, atomic so the entire string is
+	// re-read when it changes. only a meaningful state transition produces a
+	// new string, so the announcement does not fire on every store tick.
+	const announcement = $derived.by(() => {
+		if (scoresStore.error) return `Scan failed: ${scoresStore.error}`;
+		if (scoresStore.isScoring) return 'Scanning your resume.';
+		if (scoresStore.hasResults && !scoresStore.isFromHistory) {
+			const total = scoresStore.results.length;
+			const passing = scoresStore.passingCount;
+			const avg = scoresStore.averageScore;
+			return `Scan complete. Average score ${avg} out of 100. ${passing} of ${total} ATS systems passed.`;
+		}
+		return '';
+	});
 </script>
 
 <SeoHead
@@ -137,6 +148,13 @@
 />
 
 <main class="scanner">
+	<!--
+		live region for screen-reader users. role=status implies aria-live=polite
+		and aria-atomic=true. positioned via the global .sr-only utility so it is
+		visually hidden but always present in the accessibility tree.
+	-->
+	<div class="sr-only" role="status">{announcement}</div>
+
 	<!-- subtle background mesh -->
 	<div class="scanner-bg">
 		<div class="bg-orb orb-1"></div>
@@ -239,6 +257,36 @@
 				<!-- upload section -->
 				<section class="upload-section">
 					<ResumeUploader />
+
+					<!--
+						alternate input: paste resume text directly. closed by default
+						so the file uploader stays the primary affordance. textarea
+						content lives in component-local $state; the "Use this text"
+						button hands it off to resumeStore.setText which runs the
+						same downstream extraction the file path uses.
+					-->
+					<details class="paste-block">
+						<summary class="paste-toggle">Or paste resume text instead</summary>
+						<textarea
+							class="paste-textarea"
+							placeholder="Paste your resume text here. Plain text works best; section headings (Experience, Education, Skills) help us identify structure."
+							bind:value={pastedText}
+							rows="10"
+							aria-label="Paste resume text"
+						></textarea>
+						<div class="paste-actions">
+							<span class="paste-count">{pastedText.length} characters</span>
+							<button
+								type="button"
+								class="paste-btn"
+								disabled={pastedText.trim().length < 50}
+								onclick={() => resumeStore.setText(pastedText)}
+							>
+								Use this text
+							</button>
+						</div>
+					</details>
+
 					<JobDescriptionInput />
 
 					{#if resumeStore.warnings.length > 0}
@@ -470,6 +518,112 @@
 
 	.upload-section {
 		max-width: 760px;
+	}
+
+	.paste-block {
+		margin-top: 1rem;
+		background: transparent;
+		border: 1px dashed rgba(6, 182, 212, 0.25);
+		border-radius: var(--radius-md, 10px);
+		overflow: hidden;
+		transition:
+			border-color 0.2s ease,
+			background 0.2s ease;
+	}
+
+	.paste-block:hover,
+	.paste-block[open] {
+		border-color: rgba(6, 182, 212, 0.5);
+		background: rgba(6, 182, 212, 0.04);
+	}
+
+	.paste-toggle {
+		padding: 0.75rem 1rem;
+		font-size: 0.85rem;
+		font-weight: 500;
+		color: var(--accent-cyan);
+		cursor: pointer;
+		list-style: none;
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+		transition: color 0.15s ease;
+	}
+
+	.paste-toggle::-webkit-details-marker {
+		display: none;
+	}
+
+	.paste-toggle::before {
+		content: '+';
+		color: var(--accent-cyan);
+		font-weight: 600;
+		font-size: 1.05rem;
+		transition: transform 0.2s ease;
+	}
+
+	.paste-block[open] .paste-toggle::before {
+		content: '\2212';
+	}
+
+	.paste-toggle:hover {
+		color: var(--text-primary);
+		filter: brightness(1.15);
+	}
+
+	.paste-textarea {
+		width: 100%;
+		min-height: 220px;
+		padding: 0.85rem 1rem;
+		background: rgba(0, 0, 0, 0.2);
+		border: none;
+		border-top: 1px solid var(--glass-border);
+		color: var(--text-primary);
+		font-family: var(--font-mono, ui-monospace, 'SF Mono', Menlo, monospace);
+		font-size: 0.85rem;
+		line-height: 1.55;
+		resize: vertical;
+		outline: none;
+	}
+
+	.paste-textarea::placeholder {
+		color: var(--text-tertiary);
+		opacity: 0.7;
+	}
+
+	.paste-actions {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0.6rem 1rem;
+		border-top: 1px solid var(--glass-border);
+		gap: 1rem;
+	}
+
+	.paste-count {
+		font-size: 0.78rem;
+		color: var(--text-tertiary);
+	}
+
+	.paste-btn {
+		padding: 0.45rem 0.9rem;
+		background: var(--accent-cyan);
+		color: #0a0a1a;
+		border: none;
+		border-radius: var(--radius-md, 8px);
+		font-weight: 600;
+		font-size: 0.85rem;
+		cursor: pointer;
+		transition: opacity 0.15s ease;
+	}
+
+	.paste-btn:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+
+	.paste-btn:not(:disabled):hover {
+		opacity: 0.9;
 	}
 
 	.warnings {
@@ -766,7 +920,9 @@
 
 	@media (max-width: 640px) {
 		.scanner {
-			padding: 5rem 1.5rem 3rem;
+			/* env(safe-area-inset-bottom) adds clearance for iPhone notch/home-bar
+			   so the scan button never sits behind the iOS gesture handle. */
+			padding: 5rem 1.5rem calc(3rem + env(safe-area-inset-bottom, 0px));
 		}
 
 		.actions {
@@ -784,6 +940,17 @@
 		.auth-gate-card {
 			padding: 2rem 1.5rem;
 			margin: 0 1rem;
+		}
+
+		/* reduce paste textarea height on mobile so it does not eat above-the-fold
+		   space. 6 rows (~132px) is enough to see what was pasted. */
+		.paste-textarea {
+			min-height: 132px;
+		}
+
+		/* enlarge small action buttons to meet WCAG 2.5.5 44x44px touch target */
+		.paste-btn {
+			min-height: 44px;
 		}
 	}
 </style>

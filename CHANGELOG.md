@@ -5,6 +5,86 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-04-26
+
+A wide pass across security, performance, accessibility, observability, and UX. The scoring engine and ATS profiles are unchanged. The differences a returning user will notice: a dotted paste-and-scan field next to the uploader, a JD library that saves job descriptions locally, a service worker that keeps the shell available offline, a themed 404 with a thinking bitmoji, and a faster, denser dashboard on phones. Everything else is behind-the-scenes hardening that makes the app cheaper to run, safer to use, and easier to crawl.
+
+### Added
+
+- **Paste-and-scan flow**: a textarea below the file uploader accepts resume text directly. New `parseResumeText` parser entry runs the same downstream extraction (sections, contact, experience, education, skills) as the file path, so scoring is identical whether you upload a PDF, a DOCX, or paste raw text.
+- **JD Library**: a new `$lib/stores/jd-library.svelte.ts` store keeps up to ten job descriptions in `localStorage`. The "Saved JDs" pill on the JD textarea opens a dropdown of past entries with relative timestamps and a delete control, so applying to similar roles no longer means re-pasting the same JD. localStorage failures (incognito, sandboxed iframes) fall back to in-memory and warn once per session.
+- **Service worker offline shell**: `src/service-worker.ts` precaches the build assets, takes over via `skipWaiting()` plus `clients.claim()`, uses cache-first for hashed assets, network-first for routes, and skips `/api/*` and cross-origin requests entirely so user-specific scoring is never cached. Registered from `+layout.svelte` only in production. Eight structural unit tests lock the invariants.
+- **Themed 404**: `+error.svelte` now branches on `page.status === 404` and renders giant Geist Mono glitch numerals with a chromatic-aberration animation, mouse-parallax cyan/purple/blue orbs, four suggested-navigation chips, and a thinking bitmoji parked in the bottom-right with a slow bob. All motion is disabled under `prefers-reduced-motion`. Other statuses (429, 500) keep the existing professional card.
+- **Privacy notice**: lives at `/docs/legal/privacy/` (Starlight). Plain-language coverage of what is collected (account info, capped scan history), what is not (raw resume text, full job description, file binaries), how scoring requests flow through the serverless function, third-party providers, retention, and practical rights regardless of jurisdiction. Includes a per-statute reading on whether PIPEDA, CCPA, and GDPR formally apply to a non-commercial student portfolio project that accepts voluntary donations.
+- **Structured logger module**: `$lib/log.ts` exports `log(level, event, fields?)` plus `logger.{debug, info, warn, error}` shortcuts. Server emits NDJSON for Vercel log search; browser passes structured records to console for devtools-friendly expansion. Info and debug calls are silenced on non-localhost browsers in production. Every `console.warn` and `console.error` in `src/` was migrated to this module so log shape is consistent across the app.
+- **Highest-impact fixes band on the dashboard**: a band between the summary card and the toolbar surfaces the top three structured suggestions across every ATS profile, ranked by impact (critical, high, medium, low) and deduplicated by summary text. Backed by `pickQuickWins` in `$engine/scorer/quick-wins`.
+- **`/llms.txt`** at the site root so adopting AI crawlers (Anthropic, OpenAI, Perplexity) ingest a curated link list rather than scraping the full site.
+- **`/.well-known/security.txt`** per RFC 9116, listing Contact, Expires, Canonical, and Policy fields for responsible disclosure.
+- **PWA manifest** at `/manifest.webmanifest` with start_url, display, theme color, plus 192 and 512 PNG icons sized for the install prompt.
+- **RSS 2.0 feed** at `/releases.xml` parsed from `CHANGELOG.md`, with ETag round-trip and CDN caching.
+- **`/api/version`** endpoint returning `{ version, commit, branch, env }` for ops.
+- **`/api/log-error`** sampled client-error reporter (5 percent default rate, env-tunable) with a 60-per-minute rolling cap and `keepalive: true` POST so reports survive page navigation.
+- **`/api/vitals`** sampled web-vitals collector (LCP and CLS) using native `PerformanceObserver` and `navigator.sendBeacon`. No new dependency.
+- **`/api/admin/rate-limit-stats`** token-gated counters (503 fail-closed when no `ADMIN_TOKEN` is configured).
+- **`/healthz`** enriched with version, commit, env so deploys can be verified without the dashboard.
+- **noscript fallback** with key links so JS-disabled visitors and bots see meaningful content.
+- **Skip-to-content link** in the root layout.
+- **ARIA live region** on the scanner announcing scan state to screen readers.
+- **aria-current=page** on Navbar links.
+- **og:image:alt + twitter:image:alt** for social-share accessibility, plus iOS PWA polish meta tags (apple-mobile-web-app-capable, status-bar-style, application-name).
+- **`color-scheme=dark`** and **`format-detection=telephone=no`** so native form controls render in dark mode and mobile browsers stop auto-linking numeric strings as phone numbers.
+- **Native Web Share + Copy Link** buttons on `/share`.
+- **humans.txt** colophon at site root.
+- **Person schema JSON-LD** on `/about` for entity recognition.
+- **Sample JD button** in the JD textarea so a curious user can demo targeted scoring without writing a JD from scratch.
+
+### Changed
+
+- **Sign-in is now required for every scan, no exceptions.** A short-lived anonymous-trial path that briefly shipped during this cycle was reverted: the scanner page renders the auth gate the moment it sees an unauthenticated session, no localStorage flag, no free single scan. Documentation, FAQ, and changelog references to the trial were swept out so the policy reads consistently across the app.
+- **WCAG 2.2 AA contrast guard**: a new test in `tests/unit/a11y/contrast.test.ts` parses every text-on-bg color token from `tokens.css` and asserts at least a 4.5:1 ratio for body text (3:1 for large or UI text). Lifted `--text-tertiary` alpha from 0.4 to 0.5 (3.78:1 to 5.36:1), replaced two semi-transparent reds and greens with solid tokens (3.02:1 to 5.21:1, 4.63:1 to 7.73:1), and swapped a hardcoded LinkedIn blue on a tinted background for `--accent-blue` (3.10:1 to 4.79:1).
+- **Mobile UX pass on the scanner**: file picker accepts MIME types alongside extensions for reliable iOS Safari behavior, safe-area inset on the scanner bottom padding for notched iPhones, every action button raised to a 44x44 touch target (WCAG 2.5.5), Navbar hamburger raised to 44x44, dashboard toolbar wraps and stretches to full width on narrow screens, share badge dialog uses dynamic viewport height plus iOS momentum scrolling, search modal results use momentum scrolling.
+- **CWV preload**: Google Fonts stylesheet preloaded with `as="style"` so `@font-face` rules arrive before the first paint, the `dns-prefetch` versus `preconnect` decision for Firebase auth and font hosts is documented inline in `app.html`, every `<img>` in component code now has explicit width and height plus `loading="lazy"` and `decoding="async"` where appropriate, and a new test in `tests/unit/perf/lcp-readiness.test.ts` locks the invariants.
+- **Security headers**: HSTS extended to `max-age=63072000; includeSubDomains; preload` (2 year preload-list minimum, gated to https only so localhost is never poisoned), `Cross-Origin-Opener-Policy: same-origin-allow-popups` (preserves Firebase popup auth while isolating the browsing context), `Cross-Origin-Resource-Policy: same-origin` globally with a `cross-origin` exception on `/api/og` (LinkedIn, Twitter, Slack still scrape share previews), `X-DNS-Prefetch-Control: on`, `X-Permitted-Cross-Domain-Policies: none`. Thirteen header regression tests in `tests/unit/security/headers.test.ts` lock the values.
+- **Permissions-Policy** extended with `interest-cohort=()` and `browsing-topics=()` to opt out of FLoC and the Topics API.
+- **Sitemap and robots.txt**: main sitemap grew from 3 to 9 entries (now includes key docs landings); robots.txt references both the main sitemap and the docs sitemap-index.
+- **Lazy-loaded resume parser**: pdfjs and mammoth ship in separate chunks, so a PDF-only user no longer loads mammoth and vice versa. The prior 880KB combined parser chunk is gone.
+- **CDN caching** on `/sitemap.xml`, `/robots.txt`, `/llms.txt`, `/releases.xml`, `/api/og`, and `/privacy`. All static-ish endpoints serve from edge cache with stale-while-revalidate.
+- **`/api/og` function-level memo** in addition to the CDN cache, so a cache-bypass header from a misconfigured client does not re-render the same image.
+- **og-image.png** recompressed from 640KB to 247KB via sharp palette mode (61 percent smaller, identical visual).
+- **apple-touch-icon.png** recompressed from 4.8KB to 2.8KB.
+- **Auto-noindex preview deploys**: any `*.vercel.app` host that is not the production hostname now emits `meta robots="noindex, nofollow"` automatically.
+- **`@vercel/og`** runtime moved off the deprecated `runtime: 'edge'` config to default node.
+- **Highest-impact fixes** is the user-visible heading on the dashboard suggestions band (was "Quick Wins"). Internal symbols and CSS classes are unchanged.
+- **Cmd+K hint**: Navbar and SearchModal now render `command + K` on macOS and `Ctrl + K` elsewhere, with spaces around the plus on both for legibility.
+- **Footer cleanup**: the version badge linking to GitHub CHANGELOG and the standalone Changelog resource link were both removed (one source of truth on GitHub).
+- **Public-roadmap docs page** removed entirely. The roadmap is iteration-shaped; a docs page on top of it became governance debt.
+- **About FAQ and FAQPage JSON-LD** removed in favor of pointing curious users at `/docs`.
+- **PR template** rewritten as a clean four-section scaffold (What changes / Why / Verification / Notes).
+
+### Fixed
+
+- **Localhost dev 403 on `/package.json?import`**: the Footer used to import `package.json` directly to render the version badge, which Vite blocks via `fs.deny`. The version is now inlined at build time via Vite's `define` from the read at config load. The badge itself was removed in this release.
+- **Hydration mismatch on the home page**: `Math.random` calls in `Hero`, `SparklesText`, `ParticleField`, `AnimatedGridBackground`, and `Meteors` ran at module load, producing different output between SSR and client. All five were moved into `$effect` so SSR renders an empty decoration layer and the client fills in after hydration.
+- **Hydration mismatch on the scanner**: `auth.svelte.ts` was setting `loading = false` on the SSR path while the client started with `loading = true`. SSR now keeps `loading = true` so both initial renders match; `onAuthStateChanged` resolves the real state after hydration.
+- **Google profile picture not loading**: the global `Referrer-Policy` was causing the Google CDN to reject avatar fetches that included a referer. The avatar `<img>` now sets `referrerpolicy="no-referrer"` so the CDN request is anonymous and reliable.
+- **Mobile dashboard suggestion text overlap**: `.suggestion-card-header` is now flex-wrap on mobile, `.suggestion-summary` is line-clamped to two lines when collapsed and unclamped when expanded, and the platform chips hide on phone widths to reclaim space.
+- **Mobile dashboard card width parity**: summary, suggestions, and Priority Focus Areas cards used to render at slightly different widths on phones. All three now share `1.75rem` mobile padding so they line up.
+- **Mobile UserMenu dropdown centering**: when the avatar lives inside the hamburger column, the dropdown was right-anchored to the column edge. It now anchors via `left: 50%` with a centered translate plus a separate keyframe.
+- **Mobile mini-bars visibility**: the summary mini-bars were collapsing to a few visible pixels because of fixed 80px label and tight gaps. Mobile rule widens labels to 110px, raises track height, and bumps the row gap so each ATS bar is readable.
+- **Sample resume button burning LLM quota**: a one-click "Try with a sample resume" affordance fired a real LLM scan against a fictional resume on every press. It was removed entirely. The sample JD button stays because it only populates the textarea.
+- **Users-served counter not animating**: the IntersectionObserver threshold on the hero stats strip lowered from 0.5 to 0.1 (10 percent visibility is enough on any viewport). Added a 1500ms safety fallback that triggers the count-up if the observer still hasn't fired after the count loads.
+- **`prefers-reduced-motion`** now also kills `animation-delay`, `transition-delay`, and document-level `scroll-behavior`. JS-driven smooth scroll opts in via `$lib/a11y.ts`.
+- **`scan_logs` writes** are sampled via deterministic hash (`PUBLIC_SCAN_LOG_SAMPLE_RATE`, default 1.0) so high-traffic deployments can dial the rate down without redeploying.
+- **Skip post-save `loadHistory` reload**: `saveToHistory` mutates `scanHistory` locally, eliminating one Firestore read query per scan.
+- **Focus indicators** restored on previously-suppressed inputs (SearchModal search-input, login `.field-input`, uploader privacy-link).
+- **CSP report extension noise**: a new filter drops reports whose blocked-uri starts with `chrome-extension://`, `moz-extension://`, `safari-extension://`, or `safari-web-extension://` ahead of the throttle, so the per-minute cap is reserved for genuine violations.
+- **Critical CVEs**: `jspdf` 4.2.0 to 4.2.1 (HTML injection) and transitive `protobufjs` to 7.5.5 via `firebase` bump (arbitrary code execution).
+- **Em dashes purged** from every comment, log string, and SEO title that I introduced this cycle, per the project writing rule.
+
+### Tests
+
+- 336 tests passing (up from 223 at 0.2.0). Added coverage for the structured logger, JD library, service worker invariants, security headers, WCAG 2.2 AA contrast, LCP readiness, paste-resume parsing, and the no-raw-html guard.
+
 ## [0.2.0] - 2026-04-25
 
 ### Added

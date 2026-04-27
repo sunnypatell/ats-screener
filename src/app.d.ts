@@ -12,6 +12,9 @@ declare global {
 			};
 		}
 	}
+
+	// inlined at build time via vite's `define` from package.json
+	const __APP_VERSION__: string;
 }
 
 export {};

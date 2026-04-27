@@ -145,6 +145,7 @@
 			<!-- legal links -->
 			<div class="footer-col">
 				<h4 class="col-title">Legal</h4>
+				<a href="/docs/legal/privacy/" class="footer-link">Privacy</a>
 				<a
 					href="https://github.com/sunnypatell/ats-screener/blob/main/LICENSE"
 					target="_blank"
@@ -343,6 +344,10 @@
 		font-size: 0.8rem;
 		color: var(--text-tertiary);
 		opacity: 0.6;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		flex-wrap: wrap;
 	}
 
 	@media (max-width: 768px) {

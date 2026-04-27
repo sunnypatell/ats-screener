@@ -5,14 +5,69 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="theme-color" content="#0a0a1a" />
 		<meta name="author" content="Sunny Patel" />
+		<!-- safe-search categorization: tells filters this site is suitable
+		     for general audiences (no adult content). -->
+		<meta name="rating" content="general" />
+		<!-- windows pinned-tile color (matches our dark theme + manifest) -->
+		<meta name="msapplication-TileColor" content="#0a0a1a" />
+		<meta name="msapplication-config" content="none" />
+		<!-- the app is dark-only. tells the browser to render native form controls
+		     (autocomplete dropdowns, scrollbars, date pickers, autofill yellow,
+		     etc.) in dark mode so they do not flash light against the dark UI. -->
+		<meta name="color-scheme" content="dark" />
+		<!-- prevents mobile browsers from auto-linking numeric strings as phone
+		     numbers (e.g. "10+ years" misread, scan scores misread). -->
+		<meta name="format-detection" content="telephone=no" />
+		<!-- iOS standalone-PWA polish: keep the dark theme through the status
+		     bar, set a short title for the home-screen icon, opt into
+		     standalone mode (apple-prefixed for safari, generic for others). -->
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-title" content="ATS Screener" />
+		<meta name="application-name" content="ATS Screener" />
 		<!-- per-route robots/og/twitter/title/description/canonical are emitted by
 		     SeoHead. avoid a static robots tag here so noIndex pages don't ship
 		     conflicting directives ("index, follow" + "noindex, nofollow") -->
 
 		<link rel="icon" href="%sveltekit.assets%/favicon.svg" />
 		<link rel="apple-touch-icon" href="%sveltekit.assets%/apple-touch-icon.png" />
+		<!-- pwa manifest. browsers use this to surface install prompts and to
+		     style the standalone window when installed to home screen. -->
+		<link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
+		<!-- credits / colophon. tradition; surfaces author + tools to humans
+		     who go looking. https://humanstxt.org/ -->
+		<link rel="author" type="text/plain" href="/humans.txt" />
+		<!-- feed readers auto-discover release notes via this alternate link -->
+		<link
+			rel="alternate"
+			type="application/rss+xml"
+			title="ATS Screener releases"
+			href="/releases.xml"
+		/>
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<!-- preload the Google Fonts stylesheet so the browser starts the
+		     fonts.gstatic.com connection and downloads the @font-face rules
+		     as early as possible, reducing LCP font-swap jank. the stylesheet
+		     already includes display=swap so the browser renders a system
+		     fallback immediately and swaps to Geist when it arrives. -->
+		<link
+			rel="preload"
+			as="style"
+			href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
+		/>
+		<!-- dns-prefetch (not preconnect) for firebase auth hosts. lighter
+		     than preconnect, warms the DNS resolver for visitors who end up
+		     signing in without paying the TLS-handshake cost up front for
+		     visitors who never do. firebase auth is never needed before the
+		     first user interaction on the landing page, so the full TLS
+		     handshake cost of preconnect is not justified here. -->
+		<link rel="dns-prefetch" href="//accounts.google.com" />
+		<link rel="dns-prefetch" href="//apis.google.com" />
+		<link rel="dns-prefetch" href="//securetoken.googleapis.com" />
+		<link rel="dns-prefetch" href="//identitytoolkit.googleapis.com" />
+		<link rel="dns-prefetch" href="//firestore.googleapis.com" />
 		<link
 			href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
 			rel="stylesheet"
@@ -21,5 +76,36 @@
 	</head>
 	<body data-sveltekit-preload-data="hover">
 		<div style="display: contents">%sveltekit.body%</div>
+		<noscript>
+			<div
+				style="
+					max-width: 640px;
+					margin: 4rem auto;
+					padding: 2rem 1.5rem;
+					font-family: system-ui, sans-serif;
+					line-height: 1.6;
+					color: #e4e4e7;
+					background: rgba(255, 255, 255, 0.04);
+					border: 1px solid rgba(255, 255, 255, 0.1);
+					border-radius: 12px;
+				"
+			>
+				<h1 style="margin: 0 0 0.5rem; font-size: 1.4rem">JavaScript is required</h1>
+				<p style="margin: 0 0 1rem; color: #a1a1aa">
+					ATS Screener parses your resume in the browser, which needs JavaScript to run. The page
+					loads but the scanner cannot start until you enable it.
+				</p>
+				<p style="margin: 0; font-size: 0.9rem; color: #a1a1aa">
+					You can still browse the
+					<a href="/docs" style="color: #06b6d4">documentation</a>, the
+					<a
+						href="https://github.com/sunnypatell/ats-screener"
+						style="color: #06b6d4"
+						rel="noopener"
+						>source code on GitHub</a
+					>, or read the <a href="/docs/legal/privacy/" style="color: #06b6d4">privacy notice</a>.
+				</p>
+			</div>
+		</noscript>
 	</body>
 </html>

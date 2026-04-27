@@ -1,3 +1,9 @@
+/* eslint-disable no-console */
+// console.log statements in this file are intentional. they emit a
+// human-readable trace of scoring breakdowns when the integration suite
+// runs, which is invaluable when tuning the scorer or debugging a
+// regression. quieter alternatives (assert-only) would lose the
+// diagnostic signal that justifies the file existing.
 import { describe, it, expect } from 'vitest';
 import { scoreResume } from '$engine/scorer/engine';
 import { parseJobDescription } from '$engine/job-parser/extractor';

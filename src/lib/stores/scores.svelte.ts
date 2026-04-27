@@ -1,11 +1,20 @@
 import { browser } from '$app/environment';
+import { env as publicEnv } from '$env/dynamic/public';
 import type { ScoreResult } from '$engine/scorer/types';
 import type { LLMAnalysis } from '$engine/llm/types';
 import type { ParsedJobDescription } from '$engine/job-parser/types';
 import { getFirebase } from '$lib/firebase';
+import { logger } from '$lib/log';
+import { parseSampleRate, shouldSample } from '$lib/sampling';
 import { authStore } from './auth.svelte';
 
 const MAX_HISTORY = 5;
+// admin scan_logs are observability, not user data. at 50k users they alone
+// would push past firestore spark's 20k writes/day cap, so we accept losing
+// detail in exchange for staying free. default 1.0 (no behavior change at
+// current scale); set PUBLIC_SCAN_LOG_SAMPLE_RATE to e.g. 0.1 to keep 10% of
+// scans logged once traffic ramps.
+const SCAN_LOG_SAMPLE_RATE = parseSampleRate(publicEnv.PUBLIC_SCAN_LOG_SAMPLE_RATE);
 
 export interface ScanHistoryEntry {
 	id: string;
@@ -136,7 +145,9 @@ class ScoresStore {
 				...(d.data() as Omit<ScanHistoryEntry, 'id'>)
 			}));
 		} catch (err) {
-			console.warn('failed to load scan history:', err);
+			logger.warn('history.load_failed', {
+				error: err instanceof Error ? err.message : String(err)
+			});
 			this.scanHistory = [];
 		} finally {
 			this.historyLoading = false;
@@ -147,7 +158,7 @@ class ScoresStore {
 	private async saveToHistory(results: ScoreResult[], fileName?: string) {
 		if (!browser || results.length === 0) return;
 		if (!authStore.isAuthenticated || !authStore.user) {
-			console.warn('[scores] skipping history save: user not authenticated');
+			logger.info('history.skip_save', { reason: 'unauthenticated' });
 			return;
 		}
 
@@ -171,12 +182,12 @@ class ScoresStore {
 			const sanitized = JSON.parse(JSON.stringify(entry));
 
 			const docRef = await addDoc(scansRef, sanitized);
-			console.warn('[scores] saved scan to history:', docRef.id);
+			logger.info('history.saved', { docId: docRef.id });
 
 			// write to top-level scan_logs for admin visibility
 			this.writeScanLog(sanitized, uid);
 
-			// prune old scans beyond the cap
+			// prune old scans beyond the cap (one query, deletes only the overflow)
 			const allScansQuery = query(scansRef, orderBy('timestamp', 'desc'));
 			const allSnap = await getDocs(allScansQuery);
 			if (allSnap.size > MAX_HISTORY) {
@@ -186,15 +197,25 @@ class ScoresStore {
 				}
 			}
 
-			// reload with the pruned set
-			await this.loadHistory();
+			// mutate local history in place rather than re-reading. firestore round
+			// trip avoided: 1 read query per scan saved, which is the difference
+			// between staying inside spark free tier (50k reads/day) and blowing it
+			// past 50k users. on next cold start loadHistory pulls the canonical set.
+			const newEntry: ScanHistoryEntry = { id: docRef.id, ...sanitized };
+			this.scanHistory = [newEntry, ...this.scanHistory].slice(0, MAX_HISTORY);
 		} catch (err) {
-			console.error('[scores] failed to save scan to history:', err);
+			logger.error('history.save_failed', {
+				error: err instanceof Error ? err.message : String(err)
+			});
 		}
 	}
 
-	/** log scan to top-level scan_logs collection for admin browsing */
+	/** log scan to top-level scan_logs collection for admin browsing.
+	 * sampled by PUBLIC_SCAN_LOG_SAMPLE_RATE (default 1.0). hashing on
+	 * uid+timestamp keeps the decision deterministic and reproducible.
+	 */
 	private async writeScanLog(entry: Omit<ScanHistoryEntry, 'id'>, uid: string) {
+		if (!shouldSample(`${uid}:${entry.timestamp}`, SCAN_LOG_SAMPLE_RATE)) return;
 		try {
 			const { db } = await getFirebase();
 			const { setDoc, doc, serverTimestamp } = await import('firebase/firestore');
@@ -231,14 +252,23 @@ class ScoresStore {
 			}
 			this.scanHistory = [];
 		} catch (err) {
-			console.warn('failed to clear history:', err);
+			logger.warn('history.clear_failed', {
+				error: err instanceof Error ? err.message : String(err)
+			});
 		}
 	}
 
-	// load a past scan's results into the active dashboard view
-	// resets fallback flag since the toast is only relevant for the active scan session
+	// load a past scan's results into the active dashboard view.
+	// must abort any in-flight scan first, otherwise its eventual completion
+	// (finishScoring) will stomp the historical snapshot the user just clicked.
+	// also clears llmAnalysis since stored history entries do not carry it,
+	// so leaving the previous session's analysis visible would render mismatched
+	// data alongside historical results.
 	loadFromHistory(entry: ScanHistoryEntry) {
+		this.abortController?.abort();
+		this.abortController = null;
 		this.results = entry.results;
+		this.llmAnalysis = null;
 		this.isScoring = false;
 		this.isAnalyzing = false;
 		this.llmFallback = false;

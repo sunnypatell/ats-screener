@@ -1,11 +1,42 @@
 <script lang="ts">
 	import SeoHead from '$components/seo/SeoHead.svelte';
+
+	// person schema for the project author. complements the SoftwareApplication
+	// schema on the landing page; together they give search engines a clean
+	// "who built this and what does it do" pair.
+	const personLd = {
+		'@context': 'https://schema.org',
+		'@type': 'Person',
+		name: 'Sunny Patel',
+		url: 'https://sunnypatel.net',
+		sameAs: [
+			'https://github.com/sunnypatell',
+			'https://www.linkedin.com/in/sunny-patel-30b460204/'
+		],
+		jobTitle: 'Software Engineer',
+		address: {
+			'@type': 'PostalAddress',
+			addressLocality: 'Richmond Hill',
+			addressRegion: 'ON',
+			addressCountry: 'CA'
+		}
+	};
+
+	// escape '<' to its unicode form so a future user-controlled field
+	// cannot break out of the surrounding <script> tag. mirrors the
+	// landing page's softwareAppLd handling.
+	const personLdJson = JSON.stringify(personLd).replaceAll('<', '\\u003c');
 </script>
 
 <SeoHead
 	title="About | ATS Screener"
 	description="Learn about ATS Screener, the free open-source tool that simulates how real enterprise ATS platforms parse and score your resume."
 />
+
+<svelte:head>
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+	{@html `<script type="application/ld+json">${personLdJson}</` + `script>`}
+</svelte:head>
 
 <main class="about">
 	<div class="about-bg">
@@ -608,6 +639,7 @@
 		font-weight: 800;
 		color: var(--text-primary);
 		margin-bottom: 0.75rem;
+		text-align: center;
 	}
 
 	.open-source-card p {

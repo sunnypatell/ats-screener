@@ -396,7 +396,7 @@
 	}
 
 	.keyword-stat.matched .keyword-label {
-		color: rgba(34, 197, 94, 0.7);
+		color: var(--accent-green);
 	}
 
 	.keyword-stat.missing .keyword-count {
@@ -404,6 +404,6 @@
 	}
 
 	.keyword-stat.missing .keyword-label {
-		color: rgba(239, 68, 68, 0.7);
+		color: #ef4444;
 	}
 </style>

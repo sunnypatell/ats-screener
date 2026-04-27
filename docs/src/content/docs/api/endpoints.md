@@ -127,11 +127,45 @@ The server keeps a SHA-256 keyed in-memory LRU of recent prompts (200 entries, 2
 
 ## Auxiliary Endpoints
 
-| Path              | Method | Purpose                                                                                                |
-| ----------------- | ------ | ------------------------------------------------------------------------------------------------------ |
-| `/healthz`        | GET    | Liveness probe; JSON `{ status, timestamp }`. For uptime monitors                                      |
-| `/robots.txt`     | GET    | Dynamic; the `Sitemap:` URL tracks the deployment origin                                               |
-| `/sitemap.xml`    | GET    | Dynamic; lists public routes (`/`, `/scanner`, `/about`) with `lastmod` and `priority`                 |
-| `/api/og`         | GET    | Edge-cached PNG (`@vercel/og`) for share previews. Query: `score`, `pass`, `total`, optional `delta`   |
-| `/share`          | GET    | Branded share landing page; reads the same query params and emits `og:image` pointing at `/api/og`     |
-| `/api/csp-report` | POST   | Receives Content-Security-Policy violation reports for the report-only header set by `hooks.server.ts` |
+Every path below is publicly reachable. None of them require an API key. The two exceptions to "fully public" are flagged in the Notes column.
+
+### Operations and deploy identity
+
+| Path                          | Method | Purpose                                                                                                                               | Notes                                                                                                   |
+| ----------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `/healthz`                    | GET    | Liveness probe. Returns `{ status: "ok", timestamp, version, commit, env }` so a single probe confirms the right build is live.       | `Cache-Control: no-store`. Suitable for cron-job.org, BetterStack, etc.                                 |
+| `/api/version`                | GET    | Public deploy identity. Returns `{ version, commit, branch, env }`. All four fields are non-sensitive (mirror of public GitHub repo). | Browser cache 60s, CDN cache 5m, SWR 1d.                                                                |
+| `/api/admin/rate-limit-stats` | GET    | In-memory counters for the per-IP rate limiter (`totalChecks`, `totalAllowed`, `totalBlockedMinute`, `totalBlockedDaily`).            | Token-gated. Returns 503 if `ADMIN_TOKEN` env var is unset (16+ chars). Returns 401 on header mismatch. |
+
+### Telemetry ingest (sampled, console-only logging)
+
+| Path              | Method | Purpose                                                                                                                                                             | Notes                                                                                    |
+| ----------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `/api/csp-report` | POST   | Receives Content-Security-Policy violation reports for the Report-Only header set by `hooks.server.ts`. Drops browser-extension noise before the throttle.          | 5-minute dedupe window per `(directive, blocked-uri)`, 100/min hard cap, 204 No Content. |
+| `/api/log-error`  | POST   | Sampled client-error reporter wired from `window.onerror` and `unhandledrejection`. Body: `{ message, source, line, col, stack, url, ua, at }`. No durable storage. | 60/min rolling cap. 5% default sample rate (env-tunable via `PUBLIC_ERROR_SAMPLE_RATE`). |
+| `/api/vitals`     | POST   | Sampled web-vitals collector for LCP and CLS. Body: `{ lcp, cls, url, ua, at }`. Uses native `PerformanceObserver` and `navigator.sendBeacon` on the client.        | 60/min rolling cap. 5% default sample rate (`PUBLIC_VITALS_SAMPLE_RATE`).                |
+
+### Share and OpenGraph
+
+| Path      | Method | Purpose                                                                                                                                        | Notes                                                                                                |
+| --------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `/api/og` | GET    | Edge-cached PNG via `@vercel/og` for share previews. Query: `score`, `pass`, `total`, optional `delta`. Function-level LRU memo on top of CDN. | Per-route `Cross-Origin-Resource-Policy: cross-origin` so social platforms (LinkedIn, X) can scrape. |
+| `/share`  | GET    | Branded share landing page. Reads the same query params and emits `og:image` pointing at `/api/og`. Native Web Share + Copy Link buttons.      | Static-ish, edge-cached.                                                                             |
+
+### Discoverability and feeds
+
+| Path                        | Method | Purpose                                                                                                                                                                                  | Notes                                                            |
+| --------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `/robots.txt`               | GET    | Dynamic. Tracks deployment origin. References both the main sitemap and the docs sitemap-index for full crawl coverage.                                                                  | Cache: browser 1h, CDN 1d, SWR 7d.                               |
+| `/sitemap.xml`              | GET    | Dynamic. Lists public routes plus key docs landings, each with `lastmod`, `changefreq`, and `priority`.                                                                                  | Cache: browser 1h, CDN 1d, SWR 7d.                               |
+| `/llms.txt`                 | GET    | Curated link list for adopting AI crawlers (Anthropic, OpenAI, Perplexity standard). Dynamic origin so previews match themselves.                                                        | Cache: browser 1h, CDN 1d, SWR 7d.                               |
+| `/releases.xml`             | GET    | RSS 2.0 feed parsed from `CHANGELOG.md`. One `<item>` per `## [X.Y.Z] - YYYY-MM-DD` block with title, GitHub anchor link, RFC 822 pubDate, stable guid, and CDATA-wrapped markdown body. | ETag round-trip on no-change. Cache: browser 1h, CDN 1d, SWR 7d. |
+| `/.well-known/security.txt` | GET    | RFC 9116 disclosure channel. Lists Contact, Expires, Canonical, Policy, Acknowledgments, Preferred-Languages.                                                                            | Static file under `static/.well-known/`. Served `text/plain`.    |
+| `/manifest.webmanifest`     | GET    | PWA manifest. Name, start_url, display, theme color, icons (favicon.svg plus 192/512 PNG, plus apple-touch-icon).                                                                        | Static. Browsers auto-fetch via `<link rel="manifest">`.         |
+| `/humans.txt`               | GET    | Author colophon. Optional courtesy file for curious humans and automated scanners.                                                                                                       | Static.                                                          |
+
+### Redirects
+
+| Path       | Method | Behavior                                                                             |
+| ---------- | ------ | ------------------------------------------------------------------------------------ |
+| `/privacy` | GET    | 308 redirect to `/docs/legal/privacy/`. Old footer link kept working after the move. |

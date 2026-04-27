@@ -300,3 +300,7 @@ The rule-based engine exists as a fallback for when the AI is unavailable (rate 
 :::note[Source Code]
 Every formula on this page maps directly to the scoring engine at [`src/lib/engine/scorer/`](https://github.com/sunnypatell/ATS-Screener/tree/main/src/lib/engine/scorer). The weight vectors live in [`profiles/`](https://github.com/sunnypatell/ATS-Screener/tree/main/src/lib/engine/scorer/profiles), format scoring in [`format-scorer.ts`](https://github.com/sunnypatell/ATS-Screener/blob/main/src/lib/engine/scorer/format-scorer.ts), and keyword matching in [`keyword-matcher.ts`](https://github.com/sunnypatell/ATS-Screener/blob/main/src/lib/engine/scorer/keyword-matcher.ts). It's all MIT-licensed if you want to dig in.
 :::
+
+:::tip[Going Deeper]
+Curious where the platform weights, pass thresholds, and ATS quirks come from? The original research notes live in the repo at [`research/`](https://github.com/sunnypatell/ATS-Screener/tree/main/research). It is the unfiltered source behind the numbers on this page.
+:::

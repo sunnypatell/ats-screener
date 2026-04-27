@@ -54,15 +54,37 @@
 					<path d="m21 21-4.35-4.35" />
 				</svg>
 				<span class="search-placeholder">Search Docs</span>
-				<kbd class="search-kbd">{isMac ? '⌘' : 'Ctrl'}K</kbd>
+				<!-- mac shows the command glyph plus K with a thin space around the plus.
+				     other platforms show "Ctrl + K". both styles use spaces around the plus. -->
+				<kbd class="search-kbd">{isMac ? '⌘ + K' : 'Ctrl + K'}</kbd>
 			</button>
 		{/if}
 
 		<div class="nav-links" class:open={mobileOpen}>
-			<a href="/" class="nav-link" class:active={currentPath === '/'}>Home</a>
-			<a href="/scanner" class="nav-link" class:active={currentPath === '/scanner'}>Scanner</a>
-			<a href="/about" class="nav-link" class:active={currentPath === '/about'}>About</a>
-			<a href="/docs" class="nav-link" class:active={currentPath.startsWith('/docs')}>Docs</a>
+			<a
+				href="/"
+				class="nav-link"
+				class:active={currentPath === '/'}
+				aria-current={currentPath === '/' ? 'page' : undefined}>Home</a
+			>
+			<a
+				href="/scanner"
+				class="nav-link"
+				class:active={currentPath === '/scanner'}
+				aria-current={currentPath === '/scanner' ? 'page' : undefined}>Scanner</a
+			>
+			<a
+				href="/about"
+				class="nav-link"
+				class:active={currentPath === '/about'}
+				aria-current={currentPath === '/about' ? 'page' : undefined}>About</a
+			>
+			<a
+				href="/docs"
+				class="nav-link"
+				class:active={currentPath.startsWith('/docs')}
+				aria-current={currentPath.startsWith('/docs') ? 'page' : undefined}>Docs</a
+			>
 			<a
 				href="https://github.com/sunnypatell/ats-screener"
 				target="_blank"
@@ -217,7 +239,14 @@
 		background: none;
 		border: none;
 		cursor: pointer;
-		padding: 4px;
+		/* 44x44 meets WCAG 2.5.5 touch target size recommendation.
+		   bars are 20x2px; the extra padding makes up the difference. */
+		min-width: 44px;
+		min-height: 44px;
+		padding: 12px;
+		align-items: center;
+		justify-content: center;
+		border-radius: var(--radius-md);
 	}
 
 	.bar {

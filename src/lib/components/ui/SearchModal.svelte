@@ -1,11 +1,31 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import { logger } from '$lib/log';
+
+	// minimal pagefind shape we depend on. pagefind itself is a dynamic
+	// runtime import (not bundled by vite), so we cannot import its
+	// official types here. typing only the surface we touch keeps the
+	// component honest without pulling pagefind into the bundle graph.
+	interface PagefindSearchResult {
+		data: () => Promise<{
+			url: string;
+			meta?: { title?: string };
+			excerpt?: string;
+		}>;
+	}
+	interface PagefindSearchResponse {
+		results: PagefindSearchResult[];
+	}
+	interface PagefindModule {
+		init: () => Promise<void>;
+		search: (q: string) => Promise<PagefindSearchResponse>;
+	}
 
 	let open = $state(false);
 	let query = $state('');
 	let results = $state<Array<{ url: string; title: string; excerpt: string }>>([]);
 	let loading = $state(false);
-	let pagefind: any = null;
+	let pagefind: PagefindModule | null = null;
 	let inputEl: HTMLInputElement | undefined = $state();
 
 	const isMac = $derived(browser ? navigator.platform.toUpperCase().includes('MAC') : true);
@@ -15,10 +35,12 @@
 		try {
 			// load pagefind at runtime (not bundled by vite)
 			const url = '/docs/pagefind/pagefind.js';
-			pagefind = await new Function('return import("' + url + '")')();
+			pagefind = (await new Function('return import("' + url + '")')()) as PagefindModule;
 			await pagefind.init();
 		} catch (err) {
-			console.warn('[search] failed to load pagefind:', err);
+			logger.warn('search.pagefind_load_failed', {
+				error: err instanceof Error ? err.message : String(err)
+			});
 		}
 	}
 
@@ -30,8 +52,8 @@
 		loading = true;
 		try {
 			const search = await pagefind.search(query);
-			const loaded = await Promise.all(search.results.slice(0, 8).map((r: any) => r.data()));
-			results = loaded.map((r: any) => ({
+			const loaded = await Promise.all(search.results.slice(0, 8).map((r) => r.data()));
+			results = loaded.map((r) => ({
 				url: r.url,
 				title: r.meta?.title ?? r.url,
 				excerpt: r.excerpt ?? ''
@@ -126,7 +148,12 @@
 
 			<div class="search-footer">
 				<span class="footer-hint">
-					<kbd>{isMac ? '⌘' : 'Ctrl'}</kbd><kbd>K</kbd> to toggle
+					<!-- spaces around the plus on both platforms for legibility. -->
+					{#if isMac}
+						<kbd>⌘ + K</kbd>
+					{:else}
+						<kbd>Ctrl + K</kbd>
+					{/if} to toggle
 				</span>
 				<span class="footer-hint">
 					<kbd>Esc</kbd> to close
@@ -167,6 +194,15 @@
 		gap: 0.75rem;
 		padding: 1rem 1.25rem;
 		border-bottom: 1px solid var(--glass-border);
+		transition: border-bottom-color 0.15s ease;
+	}
+
+	/* the .search-input itself sets outline: none for a flush in-modal look.
+	   without a compensating indicator keyboard users would have no signal
+	   that the field is focused. :focus-within elevates the wrapper's bottom
+	   border to cyan whenever the input is the focused element. */
+	.search-input-wrapper:focus-within {
+		border-bottom-color: var(--accent-cyan);
 	}
 
 	.search-input-icon {
@@ -203,6 +239,8 @@
 	.search-results {
 		max-height: 360px;
 		overflow-y: auto;
+		/* momentum scrolling inside the results list on iOS Safari */
+		-webkit-overflow-scrolling: touch;
 		padding: 0.5rem;
 	}
 

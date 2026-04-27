@@ -1,5 +1,3 @@
-import { parsePDF } from './pdf-parser';
-import { parseDOCX } from './docx-parser';
 import { detectSections } from './section-detector';
 import { extractContact } from './contact-extractor';
 import { extractDateRanges, extractFirstDateRange } from './date-extractor';
@@ -36,7 +34,11 @@ export async function parseResume(file: File): Promise<ParseResult> {
 		let hasTables = false;
 		let hasImages = false;
 
+		// dynamic-import the per-format parser so pdfjs (~700kb) and mammoth
+		// (~250kb) end up in separate chunks. a user uploading a PDF never
+		// loads mammoth, and a DOCX-only user never loads pdfjs.
 		if (fileType === 'pdf') {
+			const { parsePDF } = await import('./pdf-parser');
 			const result = await parsePDF(file);
 			text = result.text;
 			lines = result.lines;
@@ -45,6 +47,7 @@ export async function parseResume(file: File): Promise<ParseResult> {
 			hasTables = result.hasTables;
 			hasImages = result.hasImages;
 		} else {
+			const { parseDOCX } = await import('./docx-parser');
 			const result = await parseDOCX(file);
 			text = result.text;
 			lines = result.lines;
@@ -124,6 +127,66 @@ function getFileType(file: File): 'pdf' | 'docx' | null {
 	)
 		return 'docx';
 	return null;
+}
+
+// alternate entry point for users who want to paste resume text directly,
+// bypassing the PDF/DOCX file-pickup step. runs the same downstream
+// extraction pipeline (sections, experience, education, skills, etc) so
+// the resulting ParsedResume drops into scoreResume without further
+// special-casing. metadata fields that only make sense for binary
+// documents (hasMultipleColumns, hasTables, hasImages) default to false;
+// pageCount is estimated from word count using the standard 250 wpm
+// resume rule of thumb.
+export function parseResumeText(rawText: string): ParseResult {
+	const text = rawText.replace(/\r\n/g, '\n').trimEnd();
+
+	if (text.trim().length === 0) {
+		return {
+			success: false,
+			resume: null,
+			errors: ['pasted resume text is empty'],
+			warnings: []
+		};
+	}
+
+	const lines = text.split('\n');
+	const wordCount = text.split(/\s+/).filter(Boolean).length;
+
+	const contact = extractContact(lines);
+	const sections = detectSections(lines);
+	const experience = extractExperience(sections);
+	const education = extractEducation(sections);
+	const projects = extractProjects(sections);
+	const certifications = extractCertifications(sections);
+	const skills = extractSkills(sections);
+	const summary = extractSummary(sections);
+
+	const resume: ParsedResume = {
+		rawText: text,
+		lines,
+		contact,
+		sections,
+		experience,
+		education,
+		projects,
+		certifications,
+		skills,
+		summary,
+		metadata: {
+			fileType: 'pdf',
+			// rough resume page estimate. 500 wpm is a high-density resume,
+			// 250 is more typical, but this number only feeds a heuristic
+			// pageCount scorer so a Math.ceil is plenty.
+			pageCount: Math.max(1, Math.ceil(wordCount / 500)),
+			wordCount,
+			lineCount: lines.length,
+			hasMultipleColumns: false,
+			hasTables: false,
+			hasImages: false
+		}
+	};
+
+	return { success: true, resume, errors: [], warnings: [] };
 }
 
 // extracts structured experience entries from experience sections
@@ -448,8 +511,10 @@ function splitIntoEntries(content: string): string[] {
 	return entries.filter((e) => e.trim().length > 0);
 }
 
-export { parsePDF } from './pdf-parser';
-export { parseDOCX } from './docx-parser';
+// note: parsePDF and parseDOCX are NOT re-exported here. they are loaded
+// only via dynamic import inside parseResume so the bundler can split
+// pdfjs and mammoth into per-format chunks. external code that needs
+// them directly should import from './pdf-parser' or './docx-parser'.
 export { detectSections } from './section-detector';
 export { extractContact } from './contact-extractor';
 export { extractDateRanges, extractFirstDateRange } from './date-extractor';

@@ -11,8 +11,22 @@
 		speed?: number;
 	} = $props();
 
-	const particles = $derived(
-		Array.from({ length: count }, () => ({
+	type Particle = {
+		x: number;
+		y: number;
+		size: number;
+		duration: number;
+		delay: number;
+		driftX: number;
+		driftY: number;
+		opacity: number;
+	};
+	// SSR renders an empty field; client fills in after hydration to keep the
+	// rendered output deterministic across server and client renders. tracking
+	// count/maxSize/speed inside $effect keeps the array in sync with prop changes.
+	let particles = $state<Particle[]>([]);
+	$effect(() => {
+		particles = Array.from({ length: count }, () => ({
 			x: Math.random() * 100,
 			y: Math.random() * 100,
 			size: 0.5 + Math.random() * maxSize,
@@ -21,8 +35,8 @@
 			driftX: -20 + Math.random() * 40,
 			driftY: -20 + Math.random() * 40,
 			opacity: 0.2 + Math.random() * 0.6
-		}))
-	);
+		}));
+	});
 </script>
 
 <div class="particle-field" aria-hidden="true">

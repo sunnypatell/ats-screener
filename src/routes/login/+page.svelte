@@ -445,8 +445,13 @@
 		opacity: 0.6;
 	}
 
+	/* full-saturation cyan border plus a soft glow on focus. matches the
+	   JD textarea pattern in JobDescriptionInput.svelte and gives keyboard
+	   users a clearly perceivable focus indicator (the prior 0.5-alpha
+	   border alone was below WCAG 2.4.7 visibility for many users). */
 	.field-input:focus {
-		border-color: rgba(6, 182, 212, 0.5);
+		border-color: var(--accent-cyan);
+		box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
 	}
 
 	.forgot-btn {

@@ -9,13 +9,21 @@
 	import { generatePDF } from '$engine/scorer/report';
 	import { getScoreColor, getScoreLabel } from '$engine/scorer/classification';
 	import { computeScanComparison } from '$engine/scorer/comparison';
+	import { pickQuickWins } from '$engine/scorer/quick-wins';
 	import { getExampleFor } from '$engine/suggestions/templates';
+	import { logger } from '$lib/log';
 	import type { Suggestion, StructuredSuggestion } from '$engine/scorer/types';
 
 	// derived stats for the summary card header
 	const avgScore = $derived(scoresStore.averageScore);
 	const passCount = $derived(scoresStore.passingCount);
 	const totalCount = $derived(scoresStore.results.length);
+
+	// top 3 highest-impact suggestions across all platforms, deduplicated
+	// by summary text. surfaces in the Quick Wins band so users see what
+	// to fix first without scrolling through every per-platform tab.
+	// reuses the existing impactColorMap declared further down.
+	const quickWins = $derived(pickQuickWins(scoresStore.results, 3));
 
 	// toggle between grid cards and detailed breakdown view
 	let activeView = $state<'cards' | 'detailed'>('cards');
@@ -65,7 +73,9 @@
 		try {
 			await generatePDF();
 		} catch (err) {
-			console.error('[export] pdf generation failed:', err);
+			logger.error('export.pdf_failed', {
+				error: err instanceof Error ? err.message : String(err)
+			});
 		} finally {
 			isExporting = false;
 		}
@@ -415,6 +425,49 @@
 				</div>
 			{/if}
 		</div>
+
+		<!--
+			quick wins band: top 3 highest-impact suggestions across all
+			platforms (deduplicated). surfaces what to fix first without
+			users having to scroll through every per-platform tab. only
+			renders when there is at least one structured suggestion.
+		-->
+		{#if quickWins.length > 0}
+			<div class="quick-wins-band">
+				<div class="quick-wins-header">
+					<svg
+						class="quick-wins-icon"
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+					</svg>
+					<span>Highest-impact fixes</span>
+					<span class="quick-wins-subtle">Fix these first</span>
+				</div>
+				<ol class="quick-wins-list">
+					{#each quickWins as win, i (win.summary)}
+						<li class="quick-wins-item">
+							<span class="quick-wins-rank">{i + 1}</span>
+							<span class="quick-wins-summary">{win.summary}</span>
+							<span
+								class="quick-wins-impact"
+								style="color: {impactColorMap[win.impact] ?? '#a1a1aa'};"
+							>
+								{win.impact}
+							</span>
+						</li>
+					{/each}
+				</ol>
+			</div>
+		{/if}
 
 		<!-- view toggle + export -->
 		<div class="toolbar">
@@ -1146,6 +1199,93 @@
 		box-shadow: 0 0 14px rgba(219, 39, 119, 0.08);
 	}
 
+	/* quick wins band: surfaces top 3 highest-impact suggestions before
+	   the user dives into per-platform detail. visually weighted between
+	   the dashboard-header and the toolbar so it feels like a primary
+	   recommendation, not a secondary chip. */
+	.quick-wins-band {
+		margin-bottom: 1.5rem;
+		padding: 1.1rem 1.25rem;
+		background:
+			linear-gradient(135deg, rgba(6, 182, 212, 0.04), rgba(139, 92, 246, 0.03)), var(--glass-bg);
+		border: 1px solid rgba(6, 182, 212, 0.18);
+		border-radius: var(--radius-lg, 14px);
+	}
+
+	.quick-wins-header {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-bottom: 0.85rem;
+		font-size: 0.85rem;
+		font-weight: 600;
+		color: var(--text-primary);
+		letter-spacing: 0.02em;
+	}
+
+	.quick-wins-icon {
+		color: var(--accent-cyan);
+		flex-shrink: 0;
+	}
+
+	.quick-wins-subtle {
+		margin-left: auto;
+		font-size: 0.72rem;
+		font-weight: 500;
+		color: var(--text-tertiary);
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+
+	.quick-wins-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.quick-wins-item {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 0.55rem 0.75rem;
+		background: rgba(255, 255, 255, 0.02);
+		border: 1px solid rgba(255, 255, 255, 0.05);
+		border-radius: var(--radius-md, 8px);
+	}
+
+	.quick-wins-rank {
+		flex-shrink: 0;
+		width: 22px;
+		height: 22px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 0.72rem;
+		font-weight: 700;
+		color: var(--accent-cyan);
+		background: rgba(6, 182, 212, 0.1);
+		border: 1px solid rgba(6, 182, 212, 0.25);
+		border-radius: 50%;
+	}
+
+	.quick-wins-summary {
+		flex: 1;
+		font-size: 0.88rem;
+		color: var(--text-primary);
+		line-height: 1.5;
+	}
+
+	.quick-wins-impact {
+		flex-shrink: 0;
+		font-size: 0.7rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
 	/* toolbar: toggle + export */
 	.toolbar {
 		display: flex;
@@ -1243,7 +1383,9 @@
 
 	.scores-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+		/* 280px min lets 5 columns fit at ~1400px container width, reducing dead
+		   side-space vs the old 340px min that produced only 4 columns */
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 		gap: 1.5rem;
 	}
 
@@ -1578,11 +1720,36 @@
 			flex-direction: column;
 			text-align: center;
 			gap: 1.5rem;
-			padding: 1.5rem;
+			padding: 1.75rem;
+		}
+
+		/* keep the suggestions card padded the same as priority focus areas
+		   so all dashboard cards have the same outer width and feel uniform. */
+		.suggestions-section {
+			padding: 1.75rem;
 		}
 
 		.summary-center {
 			max-width: 100%;
+			width: 100%;
+		}
+
+		/* mini bars on mobile: bigger labels, taller tracks, fill the column.
+		   without these the bars look invisible because the row gaps and
+		   the 80px right-aligned label leave the track squeezed thin. */
+		.mini-bars {
+			gap: 0.55rem;
+		}
+		.mini-bar-item {
+			gap: 0.75rem;
+		}
+		.mini-bar-track {
+			height: 6px;
+		}
+		.mini-bar-label {
+			width: 110px;
+			font-size: 0.72rem;
+			text-align: left;
 		}
 
 		.summary-right {
@@ -1597,6 +1764,13 @@
 			grid-template-columns: 1fr;
 		}
 
+		/* toolbar: stack view-toggle and actions vertically on narrow screens
+		   so the buttons do not squash below 44px wide. */
+		.toolbar {
+			flex-wrap: wrap;
+			gap: 0.75rem;
+		}
+
 		.view-toggle {
 			width: 100%;
 		}
@@ -1604,6 +1778,20 @@
 		.toggle-btn {
 			flex: 1;
 			justify-content: center;
+			/* WCAG 2.5.5: ensure buttons are at least 44px tall */
+			min-height: 44px;
+		}
+
+		.toolbar-actions {
+			width: 100%;
+			justify-content: stretch;
+		}
+
+		.toolbar-btn {
+			flex: 1;
+			justify-content: center;
+			/* WCAG 2.5.5 touch target */
+			min-height: 44px;
 		}
 
 		.fallback-toast {
@@ -1613,6 +1801,54 @@
 
 		.fallback-toast-actions {
 			justify-content: center;
+		}
+
+		/* quick-wins items: allow text to wrap so long suggestions stay readable */
+		.quick-wins-item {
+			flex-wrap: wrap;
+			gap: 0.5rem 0.75rem;
+		}
+
+		.quick-wins-impact {
+			margin-left: auto;
+		}
+
+		/* suggestion cards: on narrow viewports the right-side cluster (platform
+		   chips + impact label + chevron) can exceed the row width and overlap the
+		   summary text. wrap the header so the right cluster drops below on
+		   overflow, and let the left side truncate text before that happens. */
+		.suggestion-card-header {
+			flex-wrap: wrap;
+			gap: 0.5rem;
+		}
+
+		.suggestion-card-left {
+			min-width: 0;
+		}
+
+		.suggestion-summary {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			display: -webkit-box;
+			-webkit-line-clamp: 2;
+			line-clamp: 2;
+			-webkit-box-orient: vertical;
+		}
+
+		/* when the card is expanded on mobile, drop the clamp so the full
+		   suggestion text is visible inside the open accordion. */
+		.suggestion-card.expanded .suggestion-summary {
+			display: block;
+			-webkit-line-clamp: unset;
+			line-clamp: unset;
+			-webkit-box-orient: unset;
+			overflow: visible;
+			text-overflow: clip;
+		}
+
+		/* hide platform chips on very small viewports to reclaim space */
+		.suggestion-platforms {
+			display: none;
 		}
 	}
 </style>

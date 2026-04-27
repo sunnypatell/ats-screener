@@ -1,8 +1,13 @@
 <script lang="ts">
 	import { scoresStore } from '$stores/scores.svelte';
 	import { resumeStore } from '$stores/resume.svelte';
+	import { jdLibrary } from '$stores/jd-library.svelte';
+	import { authStore } from '$stores/auth.svelte';
+	import { SAMPLE_JD } from '$lib/sample-resume';
+	import { logger } from '$lib/log';
 
 	let expanded = $state(false);
+	let libraryOpen = $state(false);
 
 	// debounced JD value drives the live skill-extraction preview - parsing on
 	// every keystroke would re-tokenize a long JD on every char and feel laggy
@@ -53,7 +58,9 @@
 				// preview is best-effort - if the parser throws (corrupt input,
 				// transient import failure), keep the previous parsed state and
 				// log so it's grep-able in console without breaking the scan flow
-				console.warn('[jd-preview] parse failed:', err);
+				logger.warn('jd_preview.parse_failed', {
+					error: err instanceof Error ? err.message : String(err)
+				});
 			}
 		})();
 		return () => {
@@ -78,6 +85,38 @@
 	function isMatched(skill: string): boolean {
 		return matchSummary?.matchedSet.has(skill.toLowerCase()) ?? false;
 	}
+
+	// relative-time formatter - same logic as ScanHistory.svelte
+	function formatDate(iso: string): string {
+		const d = new Date(iso);
+		const now = new Date();
+		const diff = now.getTime() - d.getTime();
+		const mins = Math.floor(diff / 60_000);
+		const hours = Math.floor(diff / 3_600_000);
+		const days = Math.floor(diff / 86_400_000);
+		if (mins < 1) return 'just now';
+		if (mins < 60) return `${mins}m ago`;
+		if (hours < 24) return `${hours}h ago`;
+		if (days < 7) return `${days}d ago`;
+		return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+	}
+
+	const MIN_JD_TO_SAVE = 50;
+
+	function saveCurrentJD() {
+		const content = scoresStore.jobDescription;
+		if (content.trim().length < MIN_JD_TO_SAVE) return;
+		const label = window.prompt('label this job description (e.g. "Senior Engineer at Acme")');
+		if (label === null) return; // user cancelled
+		jdLibrary.save(label, content);
+	}
+
+	function loadFromLibrary(content: string) {
+		scoresStore.setJobDescription(content);
+		libraryOpen = false;
+	}
+
+	const savedJDs = $derived(jdLibrary.list);
 </script>
 
 <div class="jd-input">
@@ -110,6 +149,96 @@
 				value={scoresStore.jobDescription}
 				oninput={(e) => scoresStore.setJobDescription((e.target as HTMLTextAreaElement).value)}
 			></textarea>
+			<div class="jd-action-row">
+				{#if !scoresStore.hasJobDescription}
+					<button
+						type="button"
+						class="jd-sample-btn"
+						onclick={() => scoresStore.setJobDescription(SAMPLE_JD)}
+					>
+						Try with a sample job description
+					</button>
+				{/if}
+				{#if authStore.isAuthenticated}
+					<button
+						type="button"
+						class="jd-save-btn"
+						disabled={scoresStore.jobDescription.trim().length < MIN_JD_TO_SAVE}
+						onclick={saveCurrentJD}
+					>
+						<svg
+							width="12"
+							height="12"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+							<polyline points="17,21 17,13 7,13 7,21" />
+							<polyline points="7,3 7,8 15,8" />
+						</svg>
+						Save JD
+					</button>
+					{#if savedJDs.length > 0}
+						<div class="jd-library-wrap">
+							<button
+								type="button"
+								class="jd-library-btn"
+								aria-expanded={libraryOpen}
+								onclick={() => (libraryOpen = !libraryOpen)}
+							>
+								<svg
+									width="12"
+									height="12"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+								>
+									<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+									<path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+								</svg>
+								Saved JDs ({savedJDs.length})
+							</button>
+							{#if libraryOpen}
+								<div class="jd-library-dropdown" role="listbox" aria-label="Saved job descriptions">
+									{#each savedJDs as entry (entry.id)}
+										<div class="jd-library-item" role="option" aria-selected="false">
+											<button
+												type="button"
+												class="jd-library-load"
+												onclick={() => loadFromLibrary(entry.content)}
+											>
+												<span class="jd-library-label">{entry.label}</span>
+												<span class="jd-library-time">{formatDate(entry.savedAt)}</span>
+											</button>
+											<button
+												type="button"
+												class="jd-library-delete"
+												aria-label="Delete {entry.label}"
+												onclick={() => jdLibrary.remove(entry.id)}
+											>
+												<svg
+													width="12"
+													height="12"
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="currentColor"
+													stroke-width="2.5"
+												>
+													<line x1="18" y1="6" x2="6" y2="18" />
+													<line x1="6" y1="6" x2="18" y2="18" />
+												</svg>
+											</button>
+										</div>
+									{/each}
+								</div>
+							{/if}
+						</div>
+					{/if}
+				{/if}
+			</div>
 			{#if scoresStore.hasJobDescription}
 				<div class="jd-status">
 					<svg
@@ -245,6 +374,35 @@
 		color: var(--text-tertiary);
 	}
 
+	.jd-action-row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: 0.6rem;
+	}
+
+	.jd-sample-btn {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.4rem 0.85rem;
+		background: rgba(6, 182, 212, 0.06);
+		color: var(--accent-cyan);
+		border: 1px solid rgba(6, 182, 212, 0.2);
+		border-radius: var(--radius-md);
+		font-size: 0.8rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition:
+			background 0.15s ease,
+			border-color 0.15s ease;
+	}
+
+	.jd-sample-btn:hover {
+		background: rgba(6, 182, 212, 0.12);
+		border-color: rgba(6, 182, 212, 0.35);
+	}
+
 	.jd-status {
 		display: flex;
 		align-items: center;
@@ -347,5 +505,168 @@
 		color: #22c55e;
 		background: rgba(34, 197, 94, 0.1);
 		border-color: rgba(34, 197, 94, 0.28);
+	}
+
+	@media (max-width: 640px) {
+		/* bump action-row buttons to 44px tall on mobile to meet WCAG 2.5.5 */
+		.jd-sample-btn,
+		.jd-save-btn,
+		.jd-library-btn {
+			min-height: 44px;
+		}
+
+		/* JD textarea: 8 rows eats the whole screen on a 375px phone.
+		   5 rows keeps the placeholder visible and shows text without hiding the
+		   action row below the fold. */
+		.jd-textarea {
+			min-height: 110px;
+		}
+	}
+
+	/* save JD button */
+	.jd-save-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.4rem 0.85rem;
+		background: rgba(6, 182, 212, 0.06);
+		color: var(--accent-cyan);
+		border: 1px solid rgba(6, 182, 212, 0.2);
+		border-radius: var(--radius-md);
+		font-size: 0.8rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition:
+			background 0.15s ease,
+			border-color 0.15s ease,
+			opacity 0.15s ease;
+	}
+
+	.jd-save-btn:hover:not(:disabled) {
+		background: rgba(6, 182, 212, 0.12);
+		border-color: rgba(6, 182, 212, 0.35);
+	}
+
+	.jd-save-btn:disabled {
+		opacity: 0.35;
+		cursor: not-allowed;
+	}
+
+	/* library pill and dropdown */
+	.jd-library-wrap {
+		position: relative;
+	}
+
+	.jd-library-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.4rem 0.85rem;
+		background: rgba(255, 255, 255, 0.04);
+		color: var(--text-secondary);
+		border: 1px solid var(--glass-border);
+		border-radius: var(--radius-md);
+		font-size: 0.8rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition:
+			background 0.15s ease,
+			border-color 0.15s ease,
+			color 0.15s ease;
+	}
+
+	.jd-library-btn:hover,
+	.jd-library-btn[aria-expanded='true'] {
+		background: rgba(255, 255, 255, 0.07);
+		border-color: rgba(255, 255, 255, 0.15);
+		color: var(--text-primary);
+	}
+
+	.jd-library-dropdown {
+		position: absolute;
+		top: calc(100% + 6px);
+		left: 0;
+		z-index: 50;
+		min-width: 280px;
+		/* on narrow viewports the dropdown must not overflow the screen edge.
+		   clamp to the viewport width minus 2rem breathing room. right: 0
+		   anchors the right edge when the left-side anchor would push it off-screen. */
+		max-width: min(360px, calc(100vw - 2rem));
+		right: 0;
+		background: var(--glass-bg);
+		border: 1px solid var(--glass-border);
+		border-radius: var(--radius-lg);
+		backdrop-filter: blur(var(--glass-blur));
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+		overflow: hidden;
+		animation: previewIn 0.15s ease;
+	}
+
+	.jd-library-item {
+		display: flex;
+		align-items: center;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+	}
+
+	.jd-library-item:last-child {
+		border-bottom: none;
+	}
+
+	.jd-library-load {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.15rem;
+		padding: 0.65rem 0.85rem;
+		background: none;
+		border: none;
+		cursor: pointer;
+		text-align: left;
+		transition: background 0.12s ease;
+	}
+
+	.jd-library-load:hover {
+		background: rgba(6, 182, 212, 0.06);
+	}
+
+	.jd-library-label {
+		font-size: 0.82rem;
+		font-weight: 500;
+		color: var(--text-primary);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 240px;
+	}
+
+	.jd-library-time {
+		font-size: 0.72rem;
+		color: var(--text-tertiary);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.jd-library-delete {
+		flex-shrink: 0;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		/* 44x44 meets WCAG 2.5.5 touch target size recommendation */
+		width: 44px;
+		height: 44px;
+		margin-right: 0.15rem;
+		background: none;
+		border: none;
+		border-radius: var(--radius-md);
+		color: var(--text-tertiary);
+		cursor: pointer;
+		transition:
+			background 0.12s ease,
+			color 0.12s ease;
+	}
+
+	.jd-library-delete:hover {
+		background: rgba(239, 68, 68, 0.12);
+		color: #ef4444;
 	}
 </style>

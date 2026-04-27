@@ -1,9 +1,14 @@
 {
 	"name": "ats-screener",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"private": true,
 	"license": "MIT",
 	"type": "module",
+	"engines": {
+		"node": ">=20.0.0",
+		"pnpm": ">=10.0.0"
+	},
+	"packageManager": "pnpm@10.32.1",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "pnpm build:docs && vite build",
@@ -20,7 +25,8 @@
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage",
 		"test:e2e": "playwright test",
-		"validate": "pnpm check && pnpm lint && pnpm test"
+		"validate": "pnpm check && pnpm lint && pnpm format:check && pnpm test && pnpm build",
+		"gate": "pnpm validate"
 	},
 	"dependencies": {
 		"@number-flow/svelte": "^0.3.11",
@@ -28,9 +34,9 @@
 		"@vercel/og": "^0.11.1",
 		"bits-ui": "^2.16.0",
 		"compromise": "^14.14.3",
-		"firebase": "^12.9.0",
-		"jspdf": "^4.2.0",
-		"mammoth": "^1.8.0",
+		"firebase": "^12.12.1",
+		"jspdf": "^4.2.1",
+		"mammoth": "^1.12.0",
 		"motion": "^12.0.0",
 		"motion-sv": "^0.1.10",
 		"pdfjs-dist": "^4.10.38"

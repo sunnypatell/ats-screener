@@ -104,6 +104,20 @@ export default defineConfig({
 						{ label: 'Configuration', slug: 'self-hosting/configuration' },
 						{ label: 'Deployment', slug: 'self-hosting/deployment' }
 					]
+				},
+				{
+					label: 'Project',
+					items: [
+						{
+							label: 'Changelog',
+							link: 'https://github.com/sunnypatell/ats-screener/blob/main/CHANGELOG.md',
+							attrs: { target: '_blank', rel: 'noopener' }
+						}
+					]
+				},
+				{
+					label: 'Legal',
+					items: [{ label: 'Privacy and Data Handling', slug: 'legal/privacy' }]
 				}
 			],
 			lastUpdated: true,

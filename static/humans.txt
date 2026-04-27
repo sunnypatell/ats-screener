@@ -1,0 +1,29 @@
+/* TEAM */
+
+Author: Sunny Patel
+Site: https://sunnypatel.net
+GitHub: @sunnypatell
+LinkedIn: /in/sunny-patel-30b460204
+From: Richmond Hill, Ontario, Canada
+
+
+/* THANKS */
+
+To everyone who reported a bug, opened a feature request, or
+starred the repo. Open source runs on attention.
+
+
+/* SITE */
+
+Last update: 2026-04-26
+Standards: HTML5, CSS3, ES2022, WCAG 2.2 AA
+Components: SvelteKit 5, Svelte 5 runes, Bits UI
+Docs: Astro Starlight
+Hosting: Vercel
+Source: https://github.com/sunnypatell/ats-screener
+License: MIT
+
+
+/* SAY HELLO */
+
+sunnypatel124555@gmail.com

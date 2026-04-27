@@ -1,4 +1,5 @@
 import { ImageResponse } from '@vercel/og';
+import { clamp, parseInt0 } from '$lib/clamp';
 import type { RequestHandler } from './$types';
 
 // runs on the default (node) serverless runtime - the deprecated `runtime: 'edge'`
@@ -25,13 +26,18 @@ function tierLabel(score: number): string {
 	return 'POOR';
 }
 
-function clamp(n: number, min: number, max: number): number {
-	return Math.max(min, Math.min(max, n));
-}
+// function-level LRU memo of rendered PNG bytes. the vercel cdn cache
+// already absorbs identical repeat requests by URL, but a cache-bypass
+// header (Cache-Control: no-cache from a misconfigured client, a fresh
+// edge region, etc) lands on the function and re-renders the same image.
+// 200 entries x ~60kb per image is ~12MB of resident memory, well within
+// vercel hobby's per-function ceiling. keys are content-addressed so
+// collisions are not possible.
+const renderCache = new Map<string, ArrayBuffer>();
+const RENDER_CACHE_MAX = 200;
 
-function parseInt0(v: string | null, fallback: number, min: number, max: number): number {
-	const n = v ? Number.parseInt(v, 10) : NaN;
-	return Number.isFinite(n) ? clamp(n, min, max) : fallback;
+function cacheKey(score: number, pass: number, total: number, delta: number | null): string {
+	return `${score}|${pass}|${total}|${delta ?? ''}`;
 }
 
 export const GET: RequestHandler = async ({ url }) => {
@@ -43,6 +49,30 @@ export const GET: RequestHandler = async ({ url }) => {
 	const delta = url.searchParams.has('delta')
 		? parseInt0(url.searchParams.get('delta'), 0, -100, 100)
 		: null;
+
+	// memo lookup: content-addressed by the four params that drive the image
+	const memoKey = cacheKey(score, pass, total, delta);
+	const cached = renderCache.get(memoKey);
+	if (cached) {
+		// LRU bump on hit
+		renderCache.delete(memoKey);
+		renderCache.set(memoKey, cached);
+		return new Response(cached, {
+			status: 200,
+			headers: {
+				'Content-Type': 'image/png',
+				'Cache-Control':
+					'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800, immutable',
+				// override the global same-origin CORP set in hooks.server.ts:
+				// social platforms (LinkedIn, Twitter, Facebook, Slack) fetch og images
+				// from their own origin when generating link previews. same-origin would
+				// block those cross-origin fetches and break every social share card.
+				// cross-origin is safe here because this endpoint only serves a static
+				// pre-rendered PNG with no user-sensitive data.
+				'Cross-Origin-Resource-Policy': 'cross-origin'
+			}
+		});
+	}
 
 	const color = tierColor(score);
 	const label = tierLabel(score);
@@ -219,6 +249,16 @@ export const GET: RequestHandler = async ({ url }) => {
 	// never the function
 	const og = new ImageResponse(tree as never, { width: WIDTH, height: HEIGHT });
 	const buffer = await og.arrayBuffer();
+
+	// store in the function-level memo before responding. LRU eviction keeps
+	// the map bounded; oldest entry is at the head of the iterator since Map
+	// preserves insertion order and we re-insert on hit above.
+	if (renderCache.size >= RENDER_CACHE_MAX) {
+		const oldest = renderCache.keys().next().value;
+		if (oldest !== undefined) renderCache.delete(oldest);
+	}
+	renderCache.set(memoKey, buffer);
+
 	return new Response(buffer, {
 		status: 200,
 		headers: {
@@ -226,7 +266,14 @@ export const GET: RequestHandler = async ({ url }) => {
 			// s-maxage = vercel cdn TTL (1d), max-age = browser TTL (1h),
 			// stale-while-revalidate keeps serving stale up to 7d while refreshing
 			'Cache-Control':
-				'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800, immutable'
+				'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800, immutable',
+			// override the global same-origin CORP set in hooks.server.ts:
+			// social platforms (LinkedIn, Twitter, Facebook, Slack) fetch og images
+			// from their own origin when generating link previews. same-origin would
+			// block those cross-origin fetches and break every social share card.
+			// cross-origin is safe here because this endpoint only serves a static
+			// pre-rendered PNG with no user-sensitive data.
+			'Cross-Origin-Resource-Policy': 'cross-origin'
 		}
 	});
 };

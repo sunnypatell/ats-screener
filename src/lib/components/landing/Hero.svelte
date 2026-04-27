@@ -21,18 +21,34 @@
 	let hasAnimated = false;
 	let statsEl = $state<HTMLElement | null>(null);
 
-	// observe stats strip for scroll-triggered animation
-	// must be a $effect (not onMount) because bind:this resolves after onMount in svelte 5
+	// observe stats strip for scroll-triggered animation.
+	// threshold 0.1: only 10% of the strip needs to be visible to fire,
+	// which is reliable on all viewport sizes and avoids the strip being
+	// counted as "never visible" on short screens where 50% is off-screen.
+	// must be a $effect (not onMount) because bind:this resolves after onMount in svelte 5.
 	$effect(() => {
 		if (!statsEl) return;
 		const observer = new IntersectionObserver(
 			(entries) => {
 				if (entries[0].isIntersecting) isVisible = true;
 			},
-			{ threshold: 0.5 }
+			{ threshold: 0.1 }
 		);
 		observer.observe(statsEl);
-		return () => observer.disconnect();
+
+		// safety net: if the user deep-linked or fast-scrolled past the strip
+		// before the observer fires, trigger the animation after 1500ms anyway
+		// (only when a count has already loaded).
+		const safetyTimer = setTimeout(() => {
+			if (userCount > 0 && !hasAnimated) {
+				isVisible = true;
+			}
+		}, 1500);
+
+		return () => {
+			observer.disconnect();
+			clearTimeout(safetyTimer);
+		};
 	});
 
 	// trigger count-up animation when both visible and count is loaded
@@ -87,13 +103,20 @@
 	// ATS system names for the FlipWords component (short names only to prevent layout shift)
 	const systems = ['Workday', 'Taleo', 'iCIMS', 'Greenhouse', 'Lever', 'SAP SF'];
 
-	// randomize mock scores on each page load so they don't look predetermined
+	// randomize mock scores on each page load so they don't look predetermined.
+	// initialized to fixed defaults so SSR and the initial client render match;
+	// $effect re-rolls on the client after hydration.
 	function randScore(min: number, max: number): number {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	}
-	const mockWorkday = randScore(82, 96);
-	const mockTaleo = randScore(62, 78);
-	const mockGreenhouse = randScore(78, 92);
+	let mockWorkday = $state(89);
+	let mockTaleo = $state(71);
+	let mockGreenhouse = $state(85);
+	$effect(() => {
+		mockWorkday = randScore(82, 96);
+		mockTaleo = randScore(62, 78);
+		mockGreenhouse = randScore(78, 92);
+	});
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
