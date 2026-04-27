@@ -77,10 +77,15 @@
 	onclick={openFilePicker}
 	onkeydown={handleUploaderKey}
 >
+	<!--
+		accept includes both extensions and MIME types. iOS Safari requires
+		MIME types to show the "Choose File" / "Browse" option reliably;
+		extensions alone are sometimes ignored by the iOS document picker.
+	-->
 	<input
 		bind:this={fileInput}
 		type="file"
-		accept=".pdf,.docx"
+		accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 		onchange={handleFileSelect}
 		class="visually-hidden"
 	/>

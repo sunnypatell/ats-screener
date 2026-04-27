@@ -234,6 +234,8 @@
 	.search-results {
 		max-height: 360px;
 		overflow-y: auto;
+		/* momentum scrolling inside the results list on iOS Safari */
+		-webkit-overflow-scrolling: touch;
 		padding: 0.5rem;
 	}
 

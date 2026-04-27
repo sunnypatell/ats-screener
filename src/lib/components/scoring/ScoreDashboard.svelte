@@ -1737,6 +1737,13 @@
 			grid-template-columns: 1fr;
 		}
 
+		/* toolbar: stack view-toggle and actions vertically on narrow screens
+		   so the buttons do not squash below 44px wide. */
+		.toolbar {
+			flex-wrap: wrap;
+			gap: 0.75rem;
+		}
+
 		.view-toggle {
 			width: 100%;
 		}
@@ -1744,6 +1751,20 @@
 		.toggle-btn {
 			flex: 1;
 			justify-content: center;
+			/* WCAG 2.5.5: ensure buttons are at least 44px tall */
+			min-height: 44px;
+		}
+
+		.toolbar-actions {
+			width: 100%;
+			justify-content: stretch;
+		}
+
+		.toolbar-btn {
+			flex: 1;
+			justify-content: center;
+			/* WCAG 2.5.5 touch target */
+			min-height: 44px;
 		}
 
 		.fallback-toast {
@@ -1753,6 +1774,16 @@
 
 		.fallback-toast-actions {
 			justify-content: center;
+		}
+
+		/* quick-wins items: allow text to wrap so long suggestions stay readable */
+		.quick-wins-item {
+			flex-wrap: wrap;
+			gap: 0.5rem 0.75rem;
+		}
+
+		.quick-wins-impact {
+			margin-left: auto;
 		}
 	}
 </style>

@@ -237,7 +237,14 @@
 		background: none;
 		border: none;
 		cursor: pointer;
-		padding: 4px;
+		/* 44x44 meets WCAG 2.5.5 touch target size recommendation.
+		   bars are 20x2px; the extra padding makes up the difference. */
+		min-width: 44px;
+		min-height: 44px;
+		padding: 12px;
+		align-items: center;
+		justify-content: center;
+		border-radius: var(--radius-md);
 	}
 
 	.bar {

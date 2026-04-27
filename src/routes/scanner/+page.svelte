@@ -962,7 +962,9 @@
 
 	@media (max-width: 640px) {
 		.scanner {
-			padding: 5rem 1.5rem 3rem;
+			/* env(safe-area-inset-bottom) adds clearance for iPhone notch/home-bar
+			   so the scan button never sits behind the iOS gesture handle. */
+			padding: 5rem 1.5rem calc(3rem + env(safe-area-inset-bottom, 0px));
 		}
 
 		.actions {
@@ -980,6 +982,21 @@
 		.auth-gate-card {
 			padding: 2rem 1.5rem;
 			margin: 0 1rem;
+		}
+
+		/* reduce paste textarea height on mobile so it does not eat above-the-fold
+		   space. 6 rows (~132px) is enough to see what was pasted. */
+		.paste-textarea {
+			min-height: 132px;
+		}
+
+		/* enlarge small action buttons to meet WCAG 2.5.5 44x44px touch target */
+		.sample-btn {
+			min-height: 44px;
+		}
+
+		.paste-btn {
+			min-height: 44px;
 		}
 	}
 </style>

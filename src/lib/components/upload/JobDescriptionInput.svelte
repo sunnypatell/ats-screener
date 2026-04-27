@@ -507,6 +507,22 @@
 		border-color: rgba(34, 197, 94, 0.28);
 	}
 
+	@media (max-width: 640px) {
+		/* bump action-row buttons to 44px tall on mobile to meet WCAG 2.5.5 */
+		.jd-sample-btn,
+		.jd-save-btn,
+		.jd-library-btn {
+			min-height: 44px;
+		}
+
+		/* JD textarea: 8 rows eats the whole screen on a 375px phone.
+		   5 rows keeps the placeholder visible and shows text without hiding the
+		   action row below the fold. */
+		.jd-textarea {
+			min-height: 110px;
+		}
+	}
+
 	/* save JD button */
 	.jd-save-btn {
 		display: inline-flex;
@@ -572,7 +588,11 @@
 		left: 0;
 		z-index: 50;
 		min-width: 280px;
-		max-width: 360px;
+		/* on narrow viewports the dropdown must not overflow the screen edge.
+		   clamp to the viewport width minus 2rem breathing room. right: 0
+		   anchors the right edge when the left-side anchor would push it off-screen. */
+		max-width: min(360px, calc(100vw - 2rem));
+		right: 0;
 		background: var(--glass-bg);
 		border: 1px solid var(--glass-border);
 		border-radius: var(--radius-lg);
@@ -631,9 +651,10 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 2rem;
-		height: 2rem;
-		margin-right: 0.35rem;
+		/* 44x44 meets WCAG 2.5.5 touch target size recommendation */
+		width: 44px;
+		height: 44px;
+		margin-right: 0.15rem;
 		background: none;
 		border: none;
 		border-radius: var(--radius-md);

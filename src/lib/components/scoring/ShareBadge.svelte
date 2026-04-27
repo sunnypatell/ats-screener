@@ -715,8 +715,13 @@
 		position: relative;
 		width: 100%;
 		max-width: 520px;
-		max-height: 90vh;
+		/* cap at 90dvh so notched devices do not clip the bottom of the dialog
+		   behind the iOS home bar. -webkit-overflow-scrolling enables momentum
+		   scrolling inside the dialog on iOS Safari (pre-iOS 13 fallback; no-op
+		   on modern engines but harmless). */
+		max-height: 90dvh;
 		overflow-y: auto;
+		-webkit-overflow-scrolling: touch;
 		background: rgba(18, 18, 30, 0.98);
 		border: 1px solid rgba(255, 255, 255, 0.08);
 		border-radius: 24px;
