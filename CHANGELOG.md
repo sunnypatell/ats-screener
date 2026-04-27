@@ -9,12 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Anonymous one-scan trial**: visitors can now run a single scan without signing in. The first scan in a browser session is free; signing in unlocks repeat scans, scan history, and trend tracking. Soft localStorage-based gate, not a hard auth boundary.
 - **Paste-and-scan flow**: a textarea below the file uploader accepts pasted resume text directly. Same scoring runs whether you upload a PDF, a DOCX, or paste raw text. New `parseResumeText` parser entry runs the same downstream extraction (sections, contact, experience, education, skills) as the file path. 15 unit tests cover empty input, structural extraction, metadata defaults, CRLF normalization, and result-shape compatibility.
 - **Try-a-sample-resume**: a one-click button on the scanner loads a fictional but representative resume, so casual visitors can experience the full scoring flow without uploading anything personal.
 - **Privacy notice**: lives at `/docs/legal/privacy/` (Starlight). Plain-language coverage of what is collected (account info, capped scan history), what is not (raw resume text, full job description, file binaries), how scoring requests flow through the serverless function, third-party providers, retention, and your practical rights regardless of jurisdiction. Includes a per-statute reading on whether PIPEDA, CCPA, and GDPR formally apply to a non-commercial student portfolio project that accepts voluntary donations.
 - **Public roadmap**: hand-curated marketing-toned view at `/docs/roadmap/` with sections for Recently shipped, In flight, On deck, Stretch goals, and Not planned.
-- **FAQ + FAQPage JSON-LD on /about**: 7 author-curated Q&As covering free/open-source, anonymous trial, paste-and-scan, no vendor affiliation, server-side data flow, score interpretation, and how to support. Visible UI uses native `<details>` elements; structured data mirrors visible content per Google's rich-result rules.
+- **FAQ + FAQPage JSON-LD on /about**: 7 author-curated Q&As covering free/open-source, sign-in requirement, paste-and-scan, no vendor affiliation, server-side data flow, score interpretation, and how to support. Visible UI uses native `<details>` elements; structured data mirrors visible content per Google's rich-result rules.
 - **`/llms.txt`** at the site root for AI-crawler discoverability (Anthropic, OpenAI, Perplexity standard).
 - **`/.well-known/security.txt`** per RFC 9116, listing Contact, Expires, Canonical, and Policy fields for responsible disclosure.
 - **PWA manifest** at `/manifest.webmanifest` with start_url, display, theme color, and icons. App is now installable from supported browsers.

@@ -1785,5 +1785,32 @@
 		.quick-wins-impact {
 			margin-left: auto;
 		}
+
+		/* suggestion cards: on narrow viewports the right-side cluster (platform
+		   chips + impact label + chevron) can exceed the row width and overlap the
+		   summary text. wrap the header so the right cluster drops below on
+		   overflow, and let the left side truncate text before that happens. */
+		.suggestion-card-header {
+			flex-wrap: wrap;
+			gap: 0.5rem;
+		}
+
+		.suggestion-card-left {
+			min-width: 0;
+		}
+
+		.suggestion-summary {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			display: -webkit-box;
+			-webkit-line-clamp: 2;
+			line-clamp: 2;
+			-webkit-box-orient: vertical;
+		}
+
+		/* hide platform chips on very small viewports to reclaim space */
+		.suggestion-platforms {
+			display: none;
+		}
 	}
 </style>

@@ -11,7 +11,7 @@
 		},
 		{
 			q: 'Do I have to create an account to scan my resume?',
-			a: 'No. You can run one anonymous scan without signing in to try the tool. After the first scan, signing in unlocks repeat scans, scan history, and trend tracking across multiple uploads. Anonymous scans are not saved on our servers.'
+			a: 'Yes. Signing in is required to use the scanner. Creating an account is free and takes seconds with Google sign-in. Your scan history is saved automatically so you can track your scores over time.'
 		},
 		{
 			q: 'Can I paste resume text instead of uploading a file?',

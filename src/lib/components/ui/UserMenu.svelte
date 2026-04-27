@@ -31,6 +31,7 @@
 				height="36"
 				loading="lazy"
 				decoding="async"
+				referrerpolicy="no-referrer"
 			/>
 		{:else}
 			<span class="avatar-initials">{authStore.initials}</span>

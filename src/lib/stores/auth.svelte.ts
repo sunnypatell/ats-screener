@@ -35,9 +35,13 @@ class AuthStore {
 	constructor() {
 		if (browser) {
 			void this.setupAuthListener();
-		} else {
-			this.loading = false;
 		}
+		// on SSR, loading stays true so the server renders the loading spinner.
+		// the client also starts with loading=true until onAuthStateChanged fires.
+		// this ensures SSR and initial client output are identical, preventing
+		// the hydration_mismatch warning that occurred when SSR rendered the
+		// auth-gate (loading=false, user=null) while the client rendered the
+		// loading spinner (loading=true).
 	}
 
 	private async setupAuthListener() {

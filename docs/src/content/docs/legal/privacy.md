@@ -45,8 +45,7 @@ Whether or not a given law strictly applies, we operate as if a baseline of good
 
 ## How you can use the app
 
-- **Anonymous (one scan).** You can run a single scan without signing in. Nothing about that scan is saved on our servers. The result lives in your browser tab and disappears when you close it. After the first anonymous scan, the app prompts you to sign in for repeat scans.
-- **Signed in.** When you sign in, the app stores your account info plus your scan history (capped at the most recent 5 scans). The next section covers exactly what that includes.
+- **Signed in.** Signing in is required to use the scanner. When you sign in, the app stores your account info plus your scan history (capped at the most recent 5 scans). The next section covers exactly what that includes.
 
 ## What we collect from signed-in users
 
@@ -106,7 +105,7 @@ If you live in a jurisdiction with a data-protection authority (Canada's [Office
 
 ## Cookies and similar technologies
 
-The app uses only what is required for sign-in (the auth provider sets cookies and local storage to remember your session). We do not use cookies or local storage for behavioural tracking or advertising. One additional flag is stored in your browser's localStorage to track whether your one anonymous scan has been used; that flag holds no personal information.
+The app uses only what is required for sign-in (the auth provider sets cookies and local storage to remember your session). We do not use cookies or local storage for behavioural tracking or advertising.
 
 ## Children
 
