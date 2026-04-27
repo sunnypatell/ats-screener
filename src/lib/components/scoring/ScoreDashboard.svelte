@@ -1720,7 +1720,13 @@
 			flex-direction: column;
 			text-align: center;
 			gap: 1.5rem;
-			padding: 1.5rem;
+			padding: 1.75rem;
+		}
+
+		/* keep the suggestions card padded the same as priority focus areas
+		   so all dashboard cards have the same outer width and feel uniform. */
+		.suggestions-section {
+			padding: 1.75rem;
 		}
 
 		.summary-center {
