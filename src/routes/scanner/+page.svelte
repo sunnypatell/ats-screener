@@ -259,18 +259,24 @@
 				<section class="upload-section">
 					<ResumeUploader />
 
-					<!-- sample-resume affordance: lets a casual visitor experience the
-					     full scoring pipeline without uploading anything personal.
-					     loads a fictional realistic resume into the parser via setText. -->
+					<!-- sample-resume affordance: one click loads a fictional resume AND
+					     kicks off scoring, so a casual visitor reaches the dashboard
+					     without manually pressing scan. queueMicrotask gives setText's
+					     reactive writes a tick to settle before handleScan reads them. -->
 					<div class="sample-row">
 						<button
 							type="button"
 							class="sample-btn"
-							onclick={() => resumeStore.setText(SAMPLE_RESUME)}
+							onclick={() => {
+								resumeStore.setText(SAMPLE_RESUME);
+								queueMicrotask(() => {
+									if (resumeStore.isReady) handleScan();
+								});
+							}}
 						>
 							Try with a sample resume
 						</button>
-						<span class="sample-hint">No upload needed. Just see how scoring works.</span>
+						<span class="sample-hint">One click. Loads a fictional resume and runs the scan.</span>
 					</div>
 
 					<!--
@@ -571,7 +577,7 @@
 	.paste-block {
 		margin-top: 1rem;
 		background: transparent;
-		border: 1px dashed var(--glass-border);
+		border: 1px dashed rgba(6, 182, 212, 0.25);
 		border-radius: var(--radius-md, 10px);
 		overflow: hidden;
 		transition:
@@ -581,7 +587,7 @@
 
 	.paste-block:hover,
 	.paste-block[open] {
-		border-color: rgba(6, 182, 212, 0.4);
+		border-color: rgba(6, 182, 212, 0.5);
 		background: rgba(6, 182, 212, 0.04);
 	}
 
@@ -589,7 +595,7 @@
 		padding: 0.75rem 1rem;
 		font-size: 0.85rem;
 		font-weight: 500;
-		color: var(--text-secondary);
+		color: var(--accent-cyan);
 		cursor: pointer;
 		list-style: none;
 		display: flex;
@@ -616,6 +622,7 @@
 
 	.paste-toggle:hover {
 		color: var(--text-primary);
+		filter: brightness(1.15);
 	}
 
 	.paste-textarea {
