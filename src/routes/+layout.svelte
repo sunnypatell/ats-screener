@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import '../app.css';
 	import Navbar from '$components/ui/Navbar.svelte';
 	import { installErrorReporter } from '$lib/error-reporter';
 	import { installWebVitals } from '$lib/web-vitals';
+	import { logger } from '$lib/log';
 
 	let { children } = $props();
 
@@ -12,6 +14,23 @@
 	$effect(() => {
 		installErrorReporter();
 		installWebVitals();
+	});
+
+	// register the service worker after hydration, production-only.
+	// dev skips registration because SvelteKit does not emit a compiled
+	// service-worker.js in dev mode; attempting to register it would 404.
+	// onMount is fire-and-forget so registration never blocks hydration.
+	onMount(() => {
+		if ('serviceWorker' in navigator && import.meta.env.PROD) {
+			navigator.serviceWorker
+				.register('/service-worker.js', { type: 'module' })
+				.then((reg) => {
+					logger.info('sw.registered', { scope: reg.scope });
+				})
+				.catch((error) => {
+					logger.warn('sw.register_failed', { error });
+				});
+		}
 	});
 </script>
 
