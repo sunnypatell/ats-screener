@@ -1,0 +1,16 @@
+# GitHub linguist overrides
+#
+# the test suite is large and entirely TypeScript, which tipped the repo's
+# detected primary language from Svelte to TypeScript on the GitHub badge.
+# tests are not the product, so excluding them from language detection
+# restores Svelte as the headline language without losing any code.
+tests/** linguist-detectable=false
+
+# generated docs (Astro Starlight build output) is committed to static/docs
+# at deploy time but is not source we author. mark it vendored so it is also
+# excluded from language stats.
+static/docs/** linguist-vendored=true
+
+# ensure svelte files are always counted, even if linguist heuristics get
+# confused by similar-extension neighbours.
+*.svelte linguist-detectable=true linguist-language=Svelte
