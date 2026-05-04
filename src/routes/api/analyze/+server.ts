@@ -5,107 +5,23 @@ import { buildFullScoringPrompt, buildJDAnalysisPrompt } from '$engine/llm/promp
 import { logger } from '$lib/log';
 import { hashPrompt, getCached, setCached } from './cache';
 import { checkRateLimit } from './rate-limiter';
-
-// provider configuration: Gemma 3 27B (Google) → Llama 3.3 70B (Groq)
-// cross-provider fallback ensures independent quotas so one provider's limits don't cascade
-interface LLMProvider {
-	name: string;
-	apiKeyName: string;
-	buildRequest: (prompt: string, apiKey: string) => { url: string; init: RequestInit };
-	extractText: (response: unknown) => string;
-}
-
-// shared extractor for all Google Generative Language API models
-const googleExtractText = (data: unknown) => {
-	const d = data as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
-	return d.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-};
-
-function buildGoogleProvider(
-	name: string,
-	model: string,
-	opts?: { jsonMode?: boolean }
-): LLMProvider {
-	return {
-		name,
-		apiKeyName: 'GEMINI_API_KEY',
-		buildRequest: (prompt, apiKey) => ({
-			url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-			init: {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					contents: [{ parts: [{ text: prompt }] }],
-					generationConfig: {
-						temperature: 0.3,
-						topP: 0.85,
-						maxOutputTokens: 16384,
-						...(opts?.jsonMode && { responseMimeType: 'application/json' })
-					}
-				})
-			}
-		}),
-		extractText: googleExtractText
-	};
-}
-
-function buildGroqProvider(name: string, model: string): LLMProvider {
-	return {
-		name,
-		apiKeyName: 'GROQ_API_KEY',
-		buildRequest: (prompt, apiKey) => ({
-			url: 'https://api.groq.com/openai/v1/chat/completions',
-			init: {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${apiKey}`
-				},
-				body: JSON.stringify({
-					model,
-					messages: [{ role: 'user', content: prompt }],
-					temperature: 0.3,
-					top_p: 0.85,
-					max_tokens: 16384,
-					response_format: { type: 'json_object' }
-				})
-			}
-		}),
-		extractText: (data: unknown) => {
-			const d = data as { choices?: { message?: { content?: string } }[] };
-			return d.choices?.[0]?.message?.content ?? '';
-		}
-	};
-}
-
-const PROVIDERS: LLMProvider[] = [
-	// primary: Gemma 3 27B via Google - 14,400 RPD, 30 RPM, 15K TPM
-	buildGoogleProvider('gemma-3-27b', 'gemma-3-27b-it'),
-	// fallback: Llama 3.3 70B via Groq - 100-600ms, native JSON mode, 1K RPD, 100K TPD
-	buildGroqProvider('groq-llama-3.3-70b', 'llama-3.3-70b-versatile')
-];
-
-// per-provider timeouts: Gemma (90s) + Groq (30s) = 120s worst case
-// Gemma typically responds in 30-45s but can spike under load; Groq is <1s but gets headroom
-// Fluid Compute on Vercel Hobby gives 300s max, so 120s worst case fits comfortably
-const PROVIDER_TIMEOUTS_MS = [90_000, 30_000];
+import { buildProviders } from './providers';
 
 // tries each provider in sequence until one succeeds and returns valid JSON
 async function callLLM(
 	prompt: string,
 	env: Record<string, string>
 ): Promise<{ parsed: Record<string, unknown>; provider: string } | null> {
-	for (let i = 0; i < PROVIDERS.length; i++) {
-		const provider = PROVIDERS[i];
-		const timeoutMs = PROVIDER_TIMEOUTS_MS[i] ?? 10_000;
-		const apiKey = env[provider.apiKeyName] ?? '';
-		if (!apiKey) continue;
+	const providers = buildProviders(env);
+	for (const provider of providers) {
+		const secret = env[provider.configKey] ?? '';
+		if (!secret) continue;
 
 		try {
-			const { url, init } = provider.buildRequest(prompt, apiKey);
+			const { url, init } = provider.buildRequest(prompt, secret);
 
 			const controller = new AbortController();
-			const timeout = setTimeout(() => controller.abort(), timeoutMs);
+			const timeout = setTimeout(() => controller.abort(), provider.timeoutMs);
 
 			const response = await fetch(url, { ...init, signal: controller.signal });
 			clearTimeout(timeout);
@@ -140,7 +56,9 @@ async function callLLM(
 			const isTimeout = err instanceof DOMException && err.name === 'AbortError';
 			logger.warn(isTimeout ? 'llm.provider_timeout' : 'llm.provider_failed', {
 				provider: provider.name,
-				...(isTimeout ? { timeoutMs } : { error: err instanceof Error ? err.message : String(err) })
+				...(isTimeout
+					? { timeoutMs: provider.timeoutMs }
+					: { error: err instanceof Error ? err.message : String(err) })
 			});
 			continue;
 		}
@@ -194,14 +112,24 @@ interface RequestBody {
 }
 
 export const POST: RequestHandler = async ({ request }) => {
-	// collect all API keys from SvelteKit $env
+	// collect provider config from SvelteKit $env. OLLAMA_BASE_URL is the
+	// presence signal for the local-Ollama path; OLLAMA_MODEL is read inside
+	// buildProviders() and defaults to llama3.2 when unset.
 	const keys: Record<string, string> = {
 		GEMINI_API_KEY: env.GEMINI_API_KEY ?? '',
-		GROQ_API_KEY: env.GROQ_API_KEY ?? ''
+		GROQ_API_KEY: env.GROQ_API_KEY ?? '',
+		OLLAMA_BASE_URL: env.OLLAMA_BASE_URL ?? '',
+		OLLAMA_MODEL: env.OLLAMA_MODEL ?? ''
 	};
 
-	const hasAnyKey = Object.values(keys).some((v) => v.length > 0);
-	if (!hasAnyKey) {
+	// at least one provider must be configured. cloud-hosted instances set
+	// GEMINI/GROQ; self-hosted forks can opt into Ollama-only by setting
+	// OLLAMA_BASE_URL with no cloud keys.
+	const hasAnyProvider =
+		keys.GEMINI_API_KEY.length > 0 ||
+		keys.GROQ_API_KEY.length > 0 ||
+		keys.OLLAMA_BASE_URL.length > 0;
+	if (!hasAnyProvider) {
 		return json({ error: 'no LLM providers configured', fallback: true }, { status: 503 });
 	}
 
