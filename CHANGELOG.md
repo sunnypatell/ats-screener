@@ -5,21 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.1] - 2026-05-04
 
 ### Added
 
-- **Ollama support for self-hosters** (#7). New `OLLAMA_BASE_URL` (and optional `OLLAMA_MODEL`, defaulting to `llama3.2`) env vars opt the local-Ollama daemon into the provider chain. When set, Ollama is tried first so a fork running purely on local models needs zero cloud keys; the request handler now treats Ollama as a configured provider so the `503 no LLM providers configured` path no longer fires for offline-only deployments. Hosted instances are unchanged: leave the new vars unset and the chain stays `[Gemma, Groq]` with identical request shape and 90s/30s timeouts.
-- **Provider chain extracted** to `src/routes/api/analyze/providers.ts` so chain composition is unit-testable in isolation. 18 new tests cover composition for cloud-only, Ollama-only, and all-three env, plus the Ollama request shape (`POST {base}/api/chat`, `format: "json"`, trailing-slash forgiveness, response extraction, 4-minute cold-start timeout).
+- **ollama support for self-hosters** (#7). new `OLLAMA_BASE_URL` (and optional `OLLAMA_MODEL`, defaulting to `llama3.2`) env vars opt the local ollama daemon into the provider chain. when set, ollama is tried first; a fork running purely on local models needs no cloud keys. hosted instances stay unchanged: leave the new vars unset and the chain remains `[gemma, groq]` with identical request shape and 90s/30s timeouts. self-hosting docs at `/docs/self-hosting/configuration` walk through the install + .env setup.
+- **provider chain extracted** to `src/routes/api/analyze/providers.ts` so composition is unit-testable in isolation. 18 new tests cover the cloud-only / ollama-only / all-three permutations, request shape (`POST {base}/api/chat`, `format: "json"`, trailing-slash forgiveness), response extraction, and per-provider timeouts.
 
 ### Fixed
 
-- **`extractText` defensiveness** across all three providers (Google, Groq, Ollama). The runtime cast `data as { ... }` is compile-time only; a malformed response that decodes to `null` would throw `TypeError: Cannot read properties of null` before the optional-chaining could save it. Added `if (!data || typeof data !== 'object') return ''` guards on all three so a misbehaving upstream falls through to the next provider cleanly.
+- **`extractText` null-safety** across all three providers (google, groq, ollama). a malformed upstream response that decoded to `null` would throw `TypeError: Cannot read properties of null` before optional chaining could save it. all three now guard with `if (!data || typeof data !== 'object') return ''` so a misbehaving provider falls through to the next cleanly.
 
 ### Changed
 
-- `LLMProvider.apiKeyName` renamed to `configKey` (Ollama uses a base URL, not an API key). Pure rename, no behavior change.
-- `PROVIDER_TIMEOUTS_MS` parallel array removed; `timeoutMs` now lives on each `LLMProvider` so dynamic chain composition can carry per-provider deadlines without index juggling.
+- `LLMProvider.apiKeyName` renamed to `configKey` (ollama uses a base URL, not an API key). pure rename, no behavior change.
+- `PROVIDER_TIMEOUTS_MS` parallel array removed; `timeoutMs` now lives on each `LLMProvider` so dynamic chain composition can carry per-provider deadlines without index juggling. values preserved: 90s gemma, 30s groq, 240s ollama.
 
 ## [0.3.0] - 2026-04-26
 

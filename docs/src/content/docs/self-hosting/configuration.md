@@ -22,7 +22,7 @@ Never commit your `.env` file to version control. It's already in `.gitignore`, 
 
 The LLM chain composes from whatever's configured in env. Ordering is fixed:
 
-1. **Ollama** (`OLLAMA_BASE_URL`) — local first when configured
+1. **Ollama** (`OLLAMA_BASE_URL`), local first when configured
 2. **Gemma 3 27B** via Google (`GEMINI_API_KEY`)
 3. **Llama 3.3 70B** via Groq (`GROQ_API_KEY`)
 
