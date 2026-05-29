@@ -127,3 +127,97 @@ describe('cloud provider invariants (regression net)', () => {
 		expect(buildGroqProvider('x', 'm').configKey).toBe('GROQ_API_KEY');
 	});
 });
+
+// helper because headers init is HeadersInit (object literal in our case);
+// indexing it requires narrowing to Record<string, string> first.
+function headersOf(init: RequestInit): Record<string, string> {
+	return init.headers as Record<string, string>;
+}
+
+describe('buildOllamaProvider: optional bearer auth for proxied endpoints', () => {
+	it('omits Authorization header when no apiKey is given (vanilla local ollama)', () => {
+		const provider = buildOllamaProvider('test', 'llama3.2');
+		const { init } = provider.buildRequest('hello', 'http://127.0.0.1:11434');
+		expect(headersOf(init).Authorization).toBeUndefined();
+	});
+
+	it('sets Authorization: Bearer {key} when apiKey is provided', () => {
+		const provider = buildOllamaProvider('test', 'llama3.2', { apiKey: 'sk-secret-xyz' });
+		const { init } = provider.buildRequest('hello', 'http://127.0.0.1:11434');
+		expect(headersOf(init).Authorization).toBe('Bearer sk-secret-xyz');
+	});
+
+	it('treats empty-string apiKey as not set (no Authorization header)', () => {
+		const provider = buildOllamaProvider('test', 'llama3.2', { apiKey: '' });
+		const { init } = provider.buildRequest('hello', 'http://127.0.0.1:11434');
+		expect(headersOf(init).Authorization).toBeUndefined();
+	});
+
+	it('treats whitespace-only apiKey as not set (no Authorization header)', () => {
+		const provider = buildOllamaProvider('test', 'llama3.2', { apiKey: '   \n\t' });
+		const { init } = provider.buildRequest('hello', 'http://127.0.0.1:11434');
+		expect(headersOf(init).Authorization).toBeUndefined();
+	});
+
+	it('trims surrounding whitespace from apiKey before composing the header', () => {
+		const provider = buildOllamaProvider('test', 'llama3.2', { apiKey: '  sk-secret-xyz\n' });
+		const { init } = provider.buildRequest('hello', 'http://127.0.0.1:11434');
+		expect(headersOf(init).Authorization).toBe('Bearer sk-secret-xyz');
+	});
+
+	it('preserves Content-Type: application/json alongside Authorization', () => {
+		const provider = buildOllamaProvider('test', 'llama3.2', { apiKey: 'sk-secret' });
+		const { init } = provider.buildRequest('hello', 'http://127.0.0.1:11434');
+		const headers = headersOf(init);
+		expect(headers['Content-Type']).toBe('application/json');
+		expect(headers.Authorization).toBe('Bearer sk-secret');
+	});
+
+	it('does not mutate the request body or URL when apiKey is attached', () => {
+		const noKey = buildOllamaProvider('test', 'llama3.2').buildRequest(
+			'prompt',
+			'http://127.0.0.1:11434'
+		);
+		const withKey = buildOllamaProvider('test', 'llama3.2', {
+			apiKey: 'sk-secret'
+		}).buildRequest('prompt', 'http://127.0.0.1:11434');
+		expect(withKey.url).toBe(noKey.url);
+		expect(withKey.init.body).toBe(noKey.init.body);
+	});
+});
+
+describe('buildProviders: OLLAMA_API_KEY passthrough', () => {
+	it('passes OLLAMA_API_KEY through to the ollama provider when set', () => {
+		const chain = buildProviders({
+			OLLAMA_BASE_URL: 'http://127.0.0.1:11434',
+			OLLAMA_API_KEY: 'sk-proxy-token'
+		});
+		expect(chain).toHaveLength(1);
+		const { init } = chain[0].buildRequest('hello', 'http://127.0.0.1:11434');
+		expect(headersOf(init).Authorization).toBe('Bearer sk-proxy-token');
+	});
+
+	it('does not attach Authorization when OLLAMA_API_KEY is unset', () => {
+		const chain = buildProviders({
+			OLLAMA_BASE_URL: 'http://127.0.0.1:11434'
+		});
+		const { init } = chain[0].buildRequest('hello', 'http://127.0.0.1:11434');
+		expect(headersOf(init).Authorization).toBeUndefined();
+	});
+
+	it('does not attach Authorization when OLLAMA_API_KEY is empty string', () => {
+		const chain = buildProviders({
+			OLLAMA_BASE_URL: 'http://127.0.0.1:11434',
+			OLLAMA_API_KEY: ''
+		});
+		const { init } = chain[0].buildRequest('hello', 'http://127.0.0.1:11434');
+		expect(headersOf(init).Authorization).toBeUndefined();
+	});
+
+	it('OLLAMA_API_KEY alone (no OLLAMA_BASE_URL) does not produce an ollama provider', () => {
+		const chain = buildProviders({
+			OLLAMA_API_KEY: 'sk-stranded'
+		});
+		expect(chain).toEqual([]);
+	});
+});

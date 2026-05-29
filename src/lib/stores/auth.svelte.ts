@@ -1,12 +1,19 @@
 import { browser } from '$app/environment';
 import type { User } from 'firebase/auth';
-import { getFirebase } from '$lib/firebase';
+import { firebaseConfigured, getFirebase } from '$lib/firebase';
 import { logger } from '$lib/log';
 
 class AuthStore {
 	user = $state<User | null>(null);
 	loading = $state(true);
 	error = $state<string | null>(null);
+
+	// self-host mode: when firebase is not configured the store reports
+	// `disabled = true`, never attempts a network call, and the rest of the
+	// app treats the user as having full access (no auth gate, no firestore).
+	// hosted production with firebase set up sees `disabled = false` and
+	// the existing behaviour is unchanged.
+	readonly disabled: boolean = !firebaseConfigured;
 
 	get isAuthenticated(): boolean {
 		return this.user !== null;
@@ -34,10 +41,19 @@ class AuthStore {
 
 	constructor() {
 		if (browser) {
-			void this.setupAuthListener();
+			// self-host mode short-circuits the firebase listener entirely. flip
+			// loading off so the auth gate render path completes, and leave
+			// user=null. the disabled getter is read directly downstream;
+			// canScan returns true because disabled is true.
+			if (this.disabled) {
+				this.loading = false;
+			} else {
+				void this.setupAuthListener();
+			}
 		}
 		// on SSR, loading stays true so the server renders the loading spinner.
-		// the client also starts with loading=true until onAuthStateChanged fires.
+		// the client also starts with loading=true until onAuthStateChanged fires
+		// (or, in self-host mode, until the constructor flips it on first tick).
 		// this ensures SSR and initial client output are identical, preventing
 		// the hydration_mismatch warning that occurred when SSR rendered the
 		// auth-gate (loading=false, user=null) while the client rendered the
@@ -45,21 +61,32 @@ class AuthStore {
 	}
 
 	private async setupAuthListener() {
-		const { auth } = await getFirebase();
-		const { onAuthStateChanged, getRedirectResult, getAdditionalUserInfo } =
-			await import('firebase/auth');
-		onAuthStateChanged(auth, (user) => {
-			this.user = user;
-			this.loading = false;
-		});
-		// handle redirect result from signInWithRedirect fallback
 		try {
-			const result = await getRedirectResult(auth);
-			if (result && getAdditionalUserInfo(result)?.isNewUser) {
-				this.incrementUserCount();
+			const { auth } = await getFirebase();
+			const { onAuthStateChanged, getRedirectResult, getAdditionalUserInfo } =
+				await import('firebase/auth');
+			onAuthStateChanged(auth, (user) => {
+				this.user = user;
+				this.loading = false;
+			});
+			// handle redirect result from signInWithRedirect fallback
+			try {
+				const result = await getRedirectResult(auth);
+				if (result && getAdditionalUserInfo(result)?.isNewUser) {
+					this.incrementUserCount();
+				}
+			} catch {
+				// non-critical; redirect path is the fallback for popup blockers
 			}
-		} catch {
-			// non-critical; redirect path is the fallback for popup blockers
+		} catch (err) {
+			// firebase init failed even though firebaseConfigured was true.
+			// rather than hang on loading=true forever (the bug that the
+			// self-host flow was hitting before v0.3.2), flip to a safe
+			// non-authenticated terminal state and log for visibility.
+			this.loading = false;
+			logger.error('auth.listener_init_failed', {
+				error: err instanceof Error ? err.message : String(err)
+			});
 		}
 	}
 

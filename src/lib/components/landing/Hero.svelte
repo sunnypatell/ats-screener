@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getFirebase } from '$lib/firebase';
+	import { firebaseConfigured, getFirebase } from '$lib/firebase';
 	import FlipWords from '$components/ui/FlipWords.svelte';
 	import SparklesText from '$components/ui/SparklesText.svelte';
 	import NumberFlow from '@number-flow/svelte';
@@ -77,8 +77,12 @@
 	onMount(() => {
 		mounted = true;
 
-		// fetch live user count - lazy-imports firebase so the landing page
-		// doesn't pull the SDK into its critical bundle
+		// fetch live user count. skipped entirely on self-host (firebase not
+		// configured): the strip omits the Users Served stat upstream, so
+		// pulling the count would just throw and clutter the error reporter.
+		// on hosted builds we lazy-import firebase so landing-only visitors
+		// don't pull the SDK into the critical bundle.
+		if (!firebaseConfigured) return;
 		(async () => {
 			try {
 				const { db } = await getFirebase();
@@ -241,16 +245,21 @@
 			</MovingBorder>
 		</div>
 
-		<!-- stats strip -->
+		<!-- stats strip. on self-host (firebase not configured) the Users
+		     Served counter is meaningless (no firestore to read from), so the
+		     entire stat + trailing divider are omitted. the rest of the strip
+		     is universally true and renders identically across both builds. -->
 		<div class="hero-stats" bind:this={statsEl}>
-			<div class="stat">
-				<span class="stat-number">{displayCount.toLocaleString()}</span>
-				<span class="stat-label stat-live">
-					<span class="live-dot"></span>
-					Users Served
-				</span>
-			</div>
-			<div class="stat-divider"></div>
+			{#if firebaseConfigured}
+				<div class="stat">
+					<span class="stat-number">{displayCount.toLocaleString()}</span>
+					<span class="stat-label stat-live">
+						<span class="live-dot"></span>
+						Users Served
+					</span>
+				</div>
+				<div class="stat-divider"></div>
+			{/if}
 			<div class="stat">
 				<span class="stat-number">6</span>
 				<span class="stat-label">ATS Platforms</span>
