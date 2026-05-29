@@ -159,7 +159,11 @@
 						Try with a sample job description
 					</button>
 				{/if}
-				{#if authStore.isAuthenticated}
+				<!-- the Saved JDs feature is localStorage-only, so it works on
+				     self-host (firebase disabled) AND for authenticated users on
+				     hosted. anonymous visitors on hosted firebase still don't see
+				     it: signing in is required for any scan-adjacent persistence. -->
+				{#if authStore.disabled || authStore.isAuthenticated}
 					<button
 						type="button"
 						class="jd-save-btn"

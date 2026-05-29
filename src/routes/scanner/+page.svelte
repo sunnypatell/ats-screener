@@ -11,9 +11,12 @@
 	import { authStore } from '$stores/auth.svelte';
 	import type { ScoringInput } from '$engine/scorer/types';
 
-	// load history when auth state is ready
+	// load history once the user is allowed to use the scanner. authenticated
+	// users on hosted firebase pull from firestore; self-host installs (auth
+	// disabled) pull from localStorage. scoresStore.loadHistory handles the
+	// branch internally.
 	$effect(() => {
-		if (authStore.isAuthenticated) {
+		if (authStore.disabled || authStore.isAuthenticated) {
 			scoresStore.loadHistory();
 		}
 	});
@@ -168,7 +171,9 @@
 				<p class="auth-gate-text">Loading...</p>
 			</div>
 		</div>
-	{:else if !authStore.isAuthenticated}
+		<!-- gate hidden when auth is disabled (self-host: firebase not configured)
+		     so anonymous local visitors land straight on the scanner. -->
+	{:else if !authStore.disabled && !authStore.isAuthenticated}
 		<div class="auth-gate">
 			<div class="auth-gate-card">
 				<svg

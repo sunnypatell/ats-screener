@@ -13,8 +13,14 @@
 	let signupDone = $state(false);
 	let submitting = $state(false);
 
-	// redirect if already logged in
+	// redirect if already logged in OR if auth is disabled (self-host:
+	// firebase not configured, so there's no sign-in to do). either way the
+	// user should be on /scanner.
 	$effect(() => {
+		if (authStore.disabled) {
+			goto('/scanner');
+			return;
+		}
 		if (authStore.isAuthenticated && !authStore.loading) {
 			goto('/scanner');
 		}

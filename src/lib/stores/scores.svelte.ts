@@ -3,12 +3,58 @@ import { env as publicEnv } from '$env/dynamic/public';
 import type { ScoreResult } from '$engine/scorer/types';
 import type { LLMAnalysis } from '$engine/llm/types';
 import type { ParsedJobDescription } from '$engine/job-parser/types';
-import { getFirebase } from '$lib/firebase';
+import { firebaseConfigured, getFirebase } from '$lib/firebase';
 import { logger } from '$lib/log';
 import { parseSampleRate, shouldSample } from '$lib/sampling';
 import { authStore } from './auth.svelte';
 
 const MAX_HISTORY = 5;
+
+// self-host history bucket. when firebase is not configured we persist scan
+// history to localStorage under this key (capped at MAX_HISTORY entries,
+// newest-first, same shape as the firestore documents) so installs without
+// firebase get session-spanning history on the same device. data size is
+// well under quota (5 entries x ~10kb = 50kb), localStorage is the right
+// fit per `jd-library.svelte.ts` precedent and best-practice guidance.
+const LOCAL_HISTORY_KEY = 'ats_local_scan_history_v1';
+
+function readLocalHistory(): ScanHistoryEntry[] {
+	if (!browser) return [];
+	try {
+		const raw = localStorage.getItem(LOCAL_HISTORY_KEY);
+		if (!raw) return [];
+		const parsed = JSON.parse(raw);
+		return Array.isArray(parsed) ? parsed : [];
+	} catch (err) {
+		logger.warn('history.local_read_failed', {
+			error: err instanceof Error ? err.message : String(err)
+		});
+		return [];
+	}
+}
+
+function writeLocalHistory(entries: ScanHistoryEntry[]): void {
+	if (!browser) return;
+	try {
+		localStorage.setItem(LOCAL_HISTORY_KEY, JSON.stringify(entries));
+	} catch (err) {
+		// quota exceeded or storage disabled (incognito, sandboxed iframes).
+		// in-memory history still works for the current session, we just
+		// lose persistence. swallow so the scan flow does not break.
+		logger.warn('history.local_write_failed', {
+			error: err instanceof Error ? err.message : String(err)
+		});
+	}
+}
+
+function clearLocalHistory(): void {
+	if (!browser) return;
+	try {
+		localStorage.removeItem(LOCAL_HISTORY_KEY);
+	} catch {
+		// removeItem rarely throws but defend against pathological storage.
+	}
+}
 // admin scan_logs are observability, not user data. at 50k users they alone
 // would push past firestore spark's 20k writes/day cap, so we accept losing
 // detail in exchange for staying free. default 1.0 (no behavior change at
@@ -128,9 +174,21 @@ class ScoresStore {
 		this.saveToHistory(results, fileName);
 	}
 
-	// load scan history from Firestore for current user
+	// load scan history. firestore for the authenticated user on hosted
+	// builds; localStorage on self-host (no firebase configured). both
+	// return up to MAX_HISTORY entries newest-first.
 	async loadHistory() {
-		if (!browser || !authStore.isAuthenticated || !authStore.user) return;
+		if (!browser) return;
+
+		// self-host path: read from localStorage and return synchronously.
+		if (!firebaseConfigured) {
+			this.historyLoading = true;
+			this.scanHistory = readLocalHistory().slice(0, MAX_HISTORY);
+			this.historyLoading = false;
+			return;
+		}
+
+		if (!authStore.isAuthenticated || !authStore.user) return;
 
 		this.historyLoading = true;
 		try {
@@ -154,9 +212,33 @@ class ScoresStore {
 		}
 	}
 
-	// save scan results to Firestore
+	// save scan results. self-host writes to localStorage, hosted writes to
+	// firestore. both maintain the same MAX_HISTORY cap and newest-first
+	// ordering so consumers see identical shape across the two backends.
 	private async saveToHistory(results: ScoreResult[], fileName?: string) {
 		if (!browser || results.length === 0) return;
+
+		// self-host path: localStorage only, no firestore round trip, no
+		// scan_logs telemetry (scan_logs is an admin-visibility feature for
+		// the hosted instance, not user-facing).
+		if (!firebaseConfigured) {
+			const entry: ScanHistoryEntry = {
+				id: `local-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+				timestamp: new Date().toISOString(),
+				mode: this.mode,
+				averageScore: Math.round(results.reduce((s, r) => s + r.overallScore, 0) / results.length),
+				passingCount: results.filter((r) => r.passesFilter).length,
+				results,
+				...(fileName && { fileName }),
+				...(this.jobDescription && { jobDescriptionSnippet: this.jobDescription.slice(0, 200) })
+			};
+			const next = [entry, ...readLocalHistory()].slice(0, MAX_HISTORY);
+			writeLocalHistory(next);
+			this.scanHistory = next;
+			logger.info('history.local_saved', { id: entry.id });
+			return;
+		}
+
 		if (!authStore.isAuthenticated || !authStore.user) {
 			logger.info('history.skip_save', { reason: 'unauthenticated' });
 			return;
@@ -240,7 +322,16 @@ class ScoresStore {
 	}
 
 	async clearHistory() {
-		if (!browser || !authStore.isAuthenticated || !authStore.user) return;
+		if (!browser) return;
+
+		// self-host path: clear the localStorage bucket and reset in-memory.
+		if (!firebaseConfigured) {
+			clearLocalHistory();
+			this.scanHistory = [];
+			return;
+		}
+
+		if (!authStore.isAuthenticated || !authStore.user) return;
 
 		try {
 			const { db } = await getFirebase();

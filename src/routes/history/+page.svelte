@@ -9,16 +9,21 @@
 
 	let selectedEntry = $state<ScanHistoryEntry | null>(null);
 
-	// redirect if not logged in
+	// redirect if not logged in. self-host installs (auth disabled) skip
+	// the redirect: history is localStorage-backed and viewable without a
+	// sign-in. anyone on hosted firebase who hits this route while signed
+	// out still bounces to /login.
 	$effect(() => {
+		if (authStore.disabled) return;
 		if (!authStore.loading && !authStore.isAuthenticated) {
 			goto('/login');
 		}
 	});
 
-	// load history on mount
+	// load history on mount. firestore on hosted (signed-in), localStorage
+	// on self-host. scoresStore.loadHistory handles the branch internally.
 	$effect(() => {
-		if (authStore.isAuthenticated) {
+		if (authStore.disabled || authStore.isAuthenticated) {
 			scoresStore.loadHistory();
 		}
 	});
@@ -75,7 +80,11 @@
 		<div class="loading-state">
 			<div class="spinner"></div>
 		</div>
-	{:else if !authStore.isAuthenticated}
+		<!-- gate skipped when auth is disabled (self-host: firebase not
+		     configured) so the localStorage-backed history is visible without
+		     a sign-in. hosted firebase visitors without a session still get
+		     redirected to /login via the $effect above. -->
+	{:else if !authStore.disabled && !authStore.isAuthenticated}
 		<!-- redirect happens via $effect -->
 	{:else if selectedEntry}
 		<!-- viewing a specific scan's results -->
