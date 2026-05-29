@@ -114,12 +114,15 @@ interface RequestBody {
 export const POST: RequestHandler = async ({ request }) => {
 	// collect provider config from SvelteKit $env. OLLAMA_BASE_URL is the
 	// presence signal for the local-Ollama path; OLLAMA_MODEL is read inside
-	// buildProviders() and defaults to llama3.2 when unset.
+	// buildProviders() and defaults to llama3.2 when unset; OLLAMA_API_KEY is
+	// optional and, when set, attaches Authorization: Bearer {key} for forks
+	// running Ollama behind a reverse-proxy or hosted Ollama-compatible API.
 	const keys: Record<string, string> = {
 		GEMINI_API_KEY: env.GEMINI_API_KEY ?? '',
 		GROQ_API_KEY: env.GROQ_API_KEY ?? '',
 		OLLAMA_BASE_URL: env.OLLAMA_BASE_URL ?? '',
-		OLLAMA_MODEL: env.OLLAMA_MODEL ?? ''
+		OLLAMA_MODEL: env.OLLAMA_MODEL ?? '',
+		OLLAMA_API_KEY: env.OLLAMA_API_KEY ?? ''
 	};
 
 	// at least one provider must be configured. cloud-hosted instances set

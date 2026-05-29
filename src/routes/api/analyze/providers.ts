@@ -3,8 +3,9 @@
 // cloud chain is Gemma 3 27B (Google) -> Llama 3.3 70B (Groq); cross-provider
 // fallback gives independent quotas so one provider's limits don't cascade.
 // self-hosters can prepend Ollama by setting OLLAMA_BASE_URL (and optionally
-// OLLAMA_MODEL); the request handler treats Ollama as a configured provider
-// so a fork running purely on local models doesn't need any cloud API key.
+// OLLAMA_MODEL, plus OLLAMA_API_KEY for proxied / auth-gated daemons); the
+// request handler treats Ollama as a configured provider so a fork running
+// purely on local models doesn't need any cloud API key.
 //
 // timeoutMs lives on the provider itself (not a parallel array) so a dynamic
 // chain composed from env can carry per-provider deadlines without
@@ -92,11 +93,23 @@ export function buildGroqProvider(name: string, model: string): LLMProvider {
 	};
 }
 
-// Ollama provider for self-hosters. local daemon, no API key. format: 'json'
-// asks the model to return strict JSON without ad-hoc prompt engineering. the
-// secret param carries the base URL so all providers share the same factory
+// Ollama provider for self-hosters. local daemon by default needs no key;
+// reverse-proxied or hosted Ollama-compatible endpoints (OpenWebUI, LiteLLM,
+// Caddy + bearer auth, Cloudflare-tunnel + service token, etc.) take an
+// optional bearer token via opts.apiKey, which is attached as
+// `Authorization: Bearer {key}` on every request. format: 'json' asks the
+// model to return strict JSON without ad-hoc prompt engineering. the secret
+// param carries the base URL so all providers share the same factory
 // signature; trailing slashes are stripped to make OLLAMA_BASE_URL= forgiving.
-export function buildOllamaProvider(name: string, model: string): LLMProvider {
+export function buildOllamaProvider(
+	name: string,
+	model: string,
+	opts?: { apiKey?: string }
+): LLMProvider {
+	// trim and treat empty / whitespace-only as not set so a stray
+	// OLLAMA_API_KEY= line in .env does not produce a bogus
+	// `Authorization: Bearer ` header that the proxy would reject as malformed.
+	const apiKey = opts?.apiKey?.trim() ?? '';
 	return {
 		name,
 		configKey: 'OLLAMA_BASE_URL',
@@ -108,7 +121,10 @@ export function buildOllamaProvider(name: string, model: string): LLMProvider {
 			url: `${baseUrl.replace(/\/+$/, '')}/api/chat`,
 			init: {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+				headers: {
+					'Content-Type': 'application/json',
+					...(apiKey && { Authorization: `Bearer ${apiKey}` })
+				},
 				body: JSON.stringify({
 					model,
 					messages: [{ role: 'user', content: prompt }],
@@ -140,7 +156,12 @@ export function buildProviders(env: Record<string, string>): LLMProvider[] {
 	const providers: LLMProvider[] = [];
 	if (env.OLLAMA_BASE_URL) {
 		const model = env.OLLAMA_MODEL || 'llama3.2';
-		providers.push(buildOllamaProvider(`ollama-${model}`, model));
+		// OLLAMA_API_KEY is optional. when set we attach Authorization: Bearer
+		// {key} so the request gets through a reverse-proxy or hosted endpoint
+		// that gates the daemon (OpenWebUI, LiteLLM, Caddy bearer auth, etc.).
+		// vanilla localhost ollama leaves this unset and behaves as before.
+		const apiKey = env.OLLAMA_API_KEY || undefined;
+		providers.push(buildOllamaProvider(`ollama-${model}`, model, { apiKey }));
 	}
 	if (env.GEMINI_API_KEY) {
 		// primary cloud: Gemma 3 27B via Google - 14,400 RPD, 30 RPM, 15K TPM

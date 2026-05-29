@@ -7,12 +7,13 @@ description: Environment variables and configuration options for self-hosted ins
 
 All configuration is done through environment variables in the `.env` file. At least one provider must be configured (Gemini, Groq, or Ollama); the route returns `503` otherwise.
 
-| Variable          | Required     | Description                                                               |
-| ----------------- | ------------ | ------------------------------------------------------------------------- |
-| `GEMINI_API_KEY`  | One of these | Google AI API key (Gemma 3 27B)                                           |
-| `GROQ_API_KEY`    | One of these | Groq API key (Llama 3.3 70B)                                              |
-| `OLLAMA_BASE_URL` | One of these | Base URL of a local Ollama daemon (e.g. `http://127.0.0.1:11434`)         |
-| `OLLAMA_MODEL`    | Optional     | Ollama model tag, defaults to `llama3.2`. Use any tag from `ollama list`. |
+| Variable          | Required     | Description                                                                                                            |
+| ----------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `GEMINI_API_KEY`  | One of these | Google AI API key (Gemma 3 27B)                                                                                        |
+| `GROQ_API_KEY`    | One of these | Groq API key (Llama 3.3 70B)                                                                                           |
+| `OLLAMA_BASE_URL` | One of these | Base URL of a local Ollama daemon (e.g. `http://127.0.0.1:11434`)                                                      |
+| `OLLAMA_MODEL`    | Optional     | Ollama model tag, defaults to `llama3.2`. Use any tag from `ollama list`.                                              |
+| `OLLAMA_API_KEY`  | Optional     | Bearer token sent as `Authorization: Bearer {key}` on every Ollama request. Only needed if your Ollama is behind auth. |
 
 :::caution
 Never commit your `.env` file to version control. It's already in `.gitignore`, but double-check before pushing.
@@ -46,6 +47,19 @@ OLLAMA_MODEL=llama3.2
 The Ollama path uses Ollama's `format: 'json'` so the model returns strict JSON without prompt-engineering tricks. First scan is slow on commodity hardware (60-120s for `llama3.2:3b` on a typical laptop); subsequent scans of the same resume hit the in-memory result cache and return in <100ms. Bigger models produce noticeably better suggestions but take longer.
 
 The `/api/analyze` response includes `_provider: "ollama-{model}"` so you can confirm requests are landing locally and not falling back to a cloud key you forgot to remove.
+
+### Behind a reverse proxy or auth gate
+
+Vanilla `ollama serve` on `127.0.0.1` has no authentication, which is fine for a local-only setup. If your Ollama lives behind a reverse proxy that requires a bearer token, or you're pointing at a hosted Ollama-compatible endpoint (OpenWebUI, LiteLLM, OpenRouter's Ollama-compatible routes, a Cloudflare-tunneled daemon with a service token, etc.), set `OLLAMA_API_KEY` and the request will include `Authorization: Bearer {key}` on every call:
+
+```bash
+# in your .env
+OLLAMA_BASE_URL=https://ollama.your-domain.tld
+OLLAMA_MODEL=llama3.2
+OLLAMA_API_KEY=sk-your-proxy-token
+```
+
+The header is only attached when the env var is non-empty, so leaving it unset keeps the request shape identical to the local-only setup. Empty or whitespace-only values are treated as not set so a stray `OLLAMA_API_KEY=` line in `.env` does not produce a malformed `Authorization: Bearer ` header that the proxy would reject.
 
 ## Free Tier Limits
 
