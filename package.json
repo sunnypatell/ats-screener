@@ -1,6 +1,6 @@
 {
 	"name": "ats-screener",
-	"version": "0.3.2",
+	"version": "0.4.0",
 	"private": true,
 	"license": "MIT",
 	"type": "module",
@@ -69,5 +69,8 @@
 			"sharp",
 			"workerd"
 		]
+	},
+	"optionalDependencies": {
+		"ldapts": "^8.1.8"
 	}
 }
