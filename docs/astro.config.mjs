@@ -102,6 +102,8 @@ export default defineConfig({
 					items: [
 						{ label: 'Setup Guide', slug: 'self-hosting/setup' },
 						{ label: 'Configuration', slug: 'self-hosting/configuration' },
+						{ label: 'Authentication', slug: 'self-hosting/authentication' },
+						{ label: 'Active Directory (LDAP)', slug: 'self-hosting/active-directory' },
 						{ label: 'Deployment', slug: 'self-hosting/deployment' }
 					]
 				},
