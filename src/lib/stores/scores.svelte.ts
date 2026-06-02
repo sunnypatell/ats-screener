@@ -18,10 +18,21 @@ const MAX_HISTORY = 5;
 // fit per `jd-library.svelte.ts` precedent and best-practice guidance.
 const LOCAL_HISTORY_KEY = 'ats_local_scan_history_v1';
 
+// in ldap self-host mode the local bucket is namespaced by the signed-in AD
+// user's stable subject (objectGUID) so two users sharing a browser don't see
+// each other's history. anonymous 'none' mode keeps the bare legacy key, so the
+// existing self-host behaviour (and any stored data) is untouched.
+function localHistoryKey(): string {
+	if (authStore.mode === 'ldap' && authStore.ldapSub) {
+		return `${LOCAL_HISTORY_KEY}__${authStore.ldapSub}`;
+	}
+	return LOCAL_HISTORY_KEY;
+}
+
 function readLocalHistory(): ScanHistoryEntry[] {
 	if (!browser) return [];
 	try {
-		const raw = localStorage.getItem(LOCAL_HISTORY_KEY);
+		const raw = localStorage.getItem(localHistoryKey());
 		if (!raw) return [];
 		const parsed = JSON.parse(raw);
 		return Array.isArray(parsed) ? parsed : [];
@@ -36,7 +47,7 @@ function readLocalHistory(): ScanHistoryEntry[] {
 function writeLocalHistory(entries: ScanHistoryEntry[]): void {
 	if (!browser) return;
 	try {
-		localStorage.setItem(LOCAL_HISTORY_KEY, JSON.stringify(entries));
+		localStorage.setItem(localHistoryKey(), JSON.stringify(entries));
 	} catch (err) {
 		// quota exceeded or storage disabled (incognito, sandboxed iframes).
 		// in-memory history still works for the current session, we just
@@ -50,7 +61,7 @@ function writeLocalHistory(entries: ScanHistoryEntry[]): void {
 function clearLocalHistory(): void {
 	if (!browser) return;
 	try {
-		localStorage.removeItem(LOCAL_HISTORY_KEY);
+		localStorage.removeItem(localHistoryKey());
 	} catch {
 		// removeItem rarely throws but defend against pathological storage.
 	}

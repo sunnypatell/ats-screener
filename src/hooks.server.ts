@@ -1,7 +1,14 @@
 import type { Handle } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
+import { env as publicEnv } from '$env/dynamic/public';
+import { resolveAuthMode } from '$lib/server/auth/config';
+import { verifySession, SESSION_COOKIE } from '$lib/server/auth/session';
+import { buildContentSecurityPolicy } from '$lib/server/csp';
 // no node built-ins here - hooks.server.ts is bundled into BOTH node and edge
 // route functions, and edge bundling fails on fs/path/node:crypto. docs serving
-// (which used fs) lives in a node-runtime catchall route at /docs/[...slug]
+// (which used fs) lives in a node-runtime catchall route at /docs/[...slug].
+// the auth-session imports above stay edge-safe on purpose: config.ts is pure
+// string work and session.ts verifies the cookie with Web Crypto (not node:crypto).
 
 // applied as defaults: routes that already set a header keep their value.
 // headers that are conditional (e.g. HSTS) are applied in applySecurityHeaders
@@ -55,26 +62,16 @@ const SECURITY_HEADERS: Record<string, string> = {
 };
 
 // CSP in report-only mode: violations are reported to /api/csp-report but
-// nothing is blocked. lets us observe what would break before enforcing.
-// directives are sized for: SvelteKit hydration (inline scripts/styles),
-// Google Fonts, Firebase Auth (popup + APIs), Firestore, and the LLM proxies
-// the api/analyze route uses (groq + gemini are server-side, not in client connect-src)
-const CSP_REPORT_ONLY = [
-	"default-src 'self'",
-	"script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-	"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-	"font-src 'self' https://fonts.gstatic.com",
-	"img-src 'self' data: https:",
-	"connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://*.firebase.com",
-	"frame-src 'self' https://*.firebaseapp.com https://accounts.google.com",
-	"worker-src 'self' blob:",
-	"object-src 'none'",
-	"base-uri 'self'",
-	"form-action 'self'",
-	'report-uri /api/csp-report'
-].join('; ');
-
-function applySecurityHeaders(response: Response, path: string, isHttps: boolean): Response {
+// nothing is blocked. lets us observe what would break before enforcing. the
+// firebase / google-auth origins are mode-aware (see $lib/server/csp): a
+// self-host without firebase gets a CSP with zero firebase references, so the
+// directory-only or anonymous deployment never advertises firebase hosts (#13).
+function applySecurityHeaders(
+	response: Response,
+	path: string,
+	isHttps: boolean,
+	csp: string
+): Response {
 	for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
 		// HSTS must only be sent on HTTPS responses. sending it on HTTP (e.g. localhost
 		// dev server) would instruct the browser to upgrade all future requests to HTTPS,
@@ -87,13 +84,38 @@ function applySecurityHeaders(response: Response, path: string, isHttps: boolean
 	// directives only on document/iframe contexts so the header is benign on
 	// JSON / image / svg responses, just unread bytes on the wire
 	if (path !== '/api/csp-report' && !response.headers.has('Content-Security-Policy-Report-Only')) {
-		response.headers.set('Content-Security-Policy-Report-Only', CSP_REPORT_ONLY);
+		response.headers.set('Content-Security-Policy-Report-Only', csp);
 	}
 	return response;
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
+	// server-side session, ldap self-host mode ONLY. inert in firebase/none mode
+	// and on the hosted deploy: resolveAuthMode returns 'ldap' only when LDAP_URL
+	// is set (which the hosted instance never does), so no cookie is read and
+	// locals.user stays null - exactly as before this feature existed.
+	const mode = resolveAuthMode({ ...env, ...publicEnv });
+
+	event.locals.user = null;
+	if (mode === 'ldap') {
+		const token = event.cookies.get(SESSION_COOKIE);
+		if (token) {
+			const payload = await verifySession(token, env.SESSION_SECRET ?? '');
+			if (payload) {
+				event.locals.user = {
+					sub: payload.sub,
+					name: payload.name,
+					email: payload.email,
+					groups: payload.groups
+				};
+			}
+		}
+	}
+
+	// firebase origins appear in the CSP only when firebase is the active auth
+	// mode, so a self-host without firebase never advertises them (#13).
+	const csp = buildContentSecurityPolicy(mode === 'firebase');
 	const path = event.url.pathname;
 	const isHttps = event.url.protocol === 'https:';
-	return applySecurityHeaders(await resolve(event), path, isHttps);
+	return applySecurityHeaders(await resolve(event), path, isHttps, csp);
 };

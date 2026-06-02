@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-06-02
+
+self-host authentication cycle: active directory / ldap sign-in (closes [#16](https://github.com/sunnypatell/ats-screener/issues/16)) and a true firebase-free self-host (closes [#13](https://github.com/sunnypatell/ats-screener/issues/13)). purely additive: the hosted firebase deployment is byte-identical, and the anonymous self-host path is unchanged.
+
+### Added
+
+- **Active Directory (LDAP) authentication as a third self-host mode.** set `LDAP_URL` (plus a read-only service-account bind and `SESSION_SECRET`) and the app authenticates users against an on-premise AD domain: users sign in with their AD username and password, the scanner and `/api/analyze` sit behind that login, and scan history is kept in `localStorage` namespaced per user. designed for self-hosters running inside their own network (a domain-joined host or any LAN box that can reach a domain controller), which is exactly where the directory is reachable. accepts UPN (`user@domain`), down-level (`DOMAIN\user`), and bare `sAMAccountName` logon formats; supports an optional group allow-list with nested-group membership; LDAPS with internal-CA trust; and maps AD account-state errors (disabled, locked, expired, must-change-password) to friendly messages while collapsing "no such user" and "bad password" into one message so the form can't enumerate accounts. the Active Directory UI only renders when `LDAP_URL` is set, so it is invisible on the public deployment. new docs page at `/docs/self-hosting/active-directory`.
+- **Three mutually-exclusive auth modes, resolved server-side** (`resolveAuthMode`): `ldap` (when `LDAP_URL` is set) > `firebase` (when `PUBLIC_FIREBASE_PROJECT_ID` is set) > `none` (anonymous). the mode plus the validated user are surfaced to the client via a new root `+layout.server.ts`, and the auth store generalizes to all three while keeping the firebase code path identical.
+- **Stateless signed session cookie** for ldap mode, signed and verified with the Web Crypto API (HMAC-SHA256) so `hooks.server.ts` stays free of node built-ins. there is no server-side session store: the signed cookie is the session, so it survives restarts and works across instances. rotating `SESSION_SECRET` invalidates every session.
+- **Pluggable server auth-provider abstraction** (`ServerAuthProvider`, mirroring the `buildProviders()` LLM pattern) so OIDC / SAML can be added later without touching the ldap path. the `ldapts` client is an `optionalDependency`, dynamically imported only on the login route, so it never reaches the client/edge bundles and forks that don't set `LDAP_URL` never load it.
+- **Per-IP failed-login lockout** for the ldap sign-in action, mirroring the analyze rate-limiter (in-memory, per-instance), plus reliance on SvelteKit's built-in form-action origin check for CSRF.
+- **Reorganized self-hosting docs** with a dedicated [Authentication](/docs/self-hosting/authentication) page (anonymous vs firebase vs active directory, with precedence and trade-offs), a README self-hosting matrix, and a `.env.example` "Authentication" group.
+
+### Fixed
+
+- **No-firebase self-host is now genuinely firebase-free (closes [#13](https://github.com/sunnypatell/ats-screener/issues/13)).** the Content-Security-Policy is mode-aware: the firebase / google-auth origins (`*.googleapis.com`, `*.firebaseio.com`, `*.firebaseapp.com`, `accounts.google.com`) appear in `connect-src` / `frame-src` only when firebase is the active auth mode, so a docker / on-prem self-host without firebase no longer serves a CSP that references firebase or reports firebase-related violations. the firebase-auth `dns-prefetch` hints also moved out of `app.html` (where they fired for every visitor) into a firebase-mode-only block in the root layout, so a no-firebase install never resolves google / firebase DNS. the hosted firebase deployment keeps both the firebase CSP origins and the dns-prefetch hints.
+
+### Tests
+
+- 381 -> 464 (+83). new suites under `tests/unit/server/`: `auth/config` (mode precedence, trim semantics, fail-closed validation, defaults), `auth/normalize` (all three logon formats, RFC 4515 filter escaping / injection, nested-group filter), `auth/errors` (AD sub-code mapping incl. 525/52e collapsing to one message), `auth/session` (sign/verify round-trip, tamper / expiry / wrong-secret rejection), `auth/login-rate-limit` (lockout + window expiry), `auth/provider` (factory inert vs configured), and `csp` (firebase origins present in firebase mode, absent in self-host mode). plus `tests/unit/stores/scores-ldap-history-namespacing.test.ts` (per-user history keys, anonymous legacy key untouched) and updated `lcp-readiness` guards for the relocated dns-prefetch hints.
+
 ## [0.3.2] - 2026-05-29
 
 self-hosting cycle. two distinct closes to two BloodyIron issues, both purely additive (hosted production behaviour is byte-identical).

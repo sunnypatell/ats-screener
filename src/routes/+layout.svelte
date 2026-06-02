@@ -2,11 +2,21 @@
 	import { onMount } from 'svelte';
 	import '../app.css';
 	import Navbar from '$components/ui/Navbar.svelte';
+	import { authStore } from '$stores/auth.svelte';
 	import { installErrorReporter } from '$lib/error-reporter';
 	import { installWebVitals } from '$lib/web-vitals';
 	import { logger } from '$lib/log';
 
-	let { children } = $props();
+	let { children, data } = $props();
+
+	// bridge the server-resolved auth mode + ldap user into the auth store on the
+	// CLIENT only. hydrateFromServer is a no-op during SSR by design: writing
+	// per-request user data into a module-level singleton on the server could leak
+	// one request's identity into another's html. the $effect re-runs on client
+	// navigation; SSR renders from the store's constructor defaults.
+	$effect(() => {
+		authStore.hydrateFromServer(data);
+	});
 
 	// install the sampled client-side error reporter and the web-vitals
 	// collector once per page lifetime. both run in the browser only; ssr
@@ -36,6 +46,17 @@
 
 <svelte:head>
 	<title>ATS Screener</title>
+	{#if authStore.mode === 'firebase'}
+		<!-- dns-prefetch for firebase auth hosts, emitted only when firebase is the
+		     active auth mode so a self-host without firebase never resolves these.
+		     lighter than preconnect: warms DNS for visitors who end up signing in,
+		     without the TLS-handshake cost for those who never do. -->
+		<link rel="dns-prefetch" href="//accounts.google.com" />
+		<link rel="dns-prefetch" href="//apis.google.com" />
+		<link rel="dns-prefetch" href="//securetoken.googleapis.com" />
+		<link rel="dns-prefetch" href="//identitytoolkit.googleapis.com" />
+		<link rel="dns-prefetch" href="//firestore.googleapis.com" />
+	{/if}
 </svelte:head>
 
 <!--

@@ -112,6 +112,18 @@ pnpm lint       # lint
 pnpm build      # production build
 ```
 
+## Self-Hosting
+
+Auth and storage adapt to whatever you configure in `.env`, so you can run it three ways without touching code:
+
+| Mode                    | Enable with                         | Sign-in                          | Scan history         |
+| ----------------------- | ----------------------------------- | -------------------------------- | -------------------- |
+| **Hosted (Firebase)**   | `PUBLIC_FIREBASE_PROJECT_ID` + keys | Google / email                   | Firestore (synced)   |
+| **Anonymous self-host** | leave Firebase + LDAP unset         | none (open scanner)              | browser localStorage |
+| **Active Directory**    | `LDAP_URL` + service account        | AD username + password (on-prem) | per user, local      |
+
+LLM providers are independent of all this: set `GEMINI_API_KEY`/`GROQ_API_KEY` for the cloud chain, or `OLLAMA_BASE_URL` to run fully local. Mode precedence is LDAP > Firebase > anonymous. See the [self-hosting docs](https://ats-screener.vercel.app/docs/self-hosting/configuration) and the [Active Directory guide](https://ats-screener.vercel.app/docs/self-hosting/active-directory).
+
 ## Project Structure
 
 ```

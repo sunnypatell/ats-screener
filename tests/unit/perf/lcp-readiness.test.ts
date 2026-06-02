@@ -21,6 +21,7 @@ import { describe, expect, it } from 'vitest';
 const PROJECT_ROOT = process.cwd();
 const SRC_ROOT = join(PROJECT_ROOT, 'src');
 const APP_HTML = join(PROJECT_ROOT, 'src', 'app.html');
+const LAYOUT_PATH = join(PROJECT_ROOT, 'src', 'routes', '+layout.svelte');
 
 // extensions to scan for img tags
 const SCAN_EXTS = ['.svelte', '.html'];
@@ -54,8 +55,13 @@ describe('lcp/cls readiness guards', () => {
 		expect(html).not.toMatch(/@import\s+url\s*\(\s*https:/i);
 	});
 
-	it('app.html retains dns-prefetch hints for firebase auth hosts', () => {
-		const html = readFileSync(APP_HTML, 'utf-8');
+	it('root layout retains dns-prefetch hints for firebase auth hosts (firebase mode only)', () => {
+		// the hints moved out of app.html (where they fired for every visitor,
+		// including no-firebase self-hosters, see #13) into a firebase-mode-gated
+		// block in the root layout. they must still be present there so the firebase
+		// deployment keeps the optimization.
+		const layout = readFileSync(LAYOUT_PATH, 'utf-8');
+		expect(layout).toMatch(/authStore\.mode === 'firebase'/);
 		const requiredHosts = [
 			'//accounts.google.com',
 			'//apis.google.com',
@@ -64,8 +70,14 @@ describe('lcp/cls readiness guards', () => {
 			'//firestore.googleapis.com'
 		];
 		for (const host of requiredHosts) {
-			expect(html, `missing dns-prefetch for ${host}`).toContain(host);
+			expect(layout, `missing dns-prefetch for ${host}`).toContain(host);
 		}
+	});
+
+	it('app.html no longer hard-codes firebase dns-prefetch (no-firebase self-host stays firebase-free)', () => {
+		const html = readFileSync(APP_HTML, 'utf-8');
+		expect(html).not.toContain('//identitytoolkit.googleapis.com');
+		expect(html).not.toContain('//firestore.googleapis.com');
 	});
 
 	it('app.html retains preconnect to fonts.googleapis.com and fonts.gstatic.com', () => {

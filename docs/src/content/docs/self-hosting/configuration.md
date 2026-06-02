@@ -61,22 +61,18 @@ OLLAMA_API_KEY=sk-your-proxy-token
 
 The header is only attached when the env var is non-empty, so leaving it unset keeps the request shape identical to the local-only setup. Empty or whitespace-only values are treated as not set so a stray `OLLAMA_API_KEY=` line in `.env` does not produce a malformed `Authorization: Bearer ` header that the proxy would reject.
 
-## Running without Firebase
+## Authentication
 
-ATS Screener uses Firebase for sign-in and for cross-device scan history on the hosted instance. Self-hosters who don't want to run Firebase can leave every `PUBLIC_FIREBASE_*` env var unset and the app will detect this at startup and switch to a fully local mode:
+How users sign in (or whether they sign in at all) is a separate choice from the LLM provider, and it's also driven by environment variables. ATS Screener supports three modes, picked automatically:
 
-- The scanner unlocks for anonymous use (no sign-in required).
-- Scan history is persisted to the browser's `localStorage`, capped at 5 entries newest-first (same shape and cap as the Firestore-backed history).
-- The Sign In button, user menu, and `/login` route are all hidden / redirect away.
-- The Hero's "Users Served" counter is omitted from the landing page (it would have nothing to read).
-- The Firebase SDK is never imported, so the build is smaller and the page never reaches out to `googleapis.com`.
+- **Anonymous**: leave Firebase and LDAP unset. The scanner is open and history is local. This is the default.
+- **Firebase**: set the `PUBLIC_FIREBASE_*` variables for Google / email sign-in and synced history.
+- **Active Directory**: set `LDAP_URL` for on-premise AD sign-in.
 
-Detection is based on a single signal: a non-empty `PUBLIC_FIREBASE_PROJECT_ID`. Set it (along with the rest of the Firebase config) to opt into auth + cross-device sync. Leave it unset (or empty) for fully local use.
+See [Authentication](/docs/self-hosting/authentication) for the full comparison and the [Active Directory guide](/docs/self-hosting/active-directory) for AD setup. The Firebase variables are listed below.
 
 ```bash
-# self-host without firebase: leave every PUBLIC_FIREBASE_* var unset.
-# this is the default state; you don't need to add anything to .env.
-
+# self-host without firebase: leave every PUBLIC_FIREBASE_* var unset (the default).
 # self-host with firebase: set all six.
 PUBLIC_FIREBASE_API_KEY=...
 PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
@@ -85,13 +81,6 @@ PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
 PUBLIC_FIREBASE_MESSAGING_SENDER_ID=1234567890
 PUBLIC_FIREBASE_APP_ID=1:1234567890:web:abc
 ```
-
-Trade-offs of the no-Firebase path:
-
-- **Single-device**: history lives in the current browser's `localStorage`. Clearing site data or switching browsers loses it. For cross-device sync, you need Firebase (or your own auth + database, see the issue tracker for roadmap discussion).
-- **Quota**: `localStorage` is 5-10MB per origin. With the 5-entry cap (roughly 50KB total), you're 100x under that ceiling.
-- **No password reset, no sign-out**: these features simply don't exist when auth is disabled, because there's no auth.
-- **Saved JDs**: the "Saved JDs" feature in the Job Description textarea is already `localStorage`-backed and works either way.
 
 ## Free Tier Limits
 

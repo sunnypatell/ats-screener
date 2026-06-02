@@ -6,6 +6,7 @@ import { logger } from '$lib/log';
 import { hashPrompt, getCached, setCached } from './cache';
 import { checkRateLimit } from './rate-limiter';
 import { buildProviders } from './providers';
+import { resolveAuthMode } from '$lib/server/auth/config';
 
 // tries each provider in sequence until one succeeds and returns valid JSON
 async function callLLM(
@@ -111,7 +112,15 @@ interface RequestBody {
 	jobDescription?: string;
 }
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
+	// in ldap self-host mode the scanner sits behind a login, so the analyze API
+	// requires a valid session too (defense in depth). public and unchanged in
+	// the hosted firebase deploy and anonymous self-host (resolveAuthMode is
+	// 'ldap' only when LDAP_URL is set, which neither of those configures).
+	if (resolveAuthMode(env) === 'ldap' && !locals.user) {
+		return json({ error: 'authentication required' }, { status: 401 });
+	}
+
 	// collect provider config from SvelteKit $env. OLLAMA_BASE_URL is the
 	// presence signal for the local-Ollama path; OLLAMA_MODEL is read inside
 	// buildProviders() and defaults to llama3.2 when unset; OLLAMA_API_KEY is

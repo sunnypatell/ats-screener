@@ -1,7 +1,18 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { enhance } from '$app/forms';
 	import { authStore } from '$stores/auth.svelte';
 	import SeoHead from '$components/seo/SeoHead.svelte';
+	import type { PageData, ActionData } from './$types';
+
+	// data.authMode comes from the root +layout.server.ts. firebase mode keeps the
+	// existing client-side firebase UI; ldap mode renders the AD username/password
+	// form that posts to the +page.server.ts action. `form` carries action errors.
+	let { data, form }: { data: PageData; form: ActionData } = $props();
+
+	// ldap submit state, driven by the enhance lifecycle (the firebase paths use
+	// their own `submitting` below).
+	let ldapSubmitting = $state(false);
 
 	let mode = $state<'signin' | 'signup'>('signin');
 	let email = $state('');
@@ -87,205 +98,262 @@
 
 <div class="login-page">
 	<div class="login-card">
-		<!-- header -->
-		<div class="card-header">
-			<h1 class="card-title">
-				{#if showReset}
-					Reset Password
-				{:else if signupDone}
-					You're In!
-				{:else if mode === 'signin'}
-					Welcome Back
-				{:else}
-					Create Account
-				{/if}
-			</h1>
-			<p class="card-subtitle">
-				{#if showReset}
-					Enter your email to receive a password reset link.
-				{:else if signupDone}
-					Check your email to verify your account.
-				{:else if mode === 'signin'}
-					Sign in to scan your resume across 6 ATS platforms.
-				{:else}
-					Create a free account to get started.
-				{/if}
-			</p>
-		</div>
-
-		{#if authStore.error}
-			<div class="error-banner">{authStore.error}</div>
-		{/if}
-
-		{#if showReset}
-			<!-- password reset form -->
-			<div class="form-body">
-				{#if resetSent}
-					<div class="success-banner">Password reset email sent! Check your inbox.</div>
-					<p class="spam-hint">Don't see it? Check your spam or junk folder.</p>
-					<button
-						class="link-btn"
-						onclick={() => {
-							showReset = false;
-							resetSent = false;
-							authStore.clearError();
-						}}
-					>
-						Back to sign in
-					</button>
-				{:else}
-					<form
-						onsubmit={(e) => {
-							e.preventDefault();
-							handlePasswordReset();
-						}}
-					>
-						<label class="field">
-							<span class="field-label">Email</span>
-							<input
-								type="email"
-								bind:value={resetEmail}
-								placeholder="you@example.com"
-								required
-								class="field-input"
-							/>
-						</label>
-						<button type="submit" class="submit-btn" disabled={submitting}>
-							Send Reset Link
-						</button>
-					</form>
-					<button
-						class="link-btn"
-						onclick={() => {
-							showReset = false;
-							authStore.clearError();
-						}}
-					>
-						Back to sign in
-					</button>
-				{/if}
-			</div>
-		{:else if signupDone}
-			<!-- signup success: verification email sent -->
-			<div class="form-body">
-				<div class="success-banner">
-					Account created! We sent a verification email to <strong>{email}</strong>.
-				</div>
-				<p class="spam-hint">Don't see it? Check your spam or junk folder.</p>
-				<button class="submit-btn" onclick={() => goto('/scanner')}> Continue to Scanner </button>
-			</div>
-		{:else}
-			<!-- mode tabs -->
-			<div class="mode-tabs">
-				<button
-					class="mode-tab"
-					class:active={mode === 'signin'}
-					onclick={() => {
-						mode = 'signin';
-						authStore.clearError();
-					}}
-				>
-					Sign In
-				</button>
-				<button
-					class="mode-tab"
-					class:active={mode === 'signup'}
-					onclick={() => {
-						mode = 'signup';
-						authStore.clearError();
-					}}
-				>
-					Create Account
-				</button>
+		{#if data.authMode === 'ldap'}
+			<!-- active directory / ldap sign-in (self-host). posts to the
+			     +page.server.ts action; progressively enhanced. -->
+			<div class="card-header">
+				<h1 class="card-title">Sign In</h1>
+				<p class="card-subtitle">Sign in with your organization (Active Directory) account.</p>
 			</div>
 
-			<!-- google sign-in -->
-			<button class="google-btn" onclick={handleGoogle} disabled={submitting}>
-				<svg width="18" height="18" viewBox="0 0 24 24">
-					<path
-						d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
-						fill="#4285F4"
-					/>
-					<path
-						d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-						fill="#34A853"
-					/>
-					<path
-						d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-						fill="#FBBC05"
-					/>
-					<path
-						d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-						fill="#EA4335"
-					/>
-				</svg>
-				Continue with Google
-			</button>
+			{#if form?.message}
+				<div class="error-banner">{form.message}</div>
+			{/if}
 
-			<div class="divider">
-				<span>or</span>
-			</div>
-
-			<!-- email/password form -->
-			<form class="form-body" onsubmit={handleSubmit}>
-				{#if mode === 'signup'}
-					<label class="field">
-						<span class="field-label">Name</span>
-						<input
-							type="text"
-							bind:value={displayName}
-							placeholder="Your name"
-							maxlength="80"
-							autocomplete="name"
-							class="field-input"
-						/>
-					</label>
-				{/if}
-
+			<form
+				class="form-body"
+				method="POST"
+				use:enhance={() => {
+					ldapSubmitting = true;
+					return async ({ update }) => {
+						await update();
+						ldapSubmitting = false;
+					};
+				}}
+			>
 				<label class="field">
-					<span class="field-label">Email</span>
+					<span class="field-label">Username</span>
 					<input
-						type="email"
-						bind:value={email}
-						placeholder="you@example.com"
+						type="text"
+						name="username"
+						value={form?.username ?? ''}
+						placeholder={'DOMAIN\\username or you@domain.com'}
 						required
+						autocomplete="username"
+						autocapitalize="none"
+						spellcheck="false"
 						class="field-input"
 					/>
 				</label>
-
 				<label class="field">
 					<span class="field-label">Password</span>
 					<input
 						type="password"
-						bind:value={password}
-						placeholder={mode === 'signup' ? 'At least 6 characters' : 'Your password'}
+						name="password"
+						placeholder="Your password"
 						required
-						minlength={6}
+						autocomplete="current-password"
 						class="field-input"
 					/>
 				</label>
+				<button type="submit" class="submit-btn" disabled={ldapSubmitting}>
+					{#if ldapSubmitting}
+						<span class="spinner"></span>
+					{/if}
+					Sign In
+				</button>
+			</form>
+		{:else}
+			<!-- header -->
+			<div class="card-header">
+				<h1 class="card-title">
+					{#if showReset}
+						Reset Password
+					{:else if signupDone}
+						You're In!
+					{:else if mode === 'signin'}
+						Welcome Back
+					{:else}
+						Create Account
+					{/if}
+				</h1>
+				<p class="card-subtitle">
+					{#if showReset}
+						Enter your email to receive a password reset link.
+					{:else if signupDone}
+						Check your email to verify your account.
+					{:else if mode === 'signin'}
+						Sign in to scan your resume across 6 ATS platforms.
+					{:else}
+						Create a free account to get started.
+					{/if}
+				</p>
+			</div>
 
-				{#if mode === 'signin'}
+			{#if authStore.error}
+				<div class="error-banner">{authStore.error}</div>
+			{/if}
+
+			{#if showReset}
+				<!-- password reset form -->
+				<div class="form-body">
+					{#if resetSent}
+						<div class="success-banner">Password reset email sent! Check your inbox.</div>
+						<p class="spam-hint">Don't see it? Check your spam or junk folder.</p>
+						<button
+							class="link-btn"
+							onclick={() => {
+								showReset = false;
+								resetSent = false;
+								authStore.clearError();
+							}}
+						>
+							Back to sign in
+						</button>
+					{:else}
+						<form
+							onsubmit={(e) => {
+								e.preventDefault();
+								handlePasswordReset();
+							}}
+						>
+							<label class="field">
+								<span class="field-label">Email</span>
+								<input
+									type="email"
+									bind:value={resetEmail}
+									placeholder="you@example.com"
+									required
+									class="field-input"
+								/>
+							</label>
+							<button type="submit" class="submit-btn" disabled={submitting}>
+								Send Reset Link
+							</button>
+						</form>
+						<button
+							class="link-btn"
+							onclick={() => {
+								showReset = false;
+								authStore.clearError();
+							}}
+						>
+							Back to sign in
+						</button>
+					{/if}
+				</div>
+			{:else if signupDone}
+				<!-- signup success: verification email sent -->
+				<div class="form-body">
+					<div class="success-banner">
+						Account created! We sent a verification email to <strong>{email}</strong>.
+					</div>
+					<p class="spam-hint">Don't see it? Check your spam or junk folder.</p>
+					<button class="submit-btn" onclick={() => goto('/scanner')}> Continue to Scanner </button>
+				</div>
+			{:else}
+				<!-- mode tabs -->
+				<div class="mode-tabs">
 					<button
-						type="button"
-						class="forgot-btn"
+						class="mode-tab"
+						class:active={mode === 'signin'}
 						onclick={() => {
-							showReset = true;
-							resetEmail = email;
+							mode = 'signin';
 							authStore.clearError();
 						}}
 					>
-						Forgot password?
+						Sign In
 					</button>
-				{/if}
+					<button
+						class="mode-tab"
+						class:active={mode === 'signup'}
+						onclick={() => {
+							mode = 'signup';
+							authStore.clearError();
+						}}
+					>
+						Create Account
+					</button>
+				</div>
 
-				<button type="submit" class="submit-btn" disabled={submitting}>
-					{#if submitting}
-						<span class="spinner"></span>
-					{/if}
-					{mode === 'signin' ? 'Sign In' : 'Create Account'}
+				<!-- google sign-in -->
+				<button class="google-btn" onclick={handleGoogle} disabled={submitting}>
+					<svg width="18" height="18" viewBox="0 0 24 24">
+						<path
+							d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+							fill="#4285F4"
+						/>
+						<path
+							d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+							fill="#34A853"
+						/>
+						<path
+							d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+							fill="#FBBC05"
+						/>
+						<path
+							d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+							fill="#EA4335"
+						/>
+					</svg>
+					Continue with Google
 				</button>
-			</form>
+
+				<div class="divider">
+					<span>or</span>
+				</div>
+
+				<!-- email/password form -->
+				<form class="form-body" onsubmit={handleSubmit}>
+					{#if mode === 'signup'}
+						<label class="field">
+							<span class="field-label">Name</span>
+							<input
+								type="text"
+								bind:value={displayName}
+								placeholder="Your name"
+								maxlength="80"
+								autocomplete="name"
+								class="field-input"
+							/>
+						</label>
+					{/if}
+
+					<label class="field">
+						<span class="field-label">Email</span>
+						<input
+							type="email"
+							bind:value={email}
+							placeholder="you@example.com"
+							required
+							class="field-input"
+						/>
+					</label>
+
+					<label class="field">
+						<span class="field-label">Password</span>
+						<input
+							type="password"
+							bind:value={password}
+							placeholder={mode === 'signup' ? 'At least 6 characters' : 'Your password'}
+							required
+							minlength={6}
+							class="field-input"
+						/>
+					</label>
+
+					{#if mode === 'signin'}
+						<button
+							type="button"
+							class="forgot-btn"
+							onclick={() => {
+								showReset = true;
+								resetEmail = email;
+								authStore.clearError();
+							}}
+						>
+							Forgot password?
+						</button>
+					{/if}
+
+					<button type="submit" class="submit-btn" disabled={submitting}>
+						{#if submitting}
+							<span class="spinner"></span>
+						{/if}
+						{mode === 'signin' ? 'Sign In' : 'Create Account'}
+					</button>
+				</form>
+			{/if}
 		{/if}
 	</div>
 </div>
