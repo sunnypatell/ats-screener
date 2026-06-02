@@ -3,31 +3,74 @@ import type { User } from 'firebase/auth';
 import { firebaseConfigured, getFirebase } from '$lib/firebase';
 import { logger } from '$lib/log';
 
+// three mutually-exclusive auth modes, resolved server-side and surfaced via the
+// root +layout.server.ts (see resolveAuthMode in $lib/server/auth/config). the
+// type is duplicated here (not imported) because that module is server-only.
+type AuthMode = 'ldap' | 'firebase' | 'none';
+
+// the ldap session user shape mirrors App.Locals['user'] in app.d.ts.
+interface LdapSessionUser {
+	sub: string;
+	name: string;
+	email: string;
+	groups: string[];
+}
+
 class AuthStore {
+	// firebase user (firebase mode only); ldapUser (ldap mode only). kept separate
+	// so the firebase code path is byte-for-byte unchanged.
 	user = $state<User | null>(null);
+	ldapUser = $state<LdapSessionUser | null>(null);
 	loading = $state(true);
 	error = $state<string | null>(null);
 
-	// self-host mode: when firebase is not configured the store reports
-	// `disabled = true`, never attempts a network call, and the rest of the
-	// app treats the user as having full access (no auth gate, no firestore).
-	// hosted production with firebase set up sees `disabled = false` and
-	// the existing behaviour is unchanged.
-	readonly disabled: boolean = !firebaseConfigured;
+	// the active auth mode. seeded from firebaseConfigured in the constructor so
+	// first paint matches the pre-feature behaviour exactly, then upgraded to
+	// 'ldap' by hydrateFromServer() when the server says so (ldap is server-only
+	// knowledge the client can't see at construction time).
+	mode = $state<AuthMode>('none');
+
+	// self-host 'none' mode reports disabled = true: no auth gate, no firestore,
+	// anonymous localStorage history. firebase and ldap both report false.
+	// preserved as a getter so every existing `authStore.disabled` reader keeps
+	// working unchanged.
+	get disabled(): boolean {
+		return this.mode === 'none';
+	}
+
+	// true when the app should require sign-in (firebase OR ldap). the inverse of
+	// disabled; used by the navbar auth slot and the scanner gate.
+	get requiresAuth(): boolean {
+		return this.mode !== 'none';
+	}
+
+	// stable subject for the signed-in ldap user (objectGUID), used to namespace
+	// localStorage scan history per AD user. null outside ldap mode.
+	get ldapSub(): string | null {
+		return this.mode === 'ldap' ? (this.ldapUser?.sub ?? null) : null;
+	}
 
 	get isAuthenticated(): boolean {
+		if (this.mode === 'ldap') return this.ldapUser !== null;
+		if (this.mode === 'none') return false;
 		return this.user !== null;
 	}
 
 	get displayName(): string {
+		if (this.mode === 'ldap') {
+			return this.ldapUser?.name ?? this.ldapUser?.email?.split('@')[0] ?? '';
+		}
 		return this.user?.displayName ?? this.user?.email?.split('@')[0] ?? '';
 	}
 
 	get photoURL(): string | null {
+		// ldap users have no avatar; UserMenu falls back to initials.
+		if (this.mode === 'ldap') return null;
 		return this.user?.photoURL ?? null;
 	}
 
 	get email(): string {
+		if (this.mode === 'ldap') return this.ldapUser?.email ?? '';
 		return this.user?.email ?? '';
 	}
 
@@ -40,15 +83,16 @@ class AuthStore {
 	}
 
 	constructor() {
+		// ldap is server-only knowledge, so at construction we only know firebase
+		// vs none. hydrateFromServer() upgrades to 'ldap' once the layout data lands.
+		this.mode = firebaseConfigured ? 'firebase' : 'none';
 		if (browser) {
-			// self-host mode short-circuits the firebase listener entirely. flip
-			// loading off so the auth gate render path completes, and leave
-			// user=null. the disabled getter is read directly downstream;
-			// canScan returns true because disabled is true.
-			if (this.disabled) {
-				this.loading = false;
-			} else {
+			if (this.mode === 'firebase') {
 				void this.setupAuthListener();
+			} else {
+				// none mode (and the pre-hydration state of ldap) has no client
+				// listener. flip loading off so the render path completes.
+				this.loading = false;
 			}
 		}
 		// on SSR, loading stays true so the server renders the loading spinner.
@@ -58,6 +102,18 @@ class AuthStore {
 		// the hydration_mismatch warning that occurred when SSR rendered the
 		// auth-gate (loading=false, user=null) while the client rendered the
 		// loading spinner (loading=true).
+	}
+
+	// bridge the root +layout.server.ts data into the singleton. called from
+	// +layout.svelte on both SSR and client so the resolved mode + ldap user are
+	// reflected before first paint. idempotent. firebase/none modes leave the
+	// firebase listener (and its loading/user) untouched.
+	hydrateFromServer(data: { authMode: AuthMode; user: LdapSessionUser | null }): void {
+		this.mode = data.authMode;
+		if (data.authMode === 'ldap') {
+			this.ldapUser = data.user;
+			this.loading = false;
+		}
 	}
 
 	private async setupAuthListener() {
@@ -172,6 +228,19 @@ class AuthStore {
 
 	async signOut() {
 		this.error = null;
+		// ldap: clear the server session cookie, then drop the local user so the
+		// UI updates immediately. the caller (UserMenu) navigates afterwards.
+		if (this.mode === 'ldap') {
+			try {
+				await fetch('/logout', { method: 'POST' });
+			} catch (err) {
+				logger.warn('auth.ldap_logout_failed', {
+					error: err instanceof Error ? err.message : String(err)
+				});
+			}
+			this.ldapUser = null;
+			return;
+		}
 		const { auth } = await getFirebase();
 		const { signOut: firebaseSignOut } = await import('firebase/auth');
 		try {

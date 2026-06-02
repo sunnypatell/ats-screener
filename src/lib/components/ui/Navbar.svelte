@@ -100,10 +100,10 @@
 				GitHub
 			</a>
 			<a href="/scanner" class="nav-cta"> Scan Now </a>
-			<!-- auth slot hidden entirely on self-host (firebase not configured)
-			     since there's no sign-in to offer. on hosted builds the
-			     existing UserMenu / AuthButton split applies. -->
-			{#if !authStore.disabled && !authStore.loading}
+			<!-- auth slot hidden in anonymous self-host ('none' mode) since there's
+			     no sign-in to offer. shown when auth is required (hosted firebase OR
+			     ldap self-host); the UserMenu / AuthButton split applies to both. -->
+			{#if authStore.requiresAuth && !authStore.loading}
 				{#if authStore.isAuthenticated}
 					<UserMenu />
 				{:else}

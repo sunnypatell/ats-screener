@@ -42,7 +42,9 @@
 		<div class="dropdown">
 			<div class="dropdown-header">
 				<span class="dropdown-name">{authStore.displayName}</span>
-				<span class="dropdown-email">{authStore.email}</span>
+				{#if authStore.email}
+					<span class="dropdown-email">{authStore.email}</span>
+				{/if}
 			</div>
 			<div class="dropdown-divider"></div>
 			<a href="/scanner" class="dropdown-item" onclick={() => (open = false)}>
