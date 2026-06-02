@@ -109,11 +109,20 @@ class AuthStore {
 	// reflected before first paint. idempotent. firebase/none modes leave the
 	// firebase listener (and its loading/user) untouched.
 	hydrateFromServer(data: { authMode: AuthMode; user: LdapSessionUser | null }): void {
+		// browser-only: never write per-request server data into this module-level
+		// singleton during SSR, or one request's identity could bleed into another
+		// request's rendered html. on the server the store stays at its constructor
+		// defaults and the client hydrates after mount; the firebase dns-prefetch
+		// gate still works because the constructor seeds `mode` from firebaseConfigured.
+		if (!browser) return;
 		this.mode = data.authMode;
-		if (data.authMode === 'ldap') {
-			this.ldapUser = data.user;
-			this.loading = false;
-		}
+		// always clear ldapUser outside the ldap branch so no stale identity
+		// survives a mode transition (the getters guard on mode anyway).
+		this.ldapUser = data.authMode === 'ldap' ? data.user : null;
+		// ldap/none have no async listener, so resolve loading here. firebase
+		// leaves loading to onAuthStateChanged (flipping it early would flash the
+		// Sign In button before a logged-in user's session resolves).
+		if (data.authMode !== 'firebase') this.loading = false;
 	}
 
 	private async setupAuthListener() {

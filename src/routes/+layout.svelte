@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, untrack } from 'svelte';
+	import { onMount } from 'svelte';
 	import '../app.css';
 	import Navbar from '$components/ui/Navbar.svelte';
 	import { authStore } from '$stores/auth.svelte';
@@ -9,12 +9,11 @@
 
 	let { children, data } = $props();
 
-	// bridge the server-resolved auth mode + ldap user into the auth store. the
-	// untracked call runs on SSR and on first client paint so SSR and hydration
-	// render the same auth state (no flash / hydration mismatch); the $effect
-	// keeps it in sync across client navigations. inert for firebase/none modes
-	// (re-confirms the mode the constructor already set).
-	untrack(() => authStore.hydrateFromServer(data));
+	// bridge the server-resolved auth mode + ldap user into the auth store on the
+	// CLIENT only. hydrateFromServer is a no-op during SSR by design: writing
+	// per-request user data into a module-level singleton on the server could leak
+	// one request's identity into another's html. the $effect re-runs on client
+	// navigation; SSR renders from the store's constructor defaults.
 	$effect(() => {
 		authStore.hydrateFromServer(data);
 	});

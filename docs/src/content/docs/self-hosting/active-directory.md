@@ -106,6 +106,10 @@ LDAP_TLS_CA_PATH=/etc/ssl/certs/corp-internal-ca.pem
 
 After a successful sign-in, ATS Screener sets a signed, `httpOnly` session cookie. There is no server-side session store, the cookie is self-contained, so sessions survive restarts and work across multiple instances. To force everyone to sign in again, rotate `SESSION_SECRET`. Adjust `SESSION_MAX_AGE` to change how long a session lasts.
 
+:::caution
+Behind a TLS-terminating reverse proxy (nginx, Caddy, Traefik in front of the node adapter, the common AD topology), the app receives plain HTTP internally, so the session cookie's `Secure` flag depends on the proxy forwarding the original scheme. The login action honours `X-Forwarded-Proto`, but you should also tell your SvelteKit adapter to trust the proxy (for `@sveltejs/adapter-node`, set `PROTOCOL_HEADER=x-forwarded-proto` and `HOST_HEADER=x-forwarded-host`) so `Secure` is set correctly and the cookie is never sent over plain HTTP.
+:::
+
 ## Scan history
 
 In AD mode, scan history is stored in the browser's `localStorage`, namespaced per signed-in user so two people sharing a machine don't see each other's scans. As with the other self-host modes, history is per-browser and not synced across devices. Server-side, cross-device history would need a database; it's tracked as a possible future enhancement on the issue tracker.

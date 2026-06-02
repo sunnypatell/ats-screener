@@ -69,11 +69,14 @@ export const actions: Actions = {
 			makeSessionPayload(result.user, cfg.sessionMaxAgeSec),
 			cfg.sessionSecret
 		);
-		cookies.set(
-			SESSION_COOKIE,
-			token,
-			sessionCookieOptions(cfg.sessionMaxAgeSec, url.protocol === 'https:')
-		);
+		// mark the cookie Secure when the *original* request was https. behind a
+		// TLS-terminating reverse proxy (the common ad self-host topology) the
+		// internal request is http, so prefer x-forwarded-proto and fall back to
+		// url.protocol for a direct connection. (the AD guide also documents
+		// setting the adapter's proxy-trust env vars.)
+		const forwardedProto = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim();
+		const secure = forwardedProto ? forwardedProto === 'https' : url.protocol === 'https:';
+		cookies.set(SESSION_COOKIE, token, sessionCookieOptions(cfg.sessionMaxAgeSec, secure));
 		logger.info('ldap.login_success', { sub: result.user.sub });
 		throw redirect(303, '/scanner');
 	}
