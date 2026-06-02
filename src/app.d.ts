@@ -3,7 +3,17 @@
 declare global {
 	namespace App {
 		// interface Error {}
-		// interface Locals {}
+		// populated by hooks.server.ts ONLY in ldap self-host mode (server-side
+		// session). null in firebase/none mode and on the hosted deploy, so
+		// nothing that reads locals.user changes behaviour there.
+		interface Locals {
+			user: {
+				sub: string;
+				name: string;
+				email: string;
+				groups: string[];
+			} | null;
+		}
 		// interface PageData {}
 		// interface PageState {}
 		interface Platform {
