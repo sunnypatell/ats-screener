@@ -4,6 +4,7 @@ export { ICIMS_PROFILE } from './icims';
 export { GREENHOUSE_PROFILE } from './greenhouse';
 export { LEVER_PROFILE } from './lever';
 export { SUCCESSFACTORS_PROFILE } from './successfactors';
+export { GUPY_PROFILE } from './gupy';
 export type { ATSProfile, ATSQuirk } from './types';
 
 import type { ATSProfile } from './types';
@@ -13,9 +14,10 @@ import { ICIMS_PROFILE } from './icims';
 import { GREENHOUSE_PROFILE } from './greenhouse';
 import { LEVER_PROFILE } from './lever';
 import { SUCCESSFACTORS_PROFILE } from './successfactors';
+import { GUPY_PROFILE } from './gupy';
 
-// all ATS profiles ordered by market share/strictness
 export const ALL_PROFILES: ATSProfile[] = [
+	GUPY_PROFILE,
 	WORKDAY_PROFILE,
 	TALEO_PROFILE,
 	SUCCESSFACTORS_PROFILE,
@@ -24,7 +26,6 @@ export const ALL_PROFILES: ATSProfile[] = [
 	LEVER_PROFILE
 ];
 
-// lookup a profile by name (case-insensitive)
 export function getProfile(name: string): ATSProfile | undefined {
-	return ALL_PROFILES.find((p) => p.name.toLowerCase() === name.toLowerCase());
+	return ALL_PROFILES.find((profile) => profile.name.toLowerCase() === name.toLowerCase());
 }

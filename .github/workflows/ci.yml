@@ -2,7 +2,7 @@ name: ci
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main, dev, 'feat/**']
   pull_request:
     branches: [main, dev]
 
@@ -12,7 +12,6 @@ jobs:
     strategy:
       matrix:
         node-version: [20]
-
     env:
       PUBLIC_FIREBASE_API_KEY: ci-placeholder
       PUBLIC_FIREBASE_AUTH_DOMAIN: ci-placeholder.firebaseapp.com
@@ -20,31 +19,45 @@ jobs:
       PUBLIC_FIREBASE_STORAGE_BUCKET: ci-placeholder.appspot.com
       PUBLIC_FIREBASE_MESSAGING_SENDER_ID: '000000000000'
       PUBLIC_FIREBASE_APP_ID: '1:000000000000:web:0000000000000000'
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
-
       - name: install dependencies
         run: pnpm install --frozen-lockfile
-
       - name: type check
         run: pnpm check
-
       - name: lint
         run: pnpm lint
-
       - name: format check
         run: pnpm format:check
-
       - name: unit tests
         run: pnpm test
-
       - name: build
         run: pnpm build
+
+  e2e:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: deterministic scanner e2e
+        run: pnpm exec playwright test tests/e2e/deterministic-scanner.spec.ts --project=chromium
+
+  docker-build:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: build production OCR image
+        run: docker build --tag ats-screener:test .

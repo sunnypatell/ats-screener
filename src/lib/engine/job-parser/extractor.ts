@@ -1,42 +1,121 @@
 import type { ParsedJobDescription } from './types';
-import { tokenize, extractNgrams } from '$engine/nlp/tokenizer';
+import { extractNgrams, tokenize } from '$engine/nlp/tokenizer';
 import { detectIndustry, getIndustrySkills } from '$engine/nlp/skills-taxonomy';
 
-// rule-based JD extractor. LLM enhancement happens server-side. works for any industry
+const COMMON_SKILLS = [
+	'python',
+	'java',
+	'javascript',
+	'typescript',
+	'react',
+	'react native',
+	'angular',
+	'vue',
+	'next.js',
+	'node.js',
+	'golang',
+	'go',
+	'rust',
+	'swift',
+	'kotlin',
+	'ruby',
+	'php',
+	'c++',
+	'c#',
+	'.net',
+	'sql',
+	'nosql',
+	'mongodb',
+	'postgresql',
+	'mysql',
+	'redis',
+	'docker',
+	'kubernetes',
+	'aws',
+	'azure',
+	'gcp',
+	'terraform',
+	'jenkins',
+	'git',
+	'github',
+	'linux',
+	'fastapi',
+	'express',
+	'rest api',
+	'restful api',
+	'apis rest',
+	'microservices',
+	'microsservicos',
+	'microsserviços',
+	'selenium',
+	'playwright',
+	'beautifulsoup',
+	'web scraping',
+	'machine learning',
+	'deep learning',
+	'data science',
+	'nlp',
+	'natural language processing',
+	'computer vision',
+	'tensorflow',
+	'pytorch',
+	'pandas',
+	'spark',
+	'hadoop',
+	'tableau',
+	'power bi',
+	'etl',
+	'salesforce',
+	'hubspot',
+	'sap',
+	'oracle',
+	'quickbooks',
+	'excel',
+	'powerpoint',
+	'jira',
+	'confluence',
+	'asana',
+	'slack',
+	'cpa',
+	'pmp',
+	'cissp',
+	'ceh',
+	'six sigma',
+	'scrum',
+	'agile',
+	'metodologias ageis',
+	'metodologias ágeis',
+	'lideranca',
+	'liderança',
+	'comunicacao',
+	'comunicação',
+	'atendimento ao cliente',
+	'gestao de projetos',
+	'gestão de projetos'
+];
+
 export function parseJobDescription(text: string): ParsedJobDescription {
-	const lower = text.toLowerCase();
-
-	// extract all meaningful tokens
+	const normalized = fold(text);
+	const language = detectLanguage(normalized);
 	const tokens = tokenize(text);
-	const terms = [...new Set(tokens.map((t) => t.normalized))];
-
-	// extract bigrams and trigrams for multi-word skills
+	const terms = [...new Set(tokens.map((token) => token.normalized))];
 	const bigrams = extractNgrams(text, 2);
 	const trigrams = extractNgrams(text, 3);
-
-	// detect industry context
 	const industries = detectIndustry(text);
-	const industryContext = industries.length > 0 ? industries[0].industry : 'general';
-
-	// get known skills for detected industry
-	const industrySkills =
-		industries.length > 0
-			? getIndustrySkills(industries[0].industry).map((s) => s.toLowerCase())
-			: [];
-
-	// extract skills by matching against taxonomy + common patterns
-	const extractedSkills = extractSkills(terms, bigrams, trigrams, industrySkills);
-
-	// separate required vs preferred
+	const industryContext = industries[0]?.industry ?? 'general';
+	const industrySkills = industries.length
+		? getIndustrySkills(industries[0].industry).map((skill) => fold(skill))
+		: [];
+	const extractedSkills = extractSkills(text, terms, bigrams, trigrams, industrySkills);
 	const { required, preferred } = categorizeSkills(text, extractedSkills);
-
-	// detect experience level
-	const experienceLevel = detectExperienceLevel(lower);
-	const educationRequirement = detectEducationRequirement(lower);
-	const roleType = detectRoleType(lower);
-
-	// extract key phrases (important multi-word terms from the JD)
-	const keyPhrases = [...bigrams, ...trigrams].filter((phrase) => isKeyPhrase(phrase)).slice(0, 20);
+	const minimumExperienceYears = detectMinimumExperienceYears(normalized);
+	const experienceLevel = detectExperienceLevel(normalized, minimumExperienceYears);
+	const educationRequirement = detectEducationRequirement(normalized);
+	const roleType = detectRoleType(normalized);
+	const keyPhrases = [...bigrams, ...trigrams]
+		.filter(isKeyPhrase)
+		.filter((phrase, index, all) => all.indexOf(phrase) === index)
+		.slice(0, 24);
 
 	return {
 		rawText: text,
@@ -44,150 +123,279 @@ export function parseJobDescription(text: string): ParsedJobDescription {
 		requiredSkills: required,
 		preferredSkills: preferred,
 		experienceLevel,
+		minimumExperienceYears,
 		educationRequirement,
 		industryContext,
 		roleType,
-		keyPhrases
+		keyPhrases,
+		language
 	};
 }
 
+function fold(value: string): string {
+	return value.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase();
+}
+
+function detectLanguage(text: string): 'pt-BR' | 'en' {
+	const pt = (
+		text.match(
+			/\b(?:requisitos|obrigatorio|desejavel|experiencia|formacao|habilidades|competencias|vaga|cargo|anos)\b/g
+		) || []
+	).length;
+	const en = (
+		text.match(
+			/\b(?:requirements|required|preferred|experience|education|skills|position|role|years)\b/g
+		) || []
+	).length;
+	return pt > en ? 'pt-BR' : 'en';
+}
+
 function extractSkills(
+	text: string,
 	terms: string[],
 	bigrams: string[],
 	trigrams: string[],
 	industrySkills: string[]
 ): string[] {
-	const skills = new Set<string>();
-	const industrySet = new Set(industrySkills);
-
-	// match single terms against industry taxonomy
+	const result = new Set<string>();
+	const corpus = fold(text);
+	const candidates = new Set([...industrySkills, ...COMMON_SKILLS.map(fold)]);
 	for (const term of terms) {
-		if (industrySet.has(term) && term.length >= 2) {
-			skills.add(term);
-		}
+		if (candidates.has(term) && term.length >= 2) result.add(canonicalSkill(term));
 	}
-
-	// match multi-word terms
 	for (const phrase of [...bigrams, ...trigrams]) {
-		if (industrySet.has(phrase)) {
-			skills.add(phrase);
+		const folded = fold(phrase);
+		if (candidates.has(folded)) result.add(canonicalSkill(folded));
+	}
+	for (const skill of candidates) {
+		const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		if (
+			new RegExp(
+				`(^|[^\\p{L}\\p{N}])${escaped}(?=$|[^\\p{L}\\p{N}])`,
+				'iu'
+			).test(corpus)
+		) {
+			result.add(canonicalSkill(skill));
 		}
 	}
+	return [...result];
+}
 
-	// also catch common skill patterns not in taxonomy
-	const skillPatterns = [
-		// tech
-		/\b(?:python|java|javascript|typescript|react|angular|vue|node\.?js|go|rust|swift|kotlin|ruby|php|c\+\+|c#|\.net|sql|nosql|mongodb|postgresql|redis|docker|kubernetes|aws|azure|gcp|terraform|jenkins|git|linux)\b/gi,
-		// data/ml
-		/\b(?:machine learning|deep learning|data science|nlp|natural language|computer vision|tensorflow|pytorch|pandas|spark|hadoop|tableau|power bi|etl)\b/gi,
-		// business
-		/\b(?:salesforce|hubspot|sap|oracle|quickbooks|excel|powerpoint|jira|confluence|asana|slack)\b/gi,
-		// certifications
-		/\b(?:cpa|pmp|aws certified|google certified|azure certified|cissp|ceh|six sigma|scrum master|agile)\b/gi
-	];
-
-	for (const pattern of skillPatterns) {
-		const matches = terms.join(' ').match(pattern);
-		if (matches) {
-			for (const match of matches) {
-				skills.add(match.toLowerCase());
-			}
-		}
-	}
-
-	return [...skills];
+function canonicalSkill(skill: string): string {
+	const key = fold(skill).replace(/\s+/g, ' ').trim();
+	const aliases: Record<string, string> = {
+		golang: 'Go',
+		go: 'Go',
+		typescript: 'TypeScript',
+		javascript: 'JavaScript',
+		python: 'Python',
+		'react native': 'React Native',
+		react: 'React',
+		'next.js': 'Next.js',
+		nextjs: 'Next.js',
+		'node.js': 'Node.js',
+		nodejs: 'Node.js',
+		fastapi: 'FastAPI',
+		postgresql: 'PostgreSQL',
+		mysql: 'MySQL',
+		mongodb: 'MongoDB',
+		github: 'GitHub',
+		docker: 'Docker',
+		kubernetes: 'Kubernetes',
+		aws: 'AWS',
+		azure: 'Azure',
+		gcp: 'GCP',
+		sql: 'SQL',
+		'power bi': 'Power BI',
+		'rest api': 'REST APIs',
+		'restful api': 'REST APIs',
+		'apis rest': 'REST APIs',
+		microsservicos: 'Microservices',
+		microservices: 'Microservices',
+		'metodologias ageis': 'Agile',
+		agile: 'Agile',
+		scrum: 'Scrum',
+		lideranca: 'Leadership',
+		comunicacao: 'Communication',
+		'gestao de projetos': 'Project Management',
+		'atendimento ao cliente': 'Customer Service'
+	};
+	return aliases[key] ?? skill.trim();
 }
 
 function categorizeSkills(
 	text: string,
 	skills: string[]
 ): { required: string[]; preferred: string[] } {
-	const lines = text.split('\n');
-	const required: string[] = [];
-	const preferred: string[] = [];
-
-	// find sections
-	let inRequired = false;
-	let inPreferred = false;
-
-	for (const line of lines) {
-		const lower = line.toLowerCase().trim();
-
-		// detect section headers
-		if (/(?:required|must have|minimum|essential|requirements)\b/.test(lower)) {
-			inRequired = true;
-			inPreferred = false;
-		} else if (/(?:preferred|nice to have|bonus|desired|plus|ideal)\b/.test(lower)) {
-			inRequired = false;
-			inPreferred = true;
+	const required = new Set<string>();
+	const preferred = new Set<string>();
+	let mode: 'required' | 'preferred' | 'neutral' = 'neutral';
+	for (const rawLine of text.split(/\r?\n/)) {
+		const line = fold(rawLine).trim();
+		if (!line) continue;
+		if (
+			/\b(?:preferred|nice to have|bonus|desired|plus|ideal|desejavel|desejaveis|diferencial|diferenciais|sera um diferencial)\b/.test(
+				line
+			)
+		) {
+			mode = 'preferred';
+		} else if (
+			/\b(?:required|must have|minimum|essential|requirements|mandatory|requisitos|obrigatorio|obrigatorios|essencial|necessario|necessarios)\b/.test(
+				line
+			)
+		) {
+			mode = 'required';
 		}
-
-		// check which skills appear in this line
 		for (const skill of skills) {
-			if (lower.includes(skill)) {
-				if (inPreferred && !inRequired) {
-					if (!preferred.includes(skill)) preferred.push(skill);
-				} else {
-					// default to required if section is ambiguous or explicitly required
-					if (!required.includes(skill)) required.push(skill);
-				}
+			if (!containsSkill(line, fold(skill))) continue;
+			if (
+				mode === 'preferred' ||
+				/\b(?:preferred|desejavel|diferencial|bonus)\b/.test(line)
+			) {
+				preferred.add(skill);
+			} else {
+				required.add(skill);
 			}
 		}
 	}
-
-	// any skills not categorized go to required by default
 	for (const skill of skills) {
-		if (!required.includes(skill) && !preferred.includes(skill)) {
-			required.push(skill);
-		}
+		if (!required.has(skill) && !preferred.has(skill)) required.add(skill);
 	}
-
-	return { required, preferred };
+	for (const skill of preferred) required.delete(skill);
+	return { required: [...required], preferred: [...preferred] };
 }
 
-function detectExperienceLevel(text: string): string {
-	if (/\b(?:director|vp|vice president|head of|chief)\b/.test(text)) return 'executive';
-	if (/\b(?:lead|principal|staff|architect)\b/.test(text)) return 'lead';
-	if (/\b(?:senior|sr\.?)\b/.test(text) || /\b[5-9]\+?\s*(?:years?|yrs?)\b/.test(text))
-		return 'senior';
-	if (/\b[3-4]\+?\s*(?:years?|yrs?)\b/.test(text)) return 'mid';
-	if (/\b(?:junior|jr\.?|entry)\b/.test(text) || /\b[0-2]\+?\s*(?:years?|yrs?)\b/.test(text))
+function containsSkill(text: string, skill: string): boolean {
+	const aliases: Record<string, string[]> = {
+		go: ['go', 'golang'],
+		'rest apis': ['rest api', 'restful api', 'apis rest'],
+		microservices: ['microservices', 'microsservicos'],
+		leadership: ['leadership', 'lideranca'],
+		communication: ['communication', 'comunicacao'],
+		'project management': ['project management', 'gestao de projetos']
+	};
+	return (aliases[skill] ?? [skill]).some((alias) => {
+		const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		return new RegExp(
+			`(^|[^\\p{L}\\p{N}])${escaped}(?=$|[^\\p{L}\\p{N}])`,
+			'iu'
+		).test(text);
+	});
+}
+
+function detectMinimumExperienceYears(text: string): number | null {
+	const matches = [
+		...text.matchAll(
+			/\b(\d{1,2})(?:\s*(?:-|a|to)\s*\d{1,2})?\s*\+?\s*(?:anos?|years?|yrs?)\b/giu
+		)
+	]
+		.map((match) => Number(match[1]))
+		.filter((value) => Number.isFinite(value) && value <= 30);
+	return matches.length ? Math.max(...matches) : null;
+}
+
+function detectExperienceLevel(
+	text: string,
+	minimumYears: number | null
+): ParsedJobDescription['experienceLevel'] {
+	if (
+		/\b(?:director|vp|vice president|head of|chief|diretor|diretora|vice-presidente|presidente|c-level)\b/.test(
+			text
+		)
+	) {
+		return 'executive';
+	}
+	if (
+		/\b(?:lead|principal|staff|architect|lider|especialista principal|arquiteto|arquiteta)\b/.test(
+			text
+		)
+	) {
+		return 'lead';
+	}
+	if (/\b(?:senior|sr\.?)\b/.test(text) || (minimumYears ?? 0) >= 5) return 'senior';
+	if (
+		/\b(?:junior|jr\.?|entry|iniciante)\b/.test(text) ||
+		(minimumYears !== null && minimumYears <= 2)
+	) {
 		return 'entry';
-	if (/\b(?:intern|internship|co-op|new grad)\b/.test(text)) return 'entry';
+	}
+	if (/\b(?:intern|internship|co-op|new grad|estagio|estagiario|aprendiz)\b/.test(text)) {
+		return 'entry';
+	}
 	return 'mid';
 }
 
 function detectEducationRequirement(text: string): string {
-	if (/\b(?:ph\.?d|doctorate)\b/.test(text)) return 'PhD';
-	if (/\b(?:master'?s?|mba|m\.s\.?|m\.a\.?)\b/.test(text)) return "Master's degree";
-	if (/\b(?:bachelor'?s?|b\.s\.?|b\.a\.?|degree)\b/.test(text)) return "Bachelor's degree";
-	if (/\b(?:associate'?s?)\b/.test(text)) return "Associate's degree";
+	if (/\b(?:ph\.?d|doctorate|doutorado)\b/.test(text)) return 'doctorate';
+	if (/\b(?:master'?s?|mba|m\.?s\.?|m\.?a\.?|mestrado|pos-graduacao)\b/.test(text)) {
+		return 'master';
+	}
+	if (
+		/\b(?:bachelor'?s?|b\.?s\.?|b\.?a\.?|bacharelado|graduacao|ensino superior)\b/.test(
+			text
+		)
+	) {
+		return 'bachelor';
+	}
+	if (/\b(?:associate'?s?|tecnologo|tecnologia)\b/.test(text)) return 'associate';
+	if (/\b(?:technical degree|curso tecnico|ensino tecnico)\b/.test(text)) return 'technical';
 	return 'not specified';
 }
 
 function detectRoleType(text: string): string {
 	if (
-		/\b(?:engineer|developer|programmer|devops|sre|software|frontend|backend|fullstack)\b/.test(
+		/\b(?:engineer|developer|programmer|devops|sre|software|frontend|backend|fullstack|engenheiro|desenvolvedor|programador)\b/.test(
 			text
 		)
-	)
+	) {
 		return 'engineering';
-	if (/\b(?:sales|account executive|business development)\b/.test(text)) return 'sales';
-	if (/\b(?:market|brand|content|seo|social media)\b/.test(text)) return 'marketing';
-	if (/\b(?:financial|finance|accounting|audit|tax|treasury|cpa|cfa)\b/.test(text))
+	}
+	if (/\b(?:sales|account executive|business development|vendas|comercial|promotor)\b/.test(text)) {
+		return 'sales';
+	}
+	if (/\b(?:market|brand|content|seo|social media|marketing|conteudo|midias sociais)\b/.test(text)) {
+		return 'marketing';
+	}
+	if (
+		/\b(?:financial|finance|accounting|audit|tax|treasury|cpa|cfa|financeiro|financas|contabilidade|auditoria)\b/.test(
+			text
+		)
+	) {
 		return 'finance';
-	if (/\b(?:nurse|physician|clinical|patient|healthcare)\b/.test(text)) return 'healthcare';
-	if (/\b(?:legal|attorney|counsel|compliance)\b/.test(text)) return 'legal';
-	if (/\b(?:operat|supply chain|logistics|procurement)\b/.test(text)) return 'operations';
-	if (/\b(?:design|ux|ui|graphic|creative)\b/.test(text)) return 'design';
+	}
+	if (/\b(?:nurse|physician|clinical|patient|healthcare|enfermeiro|medico|clinico|saude)\b/.test(text)) {
+		return 'healthcare';
+	}
+	if (/\b(?:legal|attorney|counsel|compliance|juridico|advogado|advogada)\b/.test(text)) {
+		return 'legal';
+	}
+	if (/\b(?:operat\w*|supply chain|logistics|operacao|logistica|suprimentos)\b/.test(text)) {
+		return 'operations';
+	}
+	if (/\b(?:design|ux|ui|graphic|creative|criativo|criativa)\b/.test(text)) return 'design';
 	return 'other';
 }
 
 function isKeyPhrase(phrase: string): boolean {
 	const words = phrase.split(' ');
-	// filter out phrases that are too generic
-	const genericWords = new Set(['the', 'and', 'for', 'with', 'this', 'that', 'will', 'you', 'are']);
-	if (words.every((w) => genericWords.has(w))) return false;
-	if (words.some((w) => w.length <= 1)) return false;
-	return true;
+	const generic = new Set([
+		'the',
+		'and',
+		'for',
+		'with',
+		'this',
+		'that',
+		'will',
+		'you',
+		'are',
+		'para',
+		'com',
+		'uma',
+		'um',
+		'que',
+		'por',
+		'das',
+		'dos'
+	]);
+	return !words.every((word) => generic.has(word)) && !words.some((word) => word.length <= 1);
 }

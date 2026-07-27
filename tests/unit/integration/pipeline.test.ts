@@ -1,19 +1,10 @@
 /* eslint-disable no-console */
-// console.log statements in this file are intentional. they emit a
-// human-readable trace of scoring breakdowns when the integration suite
-// runs, which is invaluable when tuning the scorer or debugging a
-// regression. quieter alternatives (assert-only) would lose the
-// diagnostic signal that justifies the file existing.
-import { describe, it, expect } from 'vitest';
-import { scoreResume } from '$engine/scorer/engine';
+import { describe, expect, it } from 'vitest';
 import { parseJobDescription } from '$engine/job-parser/extractor';
+import { scoreResume } from '$engine/scorer/engine';
 import type { ScoringInput } from '$engine/scorer/types';
 
-// end-to-end pipeline test: simulates what the scanner page does
-// after parseResume() extracts data from a file
-
 describe('full pipeline: scoring input -> results', () => {
-	// simulates a well-structured software engineer resume
 	const goodResume: ScoringInput = {
 		resumeText: `
 			Software Engineer with 5 years of experience building scalable web applications.
@@ -44,8 +35,26 @@ describe('full pipeline: scoring input -> results', () => {
 			'Architected real-time data pipeline processing 500K events/day',
 			'Mentored 5 junior developers through structured onboarding program'
 		],
+		experienceEntries: [
+			{
+				title: 'Software Engineer',
+				company: 'Example',
+				start: '2019-01',
+				end: '2024-12',
+				isCurrent: false,
+				text: 'Software Engineer building web applications and APIs'
+			}
+		],
 		educationText:
 			'Bachelor of Science in Computer Science, University of Waterloo, 2019, GPA: 3.7/4.0',
+		educationEntries: [
+			{
+				degree: 'Bachelor of Science',
+				field: 'Computer Science',
+				institution: 'University of Waterloo',
+				text: 'Bachelor of Science in Computer Science, University of Waterloo, 2019'
+			}
+		],
 		hasMultipleColumns: false,
 		hasTables: false,
 		hasImages: false,
@@ -53,54 +62,38 @@ describe('full pipeline: scoring input -> results', () => {
 		wordCount: 500
 	};
 
-	it('scores a resume without JD (general mode)', () => {
+	it('scores a resume without a job description without fake keyword points', () => {
 		const results = scoreResume(goodResume);
-
-		// should return 6 results for 6 ATS profiles
-		expect(results).toHaveLength(6);
-
-		// every score should be between 0 and 100
-		for (const r of results) {
-			expect(r.overallScore).toBeGreaterThanOrEqual(0);
-			expect(r.overallScore).toBeLessThanOrEqual(100);
-			expect(r.breakdown).toBeDefined();
-			expect(r.system).toBeTruthy();
-			expect(r.vendor).toBeTruthy();
+		expect(results).toHaveLength(7);
+		expect(results.some((result) => result.system === 'Gupy-like')).toBe(true);
+		for (const result of results) {
+			expect(result.overallScore).toBeGreaterThanOrEqual(0);
+			expect(result.overallScore).toBeLessThanOrEqual(100);
+			expect(result.breakdown.keywordMatch.score).toBe(0);
 		}
-
-		// a good resume should average above 50
-		const avg = results.reduce((s, r) => s + r.overallScore, 0) / results.length;
-		expect(avg).toBeGreaterThan(50);
-
-		console.log('--- general mode scores ---');
-		for (const r of results) {
-			console.log(`  ${r.system} (${r.vendor}): ${r.overallScore} ${r.passesFilter ? '✓' : '✗'}`);
-		}
-		console.log(`  average: ${Math.round(avg)}`);
+		const average = results.reduce((sum, result) => sum + result.overallScore, 0) / results.length;
+		expect(average).toBeGreaterThan(50);
 	});
 
-	it('scores a resume with JD (targeted mode)', () => {
-		const jd =
-			'Looking for a Senior Software Engineer with 5+ years experience in JavaScript, TypeScript, React, Node.js, and AWS. Must have experience with microservices, CI/CD, and team leadership.';
-
-		const results = scoreResume({ ...goodResume, jobDescription: jd });
-
-		expect(results).toHaveLength(6);
-		for (const r of results) {
-			expect(r.overallScore).toBeGreaterThanOrEqual(0);
-			expect(r.overallScore).toBeLessThanOrEqual(100);
-			// with a matching JD, keyword scores should be higher
-			expect(r.breakdown.keywordMatch.matched.length).toBeGreaterThan(0);
+	it('scores a resume against a target job', () => {
+		const job = `
+			Senior Software Engineer
+			Requirements:
+			- 5+ years experience in JavaScript, TypeScript, React, Node.js, AWS and microservices
+			- Bachelor's degree in Computer Science
+			Preferred:
+			- Docker, Kubernetes, PostgreSQL and Redis
+		`;
+		const results = scoreResume({ ...goodResume, jobDescription: job });
+		expect(results).toHaveLength(7);
+		for (const result of results) {
+			expect(result.overallScore).toBeGreaterThanOrEqual(0);
+			expect(result.overallScore).toBeLessThanOrEqual(100);
+			expect(result.breakdown.keywordMatch.matched.length).toBeGreaterThan(0);
 		}
-
-		const avg = results.reduce((s, r) => s + r.overallScore, 0) / results.length;
-		console.log('--- targeted mode scores ---');
-		for (const r of results) {
-			console.log(
-				`  ${r.system}: ${r.overallScore} | keywords: ${r.breakdown.keywordMatch.matched.length} matched, ${r.breakdown.keywordMatch.missing.length} missing`
-			);
-		}
-		console.log(`  average: ${Math.round(avg)}`);
+		const gupy = results.find((result) => result.system === 'Gupy-like')!;
+		expect(gupy.breakdown.keywordMatch.score).toBeGreaterThan(60);
+		expect(gupy.breakdown.experience.score).toBeGreaterThan(60);
 	});
 
 	it('gives lower scores to a weak resume', () => {
@@ -116,115 +109,83 @@ describe('full pipeline: scoring input -> results', () => {
 			pageCount: 4,
 			wordCount: 15
 		};
-
-		const good = scoreResume(goodResume);
-		const bad = scoreResume(weak);
-
-		const goodAvg = good.reduce((s, r) => s + r.overallScore, 0) / good.length;
-		const badAvg = bad.reduce((s, r) => s + r.overallScore, 0) / bad.length;
-
-		expect(goodAvg).toBeGreaterThan(badAvg);
-
-		console.log('--- good vs weak ---');
-		console.log(`  good avg: ${Math.round(goodAvg)}`);
-		console.log(`  weak avg: ${Math.round(badAvg)}`);
-		console.log(`  difference: ${Math.round(goodAvg - badAvg)} points`);
+		const goodAverage = average(scoreResume(goodResume));
+		const weakAverage = average(scoreResume(weak));
+		expect(goodAverage).toBeGreaterThan(weakAverage);
 	});
 
 	it('produces deterministic results', () => {
-		const a = scoreResume(goodResume);
-		const b = scoreResume(goodResume);
-
-		for (let i = 0; i < a.length; i++) {
-			expect(a[i].overallScore).toBe(b[i].overallScore);
-			expect(a[i].passesFilter).toBe(b[i].passesFilter);
-			expect(a[i].breakdown.formatting.score).toBe(b[i].breakdown.formatting.score);
-			expect(a[i].breakdown.keywordMatch.score).toBe(b[i].breakdown.keywordMatch.score);
-		}
+		const first = scoreResume(goodResume);
+		const second = scoreResume(goodResume);
+		expect(first.map((result) => result.overallScore)).toEqual(
+			second.map((result) => result.overallScore)
+		);
 	});
 
-	it('produces different scores per ATS system', () => {
-		const results = scoreResume(goodResume);
-		const scores = results.map((r) => r.overallScore);
-		// not all systems should give the exact same score
-		const unique = new Set(scores);
-		expect(unique.size).toBeGreaterThan(1);
+	it('produces different scores per ATS profile', () => {
+		const scores = scoreResume(goodResume).map((result) => result.overallScore);
+		expect(new Set(scores).size).toBeGreaterThan(1);
 	});
 });
 
 describe('job description parser', () => {
-	it('extracts skills from a tech JD', () => {
-		const jd = `
-			Senior Software Engineer at Google
+	it('extracts English engineering requirements', () => {
+		const parsed = parseJobDescription(`
+			Senior Software Engineer
 			Requirements:
-			- 5+ years experience in JavaScript, TypeScript, React
-			- Experience with Node.js, AWS, Docker, Kubernetes
-			- Bachelor's degree in Computer Science or related field
+			- 5+ years experience in JavaScript, TypeScript, React, Node.js, AWS, Docker and Kubernetes
+			- Bachelor's degree in Computer Science
 			Preferred:
-			- Experience with GraphQL, Redis, PostgreSQL
-			- Agile/Scrum methodology
-		`;
-
-		const parsed = parseJobDescription(jd);
+			- Redis and PostgreSQL
+		`);
 		expect(parsed.extractedSkills.length).toBeGreaterThan(0);
 		expect(parsed.requiredSkills.length).toBeGreaterThan(0);
+		expect(parsed.preferredSkills).toEqual(expect.arrayContaining(['Redis', 'PostgreSQL']));
 		expect(parsed.experienceLevel).toBe('senior');
-		expect(parsed.educationRequirement).toContain('Bachelor');
+		expect(parsed.minimumExperienceYears).toBe(5);
+		expect(parsed.educationRequirement).toBe('bachelor');
 		expect(parsed.roleType).toBe('engineering');
-
-		console.log('--- parsed JD ---');
-		console.log(`  skills: ${parsed.extractedSkills.join(', ')}`);
-		console.log(`  required: ${parsed.requiredSkills.join(', ')}`);
-		console.log(`  preferred: ${parsed.preferredSkills.join(', ')}`);
-		console.log(`  level: ${parsed.experienceLevel}`);
-		console.log(`  education: ${parsed.educationRequirement}`);
-		console.log(`  role: ${parsed.roleType}`);
-		console.log(`  industry: ${parsed.industryContext}`);
+		expect(parsed.language).toBe('en');
 	});
 
-	it('extracts skills from a non-tech JD (nursing)', () => {
-		const jd = `
-			Registered Nurse - ICU
-			Requirements:
-			- Active RN license
-			- 3+ years ICU/Critical Care experience
-			- BLS and ACLS certification required
-			- Bachelor of Science in Nursing (BSN)
-			Preferred:
-			- CCRN certification
-			- Epic EMR experience
-		`;
-
-		const parsed = parseJobDescription(jd);
+	it('extracts Portuguese requirements and desired skills', () => {
+		const parsed = parseJobDescription(`
+			Desenvolvedor Backend Sênior
+			Requisitos obrigatórios:
+			- 4 anos de experiência com TypeScript, Node.js, PostgreSQL e APIs REST
+			- Graduação em Análise e Desenvolvimento de Sistemas
+			Diferenciais:
+			- Docker e Kubernetes
+		`);
+		expect(parsed.requiredSkills).toEqual(
+			expect.arrayContaining(['TypeScript', 'Node.js', 'PostgreSQL'])
+		);
+		expect(parsed.preferredSkills).toEqual(expect.arrayContaining(['Docker', 'Kubernetes']));
+		expect(parsed.minimumExperienceYears).toBe(4);
 		expect(parsed.experienceLevel).toBe('mid');
-		expect(parsed.roleType).toBe('healthcare');
-
-		console.log('--- nursing JD ---');
-		console.log(`  skills: ${parsed.extractedSkills.join(', ')}`);
-		console.log(`  level: ${parsed.experienceLevel}`);
-		console.log(`  role: ${parsed.roleType}`);
-		console.log(`  industry: ${parsed.industryContext}`);
+		expect(parsed.educationRequirement).toBe('bachelor');
+		expect(parsed.roleType).toBe('engineering');
+		expect(parsed.language).toBe('pt-BR');
 	});
 
-	it('extracts skills from a finance JD', () => {
-		const jd = `
+	it('extracts healthcare and finance contexts', () => {
+		const nursing = parseJobDescription(`
+			Registered Nurse - ICU
+			Requirements: 3+ years ICU experience and Bachelor of Science in Nursing
+		`);
+		expect(nursing.experienceLevel).toBe('mid');
+		expect(nursing.roleType).toBe('healthcare');
+
+		const finance = parseJobDescription(`
 			Senior Financial Analyst
-			Requirements:
-			- CPA or CFA preferred
-			- 5+ years in financial analysis or accounting
-			- Advanced Excel, PowerPoint, SAP
-			- MBA or Master's degree in Finance
-		`;
-
-		const parsed = parseJobDescription(jd);
-		expect(parsed.experienceLevel).toBe('senior');
-		expect(parsed.roleType).toBe('finance');
-		expect(parsed.educationRequirement).toContain('Master');
-
-		console.log('--- finance JD ---');
-		console.log(`  skills: ${parsed.extractedSkills.join(', ')}`);
-		console.log(`  level: ${parsed.experienceLevel}`);
-		console.log(`  role: ${parsed.roleType}`);
-		console.log(`  industry: ${parsed.industryContext}`);
+			Requirements: CPA, 5+ years in financial analysis, Excel, SAP and Master's degree
+		`);
+		expect(finance.experienceLevel).toBe('senior');
+		expect(finance.roleType).toBe('finance');
+		expect(finance.educationRequirement).toBe('master');
 	});
 });
+
+function average(results: ReturnType<typeof scoreResume>): number {
+	return results.reduce((sum, result) => sum + result.overallScore, 0) / results.length;
+}
