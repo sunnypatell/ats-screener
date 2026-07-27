@@ -90,6 +90,9 @@ export interface ParsedResume {
 		hasMultipleColumns: boolean;
 		hasTables: boolean;
 		hasImages: boolean;
+		extractionMethod: 'text-layer' | 'ocr' | 'docx' | 'pasted-text';
+		extractionQuality: number;
+		language: 'pt-BR' | 'en';
 	};
 }
 

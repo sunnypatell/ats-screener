@@ -1,9 +1,8 @@
 import type { ResumeSection, SectionType } from './types';
+import { normalizeTextFragment } from './text-normalizer';
 
-// Normalize headings before matching. PDF generators frequently prefix headings
-// with emoji/icons and may emit accented characters in decomposed form.
-function normalizeHeader(header: string): string {
-	return header
+export function normalizeHeader(header: string): string {
+	return normalizeTextFragment(header)
 		.normalize('NFKD')
 		.replace(/\p{M}/gu, '')
 		.replace(/[^\p{L}\p{N}&/+\s]/gu, ' ')
@@ -11,7 +10,6 @@ function normalizeHeader(header: string): string {
 		.trim();
 }
 
-// Maps common English and Portuguese resume section headers to canonical types.
 const SECTION_PATTERNS: Record<SectionType, RegExp[]> = {
 	contact: [
 		/^(contact\s*(info(rmation)?)?|personal\s*(info(rmation)?|details))$/i,
@@ -22,8 +20,8 @@ const SECTION_PATTERNS: Record<SectionType, RegExp[]> = {
 		/^(resumo(\s*profissional)?|perfil\s*profissional|objetivo(\s*profissional)?|sobre\s*mim|apresentacao\s*profissional)$/i
 	],
 	experience: [
-		/^(experience|work\s*experience|professional\s*experience|employment(\s*history)?|work\s*history|relevant\s*experience|career\s*history)$/i,
-		/^(experiencia(\s*profissional)?|historico\s*profissional|historico\s*de\s*trabalho|trajetoria\s*profissional)$/i
+		/^(experience|work\s*experience|professional\s*experience|employment(\s*history)?|work\s*history|relevant\s*experience|career\s*history|additional\s*experience)$/i,
+		/^(experiencia(s)?(\s*profissional(is)?)?|historico\s*profissional|historico\s*de\s*trabalho|trajetoria\s*profissional|outras?\s*experiencias?\s*profissionais?)$/i
 	],
 	education: [
 		/^(education|academic(\s*background)?|educational\s*background|qualifications|academic\s*qualifications)$/i,
@@ -38,8 +36,8 @@ const SECTION_PATTERNS: Record<SectionType, RegExp[]> = {
 		/^(projetos|projetos\s*pessoais|projetos\s*academicos|projetos\s*tecnicos|repositorios\s*tecnicos|repositorios\s*(&|e)\s*projetos\s*tecnicos)$/i
 	],
 	certifications: [
-		/^(certifications?|licenses?(\s*(&|and)\s*certifications?)?|professional\s*certifications?|accreditations?)$/i,
-		/^(certificacoes?|licencas?(\s*(&|e)\s*certificacoes?)?|cursos\s*(&|e)\s*certificacoes?)$/i
+		/^(certifications?|licenses?(\s*(&|and)\s*certifications?)?|professional\s*certifications?|accreditations?|courses?\s*(&|and)\s*certifications?)$/i,
+		/^(certificacoes?|licencas?(\s*(&|e)\s*certificacoes?)?|cursos(\s*(&|e)\s*certificacoes?)?)$/i
 	],
 	awards: [
 		/^(awards?|honors?(\s*(&|and)\s*awards?)?|achievements?|recognition|scholarships?)$/i,
@@ -64,109 +62,74 @@ const SECTION_PATTERNS: Record<SectionType, RegExp[]> = {
 	unknown: []
 };
 
-// Checks if a line is a section header using pattern matching and heuristics.
-function isSectionHeader(line: string, prevLine: string | null, nextLine: string | null): boolean {
-	const trimmed = line.trim();
-	if (trimmed.length === 0 || trimmed.length > 100) return false;
-
-	const cleaned = normalizeHeader(trimmed);
-	if (!cleaned) return false;
-
-	for (const patterns of Object.values(SECTION_PATTERNS)) {
-		if (patterns.some((p) => p.test(cleaned))) return true;
-	}
-
-	// Heuristic: all caps, short, and looks like a header.
-	const isAllCaps = cleaned === cleaned.toUpperCase() && /\p{L}/u.test(cleaned);
-	const isShort = cleaned.split(/\s+/).length <= 6;
-	const hasNoNumbers = !/\d{3,}/.test(cleaned);
-	const prevIsBlank = prevLine === null || prevLine.trim().length === 0;
-
-	if (isAllCaps && isShort && hasNoNumbers && prevIsBlank) return true;
-
-	// Heuristic: title case, ends with colon.
-	if (trimmed.endsWith(':') && isShort) return true;
-
-	// Heuristic: visually separated category label.
-	const isAlphaOnly = /^[\p{L}\s&,/]+$/u.test(cleaned);
-	const wordCount = cleaned.split(/\s+/).length;
-	const nextIsContent = nextLine !== null && nextLine.trim().length > 0;
-	const isLikelyName =
-		wordCount >= 2 &&
-		wordCount <= 5 &&
-		/^\p{Lu}[\p{L}'-]+(?:\s+\p{Lu}[\p{L}'-]+)+$/u.test(cleaned);
-
-	if (isAlphaOnly && isShort && prevIsBlank && nextIsContent && !isLikelyName && cleaned.length > 2)
-		return true;
-
-	return false;
-}
-
 function classifySection(header: string): SectionType {
 	const cleaned = normalizeHeader(header);
-
 	for (const [type, patterns] of Object.entries(SECTION_PATTERNS)) {
-		if (patterns.some((p: RegExp) => p.test(cleaned))) return type as SectionType;
+		if (patterns.some((pattern) => pattern.test(cleaned))) return type as SectionType;
 	}
-
 	return 'unknown';
 }
 
-// Detects and extracts sections from resume lines with type, header, content, and line ranges.
+function looksLikePersonName(line: string, index: number): boolean {
+	if (index > 4) return false;
+	const cleaned = normalizeHeader(line);
+	const words = cleaned.split(/\s+/).filter(Boolean);
+	if (words.length < 2 || words.length > 6) return false;
+	if (/\d|@|linkedin|github|developer|desenvolvedor|engineer/i.test(cleaned)) return false;
+	return words.every((word) => /^\p{L}[\p{L}'-]*$/u.test(word));
+}
+
+function isSectionHeader(lines: string[], index: number): boolean {
+	const line = lines[index] ?? '';
+	const trimmed = line.trim();
+	if (!trimmed || trimmed.length > 100) return false;
+	const cleaned = normalizeHeader(trimmed);
+	if (!cleaned) return false;
+	if (classifySection(cleaned) !== 'unknown') return true;
+	if (looksLikePersonName(trimmed, index)) return false;
+	if (index < 3) return false;
+	const previousBlank = index === 0 || !lines[index - 1]?.trim();
+	const nextHasContent = Boolean(lines[index + 1]?.trim());
+	const short = cleaned.split(/\s+/).length <= 5;
+	const allCaps = cleaned === cleaned.toUpperCase() && /\p{L}/u.test(cleaned);
+	const colonHeading = trimmed.endsWith(':');
+	return previousBlank && nextHasContent && short && (allCaps || colonHeading);
+}
+
 export function detectSections(lines: string[]): ResumeSection[] {
 	const sections: ResumeSection[] = [];
-	const headerIndices: { index: number; header: string; type: SectionType }[] = [];
-
-	for (let i = 0; i < lines.length; i++) {
-		const prevLine = i > 0 ? lines[i - 1] : null;
-		const nextLine = i < lines.length - 1 ? lines[i + 1] : null;
-
-		if (isSectionHeader(lines[i], prevLine, nextLine)) {
-			const type = classifySection(lines[i]);
-			headerIndices.push({ index: i, header: lines[i].trim(), type });
-		}
+	const headers: Array<{ index: number; header: string; type: SectionType }> = [];
+	for (let index = 0; index < lines.length; index++) {
+		if (!isSectionHeader(lines, index)) continue;
+		headers.push({ index, header: lines[index].trim(), type: classifySection(lines[index]) });
 	}
-
-	if (headerIndices.length === 0) {
-		return [
-			{
-				type: 'unknown',
-				header: '',
-				content: lines.join('\n'),
-				startLine: 0,
-				endLine: lines.length - 1
-			}
-		];
+	if (headers.length === 0) {
+		return [{ type: 'unknown', header: '', content: lines.join('\n'), startLine: 0, endLine: Math.max(0, lines.length - 1) }];
 	}
-
-	// Content before the first header is normally the contact block.
-	if (headerIndices[0].index > 0) {
-		const contactContent = lines.slice(0, headerIndices[0].index).join('\n').trim();
-		if (contactContent.length > 0) {
-			sections.push({
-				type: 'contact',
-				header: '',
-				content: contactContent,
-				startLine: 0,
-				endLine: headerIndices[0].index - 1
-			});
-		}
+	if (headers[0].index > 0) {
+		const content = lines.slice(0, headers[0].index).join('\n').trim();
+		if (content) sections.push({ type: 'contact', header: '', content, startLine: 0, endLine: headers[0].index - 1 });
 	}
-
-	for (let i = 0; i < headerIndices.length; i++) {
-		const current = headerIndices[i];
-		const nextIndex = i < headerIndices.length - 1 ? headerIndices[i + 1].index : lines.length;
-		const contentLines = lines.slice(current.index + 1, nextIndex);
-		const content = contentLines.join('\n').trim();
-
+	for (let i = 0; i < headers.length; i++) {
+		const current = headers[i];
+		const end = i + 1 < headers.length ? headers[i + 1].index : lines.length;
 		sections.push({
 			type: current.type,
 			header: current.header,
-			content,
+			content: lines.slice(current.index + 1, end).join('\n').trim(),
 			startLine: current.index,
-			endLine: nextIndex - 1
+			endLine: end - 1
 		});
 	}
-
-	return sections;
+	const merged: ResumeSection[] = [];
+	for (const section of sections.filter((section) => section.content || section.type === 'contact')) {
+		const previous = merged[merged.length - 1];
+		if (previous && previous.type === section.type && section.type !== 'unknown') {
+			previous.content = [previous.content, section.content].filter(Boolean).join('\n');
+			previous.endLine = section.endLine;
+			continue;
+		}
+		merged.push(section);
+	}
+	return merged;
 }

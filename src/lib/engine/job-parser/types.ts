@@ -3,9 +3,11 @@ export interface ParsedJobDescription {
 	extractedSkills: string[];
 	requiredSkills: string[];
 	preferredSkills: string[];
-	experienceLevel: string;
+	experienceLevel: 'entry' | 'mid' | 'senior' | 'lead' | 'executive';
+	minimumExperienceYears: number | null;
 	educationRequirement: string;
 	industryContext: string;
 	roleType: string;
 	keyPhrases: string[];
+	language: 'pt-BR' | 'en';
 }

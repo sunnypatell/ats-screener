@@ -1,33 +1,32 @@
 <script lang="ts">
-	import { scoresStore, type ScanHistoryEntry } from '$stores/scores.svelte';
 	import { scrollBehavior } from '$lib/a11y';
+	import { localeStore } from '$stores/locale.svelte';
+	import { scoresStore, type ScanHistoryEntry } from '$stores/scores.svelte';
 
 	let expanded = $state(false);
-
 	const history = $derived(scoresStore.history);
 	const hasHistory = $derived(history.length > 0);
 
-	// per-row average-score delta vs the chronologically prior scan;
-	// history is newest-first so history[i+1] is the previous one
 	function deltaFor(index: number): number | null {
-		const prior = history[index + 1];
-		if (!prior) return null;
-		return history[index].averageScore - prior.averageScore;
+		const previous = history[index + 1];
+		return previous ? history[index].averageScore - previous.averageScore : null;
 	}
 
 	function formatDate(iso: string): string {
-		const d = new Date(iso);
-		const now = new Date();
-		const diff = now.getTime() - d.getTime();
-		const mins = Math.floor(diff / 60_000);
-		const hours = Math.floor(diff / 3_600_000);
-		const days = Math.floor(diff / 86_400_000);
-
-		if (mins < 1) return 'just now';
-		if (mins < 60) return `${mins}m ago`;
-		if (hours < 24) return `${hours}h ago`;
-		if (days < 7) return `${days}d ago`;
-		return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+		const date = new Date(iso);
+		const difference = Date.now() - date.getTime();
+		const minutes = Math.floor(difference / 60_000);
+		const hours = Math.floor(difference / 3_600_000);
+		const days = Math.floor(difference / 86_400_000);
+		const pt = localeStore.locale === 'pt-BR';
+		if (minutes < 1) return pt ? 'agora' : 'just now';
+		if (minutes < 60) return pt ? `há ${minutes} min` : `${minutes}m ago`;
+		if (hours < 24) return pt ? `há ${hours} h` : `${hours}h ago`;
+		if (days < 7) return pt ? `há ${days} d` : `${days}d ago`;
+		return date.toLocaleDateString(pt ? 'pt-BR' : 'en-US', {
+			day: '2-digit',
+			month: 'short'
+		});
 	}
 
 	function scoreColor(score: number): string {
@@ -36,350 +35,177 @@
 		return '#ef4444';
 	}
 
-	function handleLoadEntry(entry: ScanHistoryEntry) {
+	function load(entry: ScanHistoryEntry) {
 		scoresStore.loadFromHistory(entry);
-		// wait for the results section to render, then scroll to it.
-		// scrollBehavior() reads the user's prefers-reduced-motion setting,
-		// so users who asked for reduced motion get an instant jump rather
-		// than a smooth scroll their OS told us not to perform.
 		requestAnimationFrame(() => {
 			document
-				.querySelector('.results-section')
+				.querySelector('.results')
 				?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
 		});
-	}
-
-	function handleClear() {
-		scoresStore.clearHistory();
 	}
 </script>
 
 {#if hasHistory}
-	<div class="history-section">
-		<button class="history-toggle" onclick={() => (expanded = !expanded)} aria-expanded={expanded}>
-			<div class="toggle-left">
-				<svg
-					width="14"
-					height="14"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-				>
-					<circle cx="12" cy="12" r="10" />
-					<polyline points="12,6 12,12 16,14" />
-				</svg>
-				<span>Scan History</span>
-				<span class="history-count">{history.length}</span>
-			</div>
-			<svg
-				class="chevron"
-				class:open={expanded}
-				width="14"
-				height="14"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-			>
-				<polyline points="6,9 12,15 18,9" />
-			</svg>
+	<section class="history">
+		<button class="toggle" type="button" onclick={() => (expanded = !expanded)} aria-expanded={expanded}>
+			<span>◷ {localeStore.locale === 'pt-BR' ? 'Histórico de análises' : 'Scan history'}</span>
+			<small>{history.length}</small>
+			<b aria-hidden="true">{expanded ? '⌃' : '⌄'}</b>
 		</button>
 
 		{#if expanded}
-			<div class="history-list">
-				{#each history as entry, i (entry.id)}
-					{@const delta = deltaFor(i)}
-					<button
-						class="history-entry"
-						onclick={() => handleLoadEntry(entry)}
-						title="Click to view these results"
-					>
-						<div class="entry-score-block">
-							<div class="entry-score" style="color: {scoreColor(entry.averageScore)}">
-								{entry.averageScore}
-							</div>
+			<div class="list">
+				{#each history as entry, index (entry.id)}
+					{@const delta = deltaFor(index)}
+					<button class="entry" type="button" onclick={() => load(entry)}>
+						<div class="score" style:color={scoreColor(entry.averageScore)}>
+							<strong>{entry.averageScore}</strong>
 							{#if delta !== null && delta !== 0}
-								<span
-									class="entry-delta"
-									class:positive={delta > 0}
-									class:negative={delta < 0}
-									title="{delta > 0 ? '+' : ''}{delta} vs previous scan"
-								>
+								<small class:positive={delta > 0} class:negative={delta < 0}>
 									{delta > 0 ? '+' : ''}{delta}
-								</span>
+								</small>
 							{/if}
 						</div>
-						<div class="entry-details">
-							<div class="entry-info">
-								{#if entry.fileName}
-									<span class="entry-filename">{entry.fileName}</span>
-								{/if}
-								<div class="entry-meta">
-									<span class="entry-mode">{entry.mode}</span>
-									<span class="entry-sep">&middot;</span>
-									<span class="entry-passing">{entry.passingCount}/6 passing</span>
-								</div>
-							</div>
-							<span class="entry-time">{formatDate(entry.timestamp)}</span>
+						<div class="details">
+							<strong>{entry.fileName || (localeStore.locale === 'pt-BR' ? 'Texto colado' : 'Pasted text')}</strong>
+							<span>
+								{entry.mode === 'targeted'
+									? localeStore.locale === 'pt-BR' ? 'vaga direcionada' : 'targeted'
+									: localeStore.locale === 'pt-BR' ? 'geral' : 'general'}
+								· {entry.passingCount}/{entry.results.length}
+							</span>
 						</div>
-						<svg
-							class="entry-arrow"
-							width="14"
-							height="14"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-						>
-							<polyline points="9,18 15,12 9,6" />
-						</svg>
+						<time>{formatDate(entry.timestamp)}</time>
 					</button>
 				{/each}
-
-				<button class="clear-btn" onclick={handleClear}>
-					<svg
-						width="12"
-						height="12"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-					>
-						<polyline points="3,6 5,6 21,6" />
-						<path
-							d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-						/>
-					</svg>
-					Clear History
+				<button class="clear" type="button" onclick={() => scoresStore.clearHistory()}>
+					{localeStore.locale === 'pt-BR' ? 'Limpar histórico' : 'Clear history'}
 				</button>
 			</div>
 		{/if}
-	</div>
+	</section>
 {/if}
 
 <style>
-	.history-section {
-		margin-top: 1.5rem;
+	.history {
+		margin-top: 1rem;
 		border: 1px solid var(--glass-border);
-		border-radius: var(--radius-md);
+		border-radius: var(--radius-lg);
 		background: var(--glass-bg);
-		backdrop-filter: blur(var(--glass-blur));
 		overflow: hidden;
-		animation: fadeIn 0.3s ease;
 	}
 
-	@keyframes fadeIn {
-		from {
-			opacity: 0;
-			transform: translateY(8px);
-		}
-	}
-
-	.history-toggle {
+	.toggle,
+	.entry,
+	.clear {
 		width: 100%;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 0.75rem 1rem;
-		background: none;
-		border: none;
-		cursor: pointer;
+		border: 0;
+		background: transparent;
 		color: var(--text-secondary);
-		font-size: 0.8rem;
-		font-weight: 600;
-		transition: color 0.2s ease;
+		cursor: pointer;
+		font: inherit;
 	}
 
-	.history-toggle:hover {
-		color: var(--text-primary);
-	}
-
-	.toggle-left {
-		display: flex;
+	.toggle {
+		display: grid;
+		grid-template-columns: 1fr auto auto;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.6rem;
+		padding: 0.8rem 1rem;
+		text-align: left;
 	}
 
-	.toggle-left svg {
-		color: var(--accent-cyan);
-		opacity: 0.7;
-	}
-
-	.history-count {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		min-width: 18px;
-		height: 18px;
-		padding: 0 5px;
-		border-radius: var(--radius-full);
+	.toggle small {
+		display: grid;
+		place-items: center;
+		min-width: 22px;
+		height: 22px;
+		border-radius: 999px;
 		background: rgba(6, 182, 212, 0.1);
 		color: var(--accent-cyan);
-		font-size: 0.65rem;
-		font-weight: 700;
 	}
 
-	.chevron {
-		transition: transform 0.2s ease;
-	}
-
-	.chevron.open {
-		transform: rotate(180deg);
-	}
-
-	.history-list {
+	.list {
+		display: grid;
+		gap: 0.35rem;
+		padding: 0.55rem;
 		border-top: 1px solid var(--glass-border);
-		padding: 0.5rem;
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-		animation: slideDown 0.2s ease;
 	}
 
-	@keyframes slideDown {
-		from {
-			opacity: 0;
-			transform: translateY(-4px);
-		}
-	}
-
-	.history-entry {
-		display: flex;
+	.entry {
+		display: grid;
+		grid-template-columns: 52px 1fr auto;
 		align-items: center;
 		gap: 0.75rem;
-		padding: 0.6rem 0.75rem;
-		border-radius: var(--radius-sm);
-		transition: background 0.15s ease;
-		width: 100%;
-		background: none;
-		border: none;
-		cursor: pointer;
+		padding: 0.7rem;
+		border-radius: var(--radius-md);
 		text-align: left;
-		font-family: inherit;
 	}
 
-	.history-entry:hover {
+	.entry:hover {
 		background: rgba(6, 182, 212, 0.04);
 	}
 
-	.entry-score-block {
+	.score {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 0.15rem;
-		min-width: 2.5rem;
 	}
 
-	.entry-score {
+	.score strong {
 		font-size: 1.1rem;
-		font-weight: 800;
-		font-variant-numeric: tabular-nums;
-		text-align: center;
-		line-height: 1;
 	}
 
-	.entry-delta {
-		font-size: 0.62rem;
-		font-weight: 700;
-		font-variant-numeric: tabular-nums;
-		padding: 0.05rem 0.32rem;
-		border-radius: var(--radius-full);
-		line-height: 1.4;
+	.score small {
+		font-size: 0.65rem;
 	}
 
-	.entry-delta.positive {
+	.score small.positive {
 		color: #22c55e;
-		background: rgba(34, 197, 94, 0.12);
 	}
 
-	.entry-delta.negative {
+	.score small.negative {
 		color: #ef4444;
-		background: rgba(239, 68, 68, 0.12);
 	}
 
-	.entry-details {
-		flex: 1;
+	.details {
 		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 0.5rem;
 		min-width: 0;
-	}
-
-	.entry-info {
-		display: flex;
 		flex-direction: column;
-		gap: 0.15rem;
-		min-width: 0;
+		gap: 0.2rem;
 	}
 
-	.entry-filename {
-		font-size: 0.78rem;
-		font-weight: 500;
-		color: var(--text-secondary);
-		white-space: nowrap;
+	.details strong {
 		overflow: hidden;
 		text-overflow: ellipsis;
-		max-width: 180px;
-	}
-
-	.entry-meta {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
-		font-size: 0.72rem;
-		color: var(--text-tertiary);
-	}
-
-	.entry-mode {
-		text-transform: capitalize;
+		white-space: nowrap;
 		color: var(--text-secondary);
-		font-weight: 500;
+		font-size: 0.78rem;
 	}
 
-	.entry-sep {
-		opacity: 0.4;
-	}
-
-	.entry-time {
-		font-size: 0.7rem;
+	.details span,
+	time {
 		color: var(--text-tertiary);
+		font-size: 0.7rem;
+	}
+
+	time {
 		white-space: nowrap;
 	}
 
-	.entry-arrow {
-		color: var(--text-tertiary);
-		opacity: 0;
-		transition: opacity 0.15s ease;
-		flex-shrink: 0;
-	}
-
-	.history-entry:hover .entry-arrow {
-		opacity: 0.6;
-	}
-
-	.clear-btn {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 0.4rem;
-		padding: 0.5rem;
-		margin-top: 0.25rem;
-		background: none;
-		border: 1px solid transparent;
-		border-radius: var(--radius-sm);
-		color: var(--text-tertiary);
-		font-size: 0.7rem;
-		font-weight: 500;
-		cursor: pointer;
-		transition:
-			color 0.2s ease,
-			border-color 0.2s ease;
-	}
-
-	.clear-btn:hover {
+	.clear {
+		padding: 0.6rem;
 		color: #ef4444;
-		border-color: rgba(239, 68, 68, 0.2);
+		font-size: 0.72rem;
+	}
+
+	@media (max-width: 520px) {
+		.entry {
+			grid-template-columns: 46px 1fr;
+		}
+
+		time {
+			display: none;
+		}
 	}
 </style>

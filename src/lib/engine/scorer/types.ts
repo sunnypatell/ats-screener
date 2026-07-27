@@ -1,20 +1,7 @@
 export interface ScoreBreakdown {
-	formatting: {
-		score: number;
-		issues: string[];
-		details: string[];
-	};
-	keywordMatch: {
-		score: number;
-		matched: string[];
-		missing: string[];
-		synonymMatched: string[];
-	};
-	sections: {
-		score: number;
-		present: string[];
-		missing: string[];
-	};
+	formatting: { score: number; issues: string[]; details: string[] };
+	keywordMatch: { score: number; matched: string[]; missing: string[]; synonymMatched: string[] };
+	sections: { score: number; present: string[]; missing: string[] };
 	experience: {
 		score: number;
 		quantifiedBullets: number;
@@ -22,10 +9,7 @@ export interface ScoreBreakdown {
 		actionVerbCount: number;
 		highlights: string[];
 	};
-	education: {
-		score: number;
-		notes: string[];
-	};
+	education: { score: number; notes: string[] };
 }
 
 export interface StructuredSuggestion {
@@ -46,18 +30,38 @@ export interface ScoreResult {
 	suggestions: Suggestion[];
 }
 
+export interface ScoringExperienceEntry {
+	title: string;
+	company: string;
+	start: string | null;
+	end: string | null;
+	isCurrent: boolean;
+	text: string;
+}
+
+export interface ScoringEducationEntry {
+	degree: string;
+	field: string;
+	institution: string;
+	text: string;
+}
+
 export interface ScoringInput {
 	resumeText: string;
 	resumeSkills: string[];
 	resumeSections: string[];
 	experienceBullets: string[];
 	educationText: string;
+	experienceEntries?: ScoringExperienceEntry[];
+	educationEntries?: ScoringEducationEntry[];
 	hasMultipleColumns: boolean;
 	hasTables: boolean;
 	hasImages: boolean;
 	pageCount: number;
 	wordCount: number;
 	jobDescription?: string;
+	locale?: 'pt-BR' | 'en';
+	extractionQuality?: number;
 }
 
 export interface ATSQuirk {

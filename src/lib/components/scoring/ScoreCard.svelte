@@ -1,67 +1,56 @@
 <script lang="ts">
+	import { getScoreColor } from '$engine/scorer/classification';
 	import type { ScoreResult } from '$engine/scorer/types';
-	import { getScoreColor, getScoreLabel } from '$engine/scorer/classification';
+	import { localeStore } from '$stores/locale.svelte';
 
 	let { result, previousScore }: { result: ScoreResult; previousScore?: number } = $props();
-
-	// only show the delta pill when there's a meaningful, signed change vs the
-	// previous scan; identical scores stay quiet to avoid visual noise
-	const delta = $derived(previousScore !== undefined ? result.overallScore - previousScore : null);
-	const showDelta = $derived(delta !== null && delta !== 0);
-
-	// mouse position in px for the spotlight hover effect
-	let mouseX = $state(0);
-	let mouseY = $state(0);
-
-	function handleMouseMove(e: MouseEvent) {
-		const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-		mouseX = e.clientX - rect.left;
-		mouseY = e.clientY - rect.top;
-	}
-
+	const delta = $derived(previousScore === undefined ? null : result.overallScore - previousScore);
 	const scoreColor = $derived(getScoreColor(result.overallScore));
-	// svg circle math: circumference and dash offset for the ring progress
 	const circumference = 2 * Math.PI * 42;
 	const offset = $derived(circumference - (result.overallScore / 100) * circumference);
 
-	// breakdown categories with proper display labels
-	const breakdownItems = $derived([
-		{ key: 'formatting', label: 'Formatting', score: result.breakdown.formatting.score },
-		{ key: 'keywords', label: 'Keywords', score: result.breakdown.keywordMatch.score },
-		{ key: 'sections', label: 'Sections', score: result.breakdown.sections.score },
-		{ key: 'experience', label: 'Experience', score: result.breakdown.experience.score },
-		{ key: 'education', label: 'Education', score: result.breakdown.education.score }
+	const breakdown = $derived([
+		{
+			label: localeStore.locale === 'pt-BR' ? 'Formatação' : 'Formatting',
+			score: result.breakdown.formatting.score
+		},
+		{
+			label: localeStore.locale === 'pt-BR' ? 'Palavras-chave' : 'Keywords',
+			score: result.breakdown.keywordMatch.score,
+			hide: result.breakdown.keywordMatch.matched.length === 0 && result.breakdown.keywordMatch.missing.length === 0
+		},
+		{
+			label: localeStore.locale === 'pt-BR' ? 'Seções' : 'Sections',
+			score: result.breakdown.sections.score
+		},
+		{
+			label: localeStore.locale === 'pt-BR' ? 'Experiência' : 'Experience',
+			score: result.breakdown.experience.score
+		},
+		{
+			label: localeStore.locale === 'pt-BR' ? 'Formação' : 'Education',
+			score: result.breakdown.education.score
+		}
 	]);
+
+	function verdict(score: number): string {
+		const pt = localeStore.locale === 'pt-BR';
+		if (score >= 80) return pt ? 'Excelente' : 'Excellent';
+		if (score >= 65) return pt ? 'Bom' : 'Good';
+		if (score >= 50) return pt ? 'Precisa melhorar' : 'Needs work';
+		return pt ? 'Fraco' : 'Poor';
+	}
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div
-	class="score-card"
-	class:passing={result.passesFilter}
-	class:failing={!result.passesFilter}
-	onmousemove={handleMouseMove}
-	style="--spotlight-x: {mouseX}px; --spotlight-y: {mouseY}px; --score-color: {scoreColor};"
->
-	<div class="card-spotlight"></div>
-
-	<!-- header: system name + score ring -->
-	<div class="card-header">
-		<div class="system-info">
-			<h3 class="system-name">{result.system}</h3>
-			<p class="system-vendor">{result.vendor}</p>
+<article class="card" class:passing={result.passesFilter} style:--score-color={scoreColor}>
+	<header>
+		<div>
+			<h3>{result.system}</h3>
+			<p>{result.vendor}</p>
 		</div>
-		<div class="score-ring">
-			<svg viewBox="0 0 100 100" width="76" height="76">
-				<!-- background track -->
-				<circle
-					cx="50"
-					cy="50"
-					r="42"
-					fill="none"
-					stroke="rgba(255,255,255,0.05)"
-					stroke-width="6"
-				/>
-				<!-- colored progress arc -->
+		<div class="ring">
+			<svg viewBox="0 0 100 100" width="72" height="72" aria-hidden="true">
+				<circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="6" />
 				<circle
 					cx="50"
 					cy="50"
@@ -73,337 +62,183 @@
 					stroke-dashoffset={offset}
 					stroke-linecap="round"
 					transform="rotate(-90 50 50)"
-					class="score-progress"
 				/>
 			</svg>
-			<span class="score-value" style="color: {scoreColor}">
-				{result.overallScore}
-			</span>
-			{#if showDelta && delta !== null}
-				<span
-					class="score-delta"
-					class:positive={delta > 0}
-					class:negative={delta < 0}
-					title="{delta > 0 ? '+' : ''}{delta} vs previous scan"
-				>
-					{delta > 0 ? '+' : ''}{delta}
-				</span>
+			<strong style:color={scoreColor}>{result.overallScore}</strong>
+			{#if delta !== null && delta !== 0}
+				<small class:positive={delta > 0} class:negative={delta < 0}>{delta > 0 ? '+' : ''}{delta}</small>
 			{/if}
 		</div>
+	</header>
+
+	<div class="status">
+		<span class:pass={result.passesFilter} class:fail={!result.passesFilter}>
+			{result.passesFilter
+				? localeStore.locale === 'pt-BR' ? '✓ Provável aprovação' : '✓ Likely to pass'
+				: localeStore.locale === 'pt-BR' ? '× Pode ser filtrado' : '× May be filtered'}
+		</span>
+		<b style:color={scoreColor}>{verdict(result.overallScore)}</b>
 	</div>
 
-	<!-- pass/fail status badge -->
-	<div class="card-status">
-		{#if result.passesFilter}
-			<span class="status-badge pass">
-				<svg
-					width="12"
-					height="12"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="3"
-				>
-					<polyline points="20,6 9,17 4,12" />
-				</svg>
-				Likely to Pass
-			</span>
-		{:else}
-			<span class="status-badge fail">
-				<svg
-					width="12"
-					height="12"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="3"
-				>
-					<line x1="18" y1="6" x2="6" y2="18" />
-					<line x1="6" y1="6" x2="18" y2="18" />
-				</svg>
-				May Be Filtered
-			</span>
-		{/if}
-		<span class="score-label" style="color: {scoreColor}">{getScoreLabel(result.overallScore)}</span
-		>
-	</div>
-
-	<!-- category breakdown bars -->
-	<div class="card-breakdown">
-		{#each breakdownItems as item}
-			<div class="breakdown-item">
-				<span class="breakdown-label">{item.label}</span>
-				<div class="breakdown-bar">
-					<div
-						class="breakdown-fill"
-						style="width: {item.score}%; background: {getScoreColor(item.score)}"
-					></div>
-				</div>
-				<span class="breakdown-value" style="color: {getScoreColor(item.score)}">{item.score}</span>
+	<div class="breakdown">
+		{#each breakdown.filter((item) => !item.hide) as item}
+			<div>
+				<span>{item.label}</span>
+				<i><b style:width={`${item.score}%`} style:background={getScoreColor(item.score)}></b></i>
+				<strong style:color={getScoreColor(item.score)}>{item.score}</strong>
 			</div>
 		{/each}
 	</div>
 
-	<!-- keyword stats if available -->
 	{#if result.breakdown.keywordMatch.matched.length > 0 || result.breakdown.keywordMatch.missing.length > 0}
-		<div class="keyword-summary">
-			<div class="keyword-stat matched">
-				<span class="keyword-count">{result.breakdown.keywordMatch.matched.length}</span>
-				<span class="keyword-label">Matched</span>
-			</div>
-			<div class="keyword-stat missing">
-				<span class="keyword-count">{result.breakdown.keywordMatch.missing.length}</span>
-				<span class="keyword-label">Missing</span>
-			</div>
-		</div>
+		<footer>
+			<span class="matched">{result.breakdown.keywordMatch.matched.length} {localeStore.locale === 'pt-BR' ? 'encontradas' : 'matched'}</span>
+			<span class="missing">{result.breakdown.keywordMatch.missing.length} {localeStore.locale === 'pt-BR' ? 'ausentes' : 'missing'}</span>
+		</footer>
 	{/if}
-</div>
+</article>
 
 <style>
-	.score-card {
-		position: relative;
-		padding: 1.75rem;
-		background: var(--glass-bg);
+	.card {
+		padding: 1.35rem;
 		border: 1px solid var(--glass-border);
 		border-radius: var(--radius-xl);
-		backdrop-filter: blur(var(--glass-blur));
-		overflow: hidden;
-		transition:
-			border-color 0.3s ease,
-			transform 0.25s ease,
-			box-shadow 0.3s ease;
+		background: var(--glass-bg);
+		transition: transform 0.2s ease, border-color 0.2s ease;
 	}
 
-	.score-card:hover {
-		transform: translateY(-3px);
-		box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25);
+	.card:hover {
+		transform: translateY(-2px);
+		border-color: color-mix(in srgb, var(--score-color) 35%, transparent);
 	}
 
-	.score-card.passing:hover {
-		border-color: rgba(34, 197, 94, 0.3);
-	}
-
-	.score-card.failing:hover {
-		border-color: rgba(239, 68, 68, 0.3);
-	}
-
-	.card-spotlight {
-		position: absolute;
-		inset: 0;
-		background: radial-gradient(
-			280px circle at var(--spotlight-x) var(--spotlight-y),
-			rgba(6, 182, 212, 0.06),
-			transparent 60%
-		);
-		pointer-events: none;
-		opacity: 0;
-		transition: opacity 0.3s ease;
-	}
-
-	.score-card:hover .card-spotlight {
-		opacity: 1;
-	}
-
-	.card-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-start;
-		margin-bottom: 1.25rem;
-		position: relative;
-		z-index: 1;
-	}
-
-	.system-info {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-	}
-
-	.system-name {
-		font-size: 1.2rem;
-		font-weight: 700;
-		color: var(--text-primary);
-		letter-spacing: -0.01em;
-	}
-
-	.system-vendor {
-		font-size: 0.78rem;
-		color: var(--text-tertiary);
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-	}
-
-	.score-ring {
-		position: relative;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.score-value {
-		position: absolute;
-		font-size: 1.35rem;
-		font-weight: 800;
-		font-variant-numeric: tabular-nums;
-	}
-
-	.score-progress {
-		transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1);
-	}
-
-	.score-delta {
-		position: absolute;
-		bottom: -10px;
-		right: -8px;
-		padding: 0.08rem 0.42rem;
-		font-size: 0.62rem;
-		font-weight: 700;
-		font-variant-numeric: tabular-nums;
-		border-radius: var(--radius-full);
-		line-height: 1.4;
-		white-space: nowrap;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-	}
-
-	.score-delta.positive {
-		color: #22c55e;
-		background: rgba(34, 197, 94, 0.18);
-		border: 1px solid rgba(34, 197, 94, 0.32);
-	}
-
-	.score-delta.negative {
-		color: #ef4444;
-		background: rgba(239, 68, 68, 0.18);
-		border: 1px solid rgba(239, 68, 68, 0.32);
-	}
-
-	.card-status {
+	header,
+	.status,
+	footer {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		margin-bottom: 1.25rem;
-		position: relative;
-		z-index: 1;
-	}
-
-	.status-badge {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.35rem;
-		padding: 0.3rem 0.75rem;
-		border-radius: 999px;
-		font-size: 0.72rem;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-	}
-
-	.status-badge.pass {
-		background: rgba(34, 197, 94, 0.1);
-		color: #22c55e;
-		border: 1px solid rgba(34, 197, 94, 0.2);
-	}
-
-	.status-badge.fail {
-		background: rgba(239, 68, 68, 0.1);
-		color: #ef4444;
-		border: 1px solid rgba(239, 68, 68, 0.2);
-	}
-
-	.score-label {
-		font-size: 0.72rem;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-	}
-
-	.card-breakdown {
-		display: flex;
-		flex-direction: column;
-		gap: 0.6rem;
-		position: relative;
-		z-index: 1;
-	}
-
-	.breakdown-item {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-	}
-
-	.breakdown-label {
-		font-size: 0.78rem;
-		color: var(--text-tertiary);
-		width: 85px;
-		flex-shrink: 0;
-		font-weight: 500;
-	}
-
-	.breakdown-bar {
-		flex: 1;
-		height: 5px;
-		background: rgba(255, 255, 255, 0.05);
-		border-radius: 3px;
-		overflow: hidden;
-	}
-
-	.breakdown-fill {
-		height: 100%;
-		border-radius: 3px;
-		transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
-	}
-
-	.breakdown-value {
-		font-size: 0.78rem;
-		font-weight: 600;
-		width: 28px;
-		text-align: right;
-		flex-shrink: 0;
-		font-variant-numeric: tabular-nums;
-	}
-
-	.keyword-summary {
-		display: flex;
 		gap: 1rem;
-		margin-top: 1.25rem;
-		padding-top: 1rem;
-		border-top: 1px solid var(--glass-border);
-		position: relative;
-		z-index: 1;
 	}
 
-	.keyword-stat {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
+	h3 {
+		color: var(--text-primary);
+		font-size: 1.05rem;
 	}
 
-	.keyword-count {
-		font-size: 1rem;
-		font-weight: 700;
-		font-variant-numeric: tabular-nums;
-	}
-
-	.keyword-label {
-		font-size: 0.72rem;
+	header p {
+		margin-top: 0.2rem;
+		color: var(--text-tertiary);
+		font-size: 0.7rem;
 		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		font-weight: 500;
 	}
 
-	.keyword-stat.matched .keyword-count {
+	.ring {
+		position: relative;
+		display: grid;
+		place-items: center;
+		flex: 0 0 auto;
+	}
+
+	.ring svg,
+	.ring > strong,
+	.ring > small {
+		grid-area: 1 / 1;
+	}
+
+	.ring > strong {
+		font-size: 1.25rem;
+	}
+
+	.ring > small {
+		align-self: end;
+		justify-self: end;
+		padding: 0.12rem 0.3rem;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.08);
+		font-size: 0.62rem;
+	}
+
+	.ring > small.positive {
 		color: #22c55e;
 	}
 
-	.keyword-stat.matched .keyword-label {
-		color: var(--accent-green);
-	}
-
-	.keyword-stat.missing .keyword-count {
+	.ring > small.negative {
 		color: #ef4444;
 	}
 
-	.keyword-stat.missing .keyword-label {
+	.status {
+		margin: 0.75rem 0 1rem;
+	}
+
+	.status span,
+	.status b {
+		font-size: 0.7rem;
+		text-transform: uppercase;
+	}
+
+	.status span {
+		padding: 0.3rem 0.55rem;
+		border-radius: 999px;
+	}
+
+	.status span.pass {
+		background: rgba(34, 197, 94, 0.08);
+		color: #22c55e;
+	}
+
+	.status span.fail {
+		background: rgba(239, 68, 68, 0.08);
+		color: #ef4444;
+	}
+
+	.breakdown {
+		display: grid;
+		gap: 0.55rem;
+	}
+
+	.breakdown > div {
+		display: grid;
+		grid-template-columns: 92px 1fr 30px;
+		align-items: center;
+		gap: 0.55rem;
+	}
+
+	.breakdown span,
+	.breakdown strong {
+		font-size: 0.7rem;
+	}
+
+	.breakdown span {
+		color: var(--text-tertiary);
+	}
+
+	.breakdown i {
+		display: block;
+		height: 5px;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.055);
+		overflow: hidden;
+	}
+
+	.breakdown i b {
+		display: block;
+		height: 100%;
+		border-radius: inherit;
+	}
+
+	footer {
+		margin-top: 1rem;
+		padding-top: 0.75rem;
+		border-top: 1px solid var(--glass-border);
+		font-size: 0.7rem;
+	}
+
+	footer .matched {
+		color: #22c55e;
+	}
+
+	footer .missing {
 		color: #ef4444;
 	}
 </style>

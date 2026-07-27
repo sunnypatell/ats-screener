@@ -1,154 +1,104 @@
 import type { DateRange } from './types';
 
-const MONTH_NAMES = [
-	'january',
-	'february',
-	'march',
-	'april',
-	'may',
-	'june',
-	'july',
-	'august',
-	'september',
-	'october',
-	'november',
-	'december'
+const MONTHS: Array<{ month: string; aliases: string[] }> = [
+	{ month: '01', aliases: ['january', 'jan', 'janeiro'] },
+	{ month: '02', aliases: ['february', 'feb', 'fevereiro', 'fev'] },
+	{ month: '03', aliases: ['march', 'março', 'marco', 'mar'] },
+	{ month: '04', aliases: ['april', 'apr', 'abril', 'abr'] },
+	{ month: '05', aliases: ['may', 'maio', 'mai'] },
+	{ month: '06', aliases: ['june', 'junho', 'jun'] },
+	{ month: '07', aliases: ['july', 'julho', 'jul'] },
+	{ month: '08', aliases: ['august', 'aug', 'agosto', 'ago'] },
+	{ month: '09', aliases: ['september', 'sept', 'sep', 'setembro', 'set'] },
+	{ month: '10', aliases: ['october', 'oct', 'outubro', 'out'] },
+	{ month: '11', aliases: ['november', 'nov', 'novembro'] },
+	{ month: '12', aliases: ['december', 'dec', 'dezembro', 'dez'] }
 ];
 
-const MONTH_ABBREVS = [
-	'jan',
-	'feb',
-	'mar',
-	'apr',
-	'may',
-	'jun',
-	'jul',
-	'aug',
-	'sep',
-	'oct',
-	'nov',
-	'dec'
-];
+const MONTH_TOKEN = MONTHS.flatMap((entry) => entry.aliases)
+	.sort((a, b) => b.length - a.length)
+	.join('|');
+const CURRENT_TOKEN = 'present|current|now|ongoing|today|presente|atual|hoje|em\\s+andamento';
+const SEPARATOR = '(?:-|–|—|~|\\bto\\b|\\ba\\b|\\bat[eé]\\b)';
+const CURRENT_INDICATORS = new RegExp(`\\b(?:${CURRENT_TOKEN})\\b`, 'i');
 
-const CURRENT_INDICATORS = /\b(present|current|now|ongoing|today)\b/i;
-
-// "Jan 2023 - Present", "January 2023 - December 2024", "01/2023 - 12/2024"
 const DATE_RANGE_PATTERNS = [
-	// Month Year - Month Year (or Present)
-	/(?:(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*\.?\s*\d{4})\s*[-–—~to]+\s*(?:(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*\.?\s*\d{4}|present|current|now|ongoing|today)/gi,
-
-	// MM/YYYY - MM/YYYY (or Present)
-	/\d{1,2}\/\d{4}\s*[-–—~to]+\s*(?:\d{1,2}\/\d{4}|present|current|now|ongoing|today)/gi,
-
-	// Year - Year (or Present)
-	/\b(20\d{2}|19\d{2})\s*[-–—~to]+\s*(?:(20\d{2}|19\d{2})|present|current|now|ongoing|today)\b/gi,
-
-	// Season Year - Season Year
-	/(?:spring|summer|fall|autumn|winter)\s*\d{4}\s*[-–—~to]+\s*(?:(?:spring|summer|fall|autumn|winter)\s*\d{4}|present|current|now)/gi,
-
-	// standalone "Month Year" (single date)
-	/(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*\.?\s*\d{4}/gi
+	new RegExp(
+		`(?:${MONTH_TOKEN})\\.?\\s*\\/?\\s*\\d{4}\\s*${SEPARATOR}\\s*(?:(?:${MONTH_TOKEN})\\.?\\s*\\/?\\s*\\d{4}|${CURRENT_TOKEN})`,
+		'giu'
+	),
+	new RegExp(`\\d{1,2}\\/\\d{4}\\s*${SEPARATOR}\\s*(?:\\d{1,2}\\/\\d{4}|${CURRENT_TOKEN})`, 'giu'),
+	new RegExp(`\\b(?:19|20)\\d{2}\\s*${SEPARATOR}\\s*(?:(?:19|20)\\d{2}|${CURRENT_TOKEN})\\b`, 'giu'),
+	/(?:spring|summer|fall|autumn|winter)\s*\d{4}\s*(?:-|–|—|~|to)\s*(?:(?:spring|summer|fall|autumn|winter)\s*\d{4}|present|current|now)/giu,
+	new RegExp(`(?:${MONTH_TOKEN})\\.?\\s*\\/?\\s*\\d{4}`, 'giu'),
+	/\b(?:19|20)\d{2}\b/gu
 ];
 
-// extracts all date ranges from text, prioritizing ranges over standalone dates
 export function extractDateRanges(text: string): DateRange[] {
 	const ranges: DateRange[] = [];
-	// track which character positions have already been matched
 	const matchedSpans: Array<[number, number]> = [];
-
 	for (const pattern of DATE_RANGE_PATTERNS) {
-		const matches = text.matchAll(new RegExp(pattern));
-
-		for (const match of matches) {
+		for (const match of text.matchAll(new RegExp(pattern.source, pattern.flags))) {
 			const raw = match[0].trim();
-			const start = match.index!;
+			const start = match.index ?? 0;
 			const end = start + match[0].length;
-
-			// skip if this overlaps with an already-matched span
-			const overlaps = matchedSpans.some(([s, e]) => start < e && end > s);
-			if (overlaps) continue;
-
+			if (matchedSpans.some(([s, e]) => start < e && end > s)) continue;
 			const range = parseDateRange(raw);
-			if (range) {
-				ranges.push(range);
-				matchedSpans.push([start, end]);
-			}
+			if (!range) continue;
+			ranges.push(range);
+			matchedSpans.push([start, end]);
 		}
 	}
-
 	return ranges;
 }
 
-// parses a date range string into a structured DateRange
 function parseDateRange(raw: string): DateRange | null {
 	const isCurrent = CURRENT_INDICATORS.test(raw);
-
-	// split on common separators
-	const parts = raw.split(/\s*[-–—~]\s*|\s+to\s+/i);
-
+	const parts = raw.split(/\s*(?:-|–|—|~)\s*|\s+to\s+|\s+at[eé]\s+|\s+a\s+/iu);
 	if (parts.length >= 2) {
 		return {
-			start: normalizeDate(parts[0].trim()),
-			end: isCurrent ? null : normalizeDate(parts[1].trim()),
+			start: normalizeDate(parts[0]),
+			end: isCurrent ? null : normalizeDate(parts[1]),
 			isCurrent
 		};
 	}
-
-	// single date
-	return {
-		start: normalizeDate(raw),
-		end: null,
-		isCurrent: false
-	};
+	const start = normalizeDate(raw);
+	return start ? { start, end: null, isCurrent: false } : null;
 }
 
-// normalizes a date string to "YYYY-MM" or "YYYY" format
-function normalizeDate(dateStr: string): string | null {
-	const cleaned = dateStr.trim().toLowerCase();
-
+function normalizeDate(value: string): string | null {
+	const cleaned = value
+		.normalize('NFKD')
+		.replace(/\p{M}/gu, '')
+		.toLowerCase()
+		.trim();
 	if (CURRENT_INDICATORS.test(cleaned)) return null;
-
-	// try MM/YYYY
-	const slashMatch = cleaned.match(/(\d{1,2})\/(\d{4})/);
-	if (slashMatch) {
-		return `${slashMatch[2]}-${slashMatch[1].padStart(2, '0')}`;
+	const slash = cleaned.match(/\b(\d{1,2})\/(\d{4})\b/);
+	if (slash) {
+		const month = Number(slash[1]);
+		if (month >= 1 && month <= 12) return `${slash[2]}-${String(month).padStart(2, '0')}`;
 	}
-
-	// try Month Year
-	for (let i = 0; i < MONTH_NAMES.length; i++) {
-		const name = MONTH_NAMES[i];
-		const abbrev = MONTH_ABBREVS[i];
-		const monthNum = String(i + 1).padStart(2, '0');
-
-		if (cleaned.includes(name) || cleaned.startsWith(abbrev)) {
-			const yearMatch = cleaned.match(/\d{4}/);
-			if (yearMatch) return `${yearMatch[0]}-${monthNum}`;
+	for (const entry of MONTHS) {
+		if (entry.aliases.some((alias) => new RegExp(`\\b${alias.normalize('NFKD').replace(/\p{M}/gu, '')}\\b`, 'i').test(cleaned))) {
+			const year = cleaned.match(/\b(?:19|20)\d{2}\b/);
+			if (year) return `${year[0]}-${entry.month}`;
 		}
 	}
-
-	// try standalone year
-	const yearMatch = cleaned.match(/^(19|20)\d{2}$/);
-	if (yearMatch) return yearMatch[0];
-
-	// try season year
-	const seasonMatch = cleaned.match(/(spring|summer|fall|autumn|winter)\s*(\d{4})/i);
-	if (seasonMatch) {
-		const seasonMonths: Record<string, string> = {
-			spring: '03',
-			summer: '06',
-			fall: '09',
-			autumn: '09',
-			winter: '12'
-		};
-		const month = seasonMonths[seasonMatch[1].toLowerCase()];
-		return `${seasonMatch[2]}-${month}`;
+	const season = cleaned.match(/\b(spring|summer|fall|autumn|winter)\s*((?:19|20)\d{2})\b/i);
+	if (season) {
+		const seasonMonths: Record<string, string> = { spring: '03', summer: '06', fall: '09', autumn: '09', winter: '12' };
+		return `${season[2]}-${seasonMonths[season[1].toLowerCase()]}`;
 	}
-
-	return null;
+	const year = cleaned.match(/^((?:19|20)\d{2})$/);
+	return year ? year[1] : null;
 }
 
-// extracts the first date range found in a line of text
 export function extractFirstDateRange(text: string): DateRange | null {
-	const ranges = extractDateRanges(text);
-	return ranges.length > 0 ? ranges[0] : null;
+	return extractDateRanges(text)[0] ?? null;
+}
+
+export function stripDateRanges(text: string): string {
+	let result = text;
+	for (const pattern of DATE_RANGE_PATTERNS.slice(0, 4)) result = result.replace(new RegExp(pattern.source, pattern.flags), ' ');
+	return result.replace(/\s+/g, ' ').trim();
 }

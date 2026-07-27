@@ -1,3 +1,4 @@
+import { parseResumeText } from '$engine/parser';
 import type { ATSProfile, ScoringInput, ScoreResult, ScoreBreakdown } from './types';
 import { ALL_PROFILES } from './profiles';
 import { scoreFormatting } from './format-scorer';
@@ -5,48 +6,147 @@ import { scoreSections } from './section-scorer';
 import { scoreExperience } from './experience-scorer';
 import { scoreEducation } from './education-scorer';
 import { matchKeywords } from './keyword-matcher';
+import { scoreGupyAlignment } from './gupy-alignment';
 
-// scores a resume against all 6 ATS profiles. deterministic: same input = same output
 export function scoreResume(input: ScoringInput): ScoreResult[] {
-	return ALL_PROFILES.map((profile) => scoreAgainstProfile(input, profile));
+	const enriched = enrichStructuredInput(input);
+	return ALL_PROFILES.map((profile) => scoreAgainstProfile(enriched, profile));
 }
 
-// scores a resume against a single ATS profile
-export function scoreAgainstProfile(input: ScoringInput, profile: ATSProfile): ScoreResult {
-	const breakdown = computeBreakdown(input, profile);
-	const weightedScore = computeWeightedScore(breakdown, profile);
+function enrichStructuredInput(input: ScoringInput): ScoringInput {
+	if (input.experienceEntries?.length && input.educationEntries?.length) return input;
+	const parsed = parseResumeText(input.resumeText).resume;
+	if (!parsed) return input;
+	return {
+		...input,
+		experienceEntries:
+			input.experienceEntries ??
+			parsed.experience.map((entry) => ({
+				title: entry.title,
+				company: entry.company,
+				start: entry.dates.start,
+				end: entry.dates.end,
+				isCurrent: entry.dates.isCurrent,
+				text: entry.rawText
+			})),
+		educationEntries:
+			input.educationEntries ??
+			parsed.education.map((entry) => ({
+				degree: entry.degree,
+				field: entry.field,
+				institution: entry.institution,
+				text: entry.rawText
+			}))
+	};
+}
 
-	// apply quirk penalties/bonuses
-	const quirkAdjustment = computeQuirkAdjustment(input, profile);
+export function scoreAgainstProfile(input: ScoringInput, profile: ATSProfile): ScoreResult {
+	const normalizedInput = { ...input, locale: input.locale ?? detectLocale(input.resumeText) };
+	const breakdown = computeBreakdown(normalizedInput, profile);
+	const weightedScore = computeWeightedScore(
+		breakdown,
+		profile,
+		Boolean(input.jobDescription?.trim())
+	);
+	const quirkAdjustment = computeQuirkAdjustment(normalizedInput, profile);
+	const confidencePenalty =
+		input.extractionQuality !== undefined && input.extractionQuality < 60
+			? Math.min(12, (60 - input.extractionQuality) * 0.25)
+			: 0;
 	const overallScore = Math.max(
 		0,
-		Math.min(100, Math.round(weightedScore + quirkAdjustment.totalAdjustment))
+		Math.min(
+			100,
+			Math.round(weightedScore + quirkAdjustment.totalAdjustment - confidencePenalty)
+		)
 	);
-
-	const suggestions = generateSuggestions(breakdown, profile, quirkAdjustment.messages);
-
 	return {
 		system: profile.name,
 		vendor: profile.vendor,
 		overallScore,
 		passesFilter: overallScore >= profile.passingScore,
 		breakdown,
-		suggestions
+		suggestions: generateSuggestions(
+			breakdown,
+			profile,
+			quirkAdjustment.messages,
+			normalizedInput
+		)
 	};
 }
 
-// runs each individual scorer and assembles the breakdown
+function detectLocale(text: string): 'pt-BR' | 'en' {
+	const normalized = text
+		.normalize('NFKD')
+		.replace(/\p{M}/gu, '')
+		.toLowerCase();
+	const pt = (
+		normalized.match(
+			/\b(?:experiencia|formacao|habilidades|competencias|desenvolvimento|atuacao|presente|conclusao)\b/g
+		) || []
+	).length;
+	const en = (
+		normalized.match(
+			/\b(?:experience|education|skills|development|present|summary|degree|responsibilities)\b/g
+		) || []
+	).length;
+	return pt > en ? 'pt-BR' : 'en';
+}
+
 function computeBreakdown(input: ScoringInput, profile: ATSProfile): ScoreBreakdown {
+	const locale = input.locale ?? 'en';
 	const formatting = scoreFormatting(input, profile.parsingStrictness);
 	const sections = scoreSections(input.resumeSections, profile.requiredSections);
-	const experience = scoreExperience(input.experienceBullets);
-	const education = scoreEducation(input.educationText);
+	const experience = scoreExperience(input.experienceBullets, locale);
+	const education = scoreEducation(input.educationText, locale);
+	const hasJob = Boolean(input.jobDescription?.trim());
+
+	if (profile.name === 'Gupy-like' && hasJob) {
+		const alignment = scoreGupyAlignment(input, experience.score, education.score);
+		return {
+			formatting: {
+				score: formatting.score,
+				issues: formatting.issues,
+				details: formatting.details
+			},
+			keywordMatch: {
+				score: alignment.keywordScore,
+				matched: alignment.matchedSkills,
+				missing: alignment.missingSkills,
+				synonymMatched: alignment.preferredMatched
+			},
+			sections: {
+				score: sections.score,
+				present: sections.present,
+				missing: sections.missing
+			},
+			experience: {
+				score: alignment.experienceScore,
+				quantifiedBullets: experience.quantifiedBullets,
+				totalBullets: experience.totalBullets,
+				actionVerbCount: experience.actionVerbCount,
+				highlights: [...experience.highlights, ...alignment.experienceNotes]
+			},
+			education: {
+				score: alignment.educationScore,
+				notes: [...education.notes, ...alignment.educationNotes]
+			}
+		};
+	}
+
+	const keywordCorpus =
+		profile.name === 'Gupy-like'
+			? [
+					input.resumeSkills.join(' '),
+					input.experienceBullets.join(' '),
+					input.educationText
+				].join('\n')
+			: input.resumeText;
 	const keywords = matchKeywords(
-		input.resumeText,
+		keywordCorpus,
 		input.jobDescription || '',
 		profile.keywordStrategy
 	);
-
 	return {
 		formatting: {
 			score: formatting.score,
@@ -71,125 +171,162 @@ function computeBreakdown(input: ScoringInput, profile: ATSProfile): ScoreBreakd
 			actionVerbCount: experience.actionVerbCount,
 			highlights: experience.highlights
 		},
-		education: {
-			score: education.score,
-			notes: education.notes
-		}
+		education: { score: education.score, notes: education.notes }
 	};
 }
 
-// applies profile weights to produce a single 0-100 score
-function computeWeightedScore(breakdown: ScoreBreakdown, profile: ATSProfile): number {
+function computeWeightedScore(
+	breakdown: ScoreBreakdown,
+	profile: ATSProfile,
+	hasJobDescription: boolean
+): number {
 	const { weights } = profile;
-
-	// quantification is derived from the experience scorer's quantification ratio
 	const quantificationScore =
 		breakdown.experience.totalBullets > 0
 			? Math.round(
-					(breakdown.experience.quantifiedBullets / breakdown.experience.totalBullets) * 100
+					(breakdown.experience.quantifiedBullets /
+						breakdown.experience.totalBullets) *
+						100
 				)
 			: 0;
-
-	const weighted =
-		breakdown.formatting.score * weights.formatting +
-		breakdown.keywordMatch.score * weights.keywordMatch +
-		breakdown.sections.score * weights.sectionCompleteness +
-		breakdown.experience.score * weights.experienceRelevance +
-		breakdown.education.score * weights.educationMatch +
-		quantificationScore * weights.quantification;
-
-	return weighted;
+	const components = [
+		{ score: breakdown.formatting.score, weight: weights.formatting },
+		{ score: breakdown.sections.score, weight: weights.sectionCompleteness },
+		{ score: breakdown.experience.score, weight: weights.experienceRelevance },
+		{ score: breakdown.education.score, weight: weights.educationMatch },
+		{ score: quantificationScore, weight: weights.quantification }
+	];
+	if (hasJobDescription) {
+		components.push({
+			score: breakdown.keywordMatch.score,
+			weight: weights.keywordMatch
+		});
+	}
+	const activeWeight = components.reduce(
+		(sum, component) => sum + component.weight,
+		0
+	);
+	return activeWeight > 0
+		? components.reduce(
+				(sum, component) => sum + component.score * component.weight,
+				0
+			) / activeWeight
+		: 0;
 }
 
-// runs quirk checks for a profile. negative penalty = bonus, positive = deduction
 function computeQuirkAdjustment(
 	input: ScoringInput,
 	profile: ATSProfile
 ): { totalAdjustment: number; messages: string[] } {
 	let totalAdjustment = 0;
 	const messages: string[] = [];
-
 	for (const quirk of profile.quirks) {
 		const result = quirk.check(input);
-		if (result) {
-			totalAdjustment -= result.penalty;
-			messages.push(result.message);
-		}
+		if (!result) continue;
+		totalAdjustment -= result.penalty;
+		messages.push(result.message);
 	}
-
 	return { totalAdjustment, messages };
 }
 
-// generates rule-based suggestions. LLM enhancement is layered on top separately
 function generateSuggestions(
 	breakdown: ScoreBreakdown,
 	profile: ATSProfile,
-	quirkMessages: string[]
+	quirkMessages: string[],
+	input: ScoringInput
 ): string[] {
+	const pt = input.locale === 'pt-BR';
 	const suggestions: string[] = [];
-
-	// formatting suggestions
+	if (input.extractionQuality !== undefined && input.extractionQuality < 70) {
+		suggestions.push(
+			pt
+				? `revise os campos extraídos: confiança de leitura em ${input.extractionQuality}%`
+				: `review extracted fields: reading confidence is ${input.extractionQuality}%`
+		);
+	}
 	if (breakdown.formatting.score < 70) {
-		if (breakdown.formatting.issues.some((i) => i.includes('multi-column'))) {
-			suggestions.push('switch to a single-column resume layout for better ATS parsing');
+		if (
+			breakdown.formatting.issues.some((issue) => issue.includes('multi-column'))
+		) {
+			suggestions.push(
+				pt ? 'use um layout de coluna única' : 'switch to a single-column resume layout'
+			);
 		}
-		if (breakdown.formatting.issues.some((i) => i.includes('tables'))) {
-			suggestions.push('remove tables and use plain text formatting instead');
+		if (breakdown.formatting.issues.some((issue) => issue.includes('tables'))) {
+			suggestions.push(
+				pt
+					? 'remova tabelas e use blocos de texto simples'
+					: 'remove tables and use plain text blocks'
+			);
 		}
-		if (breakdown.formatting.issues.some((i) => i.includes('images'))) {
-			suggestions.push('remove images, logos, and graphics from your resume');
+		if (breakdown.formatting.issues.some((issue) => issue.includes('images'))) {
+			suggestions.push(
+				pt
+					? 'remova imagens que contenham informações relevantes'
+					: 'remove images that contain relevant information'
+			);
 		}
 	}
-
-	// keyword suggestions
-	if (breakdown.keywordMatch.score < 60 && breakdown.keywordMatch.missing.length > 0) {
-		const topMissing = breakdown.keywordMatch.missing.slice(0, 5);
+	if (
+		input.jobDescription?.trim() &&
+		breakdown.keywordMatch.score < 60 &&
+		breakdown.keywordMatch.missing.length
+	) {
+		const topMissing = breakdown.keywordMatch.missing.slice(0, 8);
 		suggestions.push(
-			`add these missing keywords from the job description: ${topMissing.join(', ')}`
+			pt
+				? `competências obrigatórias ausentes em relação à vaga: ${topMissing.join(', ')}`
+				: `required skills missing from the job: ${topMissing.join(', ')}`
 		);
-
 		if (profile.keywordStrategy === 'exact') {
 			suggestions.push(
-				`${profile.name} uses exact keyword matching. use the exact terms from the job posting, not synonyms.`
+				pt
+					? `${profile.name} valoriza os termos exatos usados na vaga`
+					: `${profile.name} favors exact terms used in the posting`
 			);
 		}
 	}
-
-	// section suggestions
-	if (breakdown.sections.missing.length > 0) {
+	if (breakdown.sections.missing.length) {
 		suggestions.push(
-			`add missing sections: ${breakdown.sections.missing.join(', ')}. ${profile.name} requires these for proper parsing.`
+			pt
+				? `seções ausentes: ${breakdown.sections.missing.join(', ')}`
+				: `missing sections: ${breakdown.sections.missing.join(', ')}`
 		);
 	}
-
-	// experience suggestions
 	if (breakdown.experience.totalBullets > 0) {
-		const quantRatio = breakdown.experience.quantifiedBullets / breakdown.experience.totalBullets;
+		const quantRatio =
+			breakdown.experience.quantifiedBullets /
+			breakdown.experience.totalBullets;
+		const actionRatio =
+			breakdown.experience.actionVerbCount /
+			breakdown.experience.totalBullets;
 		if (quantRatio < 0.3) {
 			suggestions.push(
-				'add more quantified achievements (numbers, percentages, dollar amounts) to your experience bullets'
+				pt
+					? 'adicione resultados mensuráveis às experiências'
+					: 'add measurable outcomes to experience bullets'
 			);
 		}
-		if (breakdown.experience.actionVerbCount / breakdown.experience.totalBullets < 0.5) {
+		if (actionRatio < 0.5) {
 			suggestions.push(
-				'start more bullet points with strong action verbs (led, developed, increased, delivered)'
+				pt
+					? 'inicie mais tópicos com verbos de ação'
+					: 'start more bullets with action verbs'
 			);
 		}
 	} else {
-		suggestions.push('add detailed experience bullets with measurable achievements');
-	}
-
-	// education suggestions
-	if (breakdown.education.score < 50) {
 		suggestions.push(
-			'ensure your education section includes degree type, institution, and graduation date'
+			pt
+				? 'descreva responsabilidades e entregas nas experiências'
+				: 'describe responsibilities and outcomes in experience entries'
 		);
 	}
-
-	// quirk-specific suggestions (from profile checks)
-	for (const message of quirkMessages) {
-		suggestions.push(message);
+	if (breakdown.education.score < 50) {
+		suggestions.push(
+			pt
+				? 'informe tipo de curso, instituição, área e período'
+				: 'include degree type, institution, field and dates'
+		);
 	}
-
-	return suggestions;
+	return [...new Set([...suggestions, ...quirkMessages])];
 }
