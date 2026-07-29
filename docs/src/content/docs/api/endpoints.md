@@ -103,7 +103,7 @@ Extract structured requirements from a job description without scoring a resume.
 			"suggestions": ["Add AWS and CI/CD keywords to match Workday's exact matching"]
 		}
 	],
-	"_provider": "gemma-3-27b",
+	"_provider": "gemini-3.5-flash-lite",
 	"_fallback": false,
 	"_cached": false
 }
@@ -119,7 +119,7 @@ Extract structured requirements from a job description without scoring a resume.
 | `results[].passesFilter` | boolean                    | Whether resume passes initial screening                                                                    |
 | `results[].breakdown`    | object                     | Per-dimension scores and details                                                                           |
 | `results[].suggestions`  | string \| StructuredItem[] | Platform-specific improvement tips. May be plain strings (rule-based) or structured objects (LLM-enhanced) |
-| `_provider`              | string                     | Which LLM provider handled the request (e.g. `gemma-3-27b`, `groq-llama-3.3-70b`)                          |
+| `_provider`              | string                     | Which LLM provider handled the request (e.g. `gemini-3.5-flash-lite`, `groq-llama-3.3-70b`)                |
 | `_fallback`              | boolean                    | `true` when all providers failed and the client must fall back to local rule-based scoring                 |
 | `_cached`                | boolean                    | `true` when the response was served from the in-memory result cache (sub-100ms, zero LLM cost)             |
 

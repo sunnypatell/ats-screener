@@ -11,12 +11,23 @@ describe('buildProviders: chain composition', () => {
 		expect(buildProviders({})).toEqual([]);
 	});
 
-	it('hosted-only env (Gemini + Groq) composes [gemma, groq] in that order', () => {
+	// exactly one model per vendor. a second Gemini leg would share the same key's
+	// quota, so it adds latency without adding redundancy
+	it('hosted-only env (Gemini + Groq) composes [flash-lite, groq] in that order', () => {
 		const chain = buildProviders({
 			GEMINI_API_KEY: 'fake-gemini',
 			GROQ_API_KEY: 'fake-groq'
 		});
-		expect(chain.map((p) => p.name)).toEqual(['gemma-3-27b', 'groq-llama-3.3-70b']);
+		expect(chain.map((p) => p.name)).toEqual(['gemini-3.5-flash-lite', 'groq-llama-3.3-70b']);
+	});
+
+	it('never puts two models from the same vendor in the chain', () => {
+		const chain = buildProviders({
+			GEMINI_API_KEY: 'fake-gemini',
+			GROQ_API_KEY: 'fake-groq'
+		});
+		const perKey = chain.map((p) => p.configKey);
+		expect(new Set(perKey).size).toBe(perKey.length);
 	});
 
 	it('self-hosted-only env (Ollama) composes [ollama] with default model llama3.2', () => {
@@ -36,7 +47,7 @@ describe('buildProviders: chain composition', () => {
 		expect(chain[0].name).toBe('ollama-gemma3:1b');
 	});
 
-	it('all-three env composes [ollama, gemma, groq] - Ollama prepends', () => {
+	it('all-three env composes [ollama, flash-lite, groq] - Ollama prepends', () => {
 		const chain = buildProviders({
 			OLLAMA_BASE_URL: 'http://127.0.0.1:11434',
 			OLLAMA_MODEL: 'llama3.2',
@@ -45,7 +56,7 @@ describe('buildProviders: chain composition', () => {
 		});
 		expect(chain.map((p) => p.name)).toEqual([
 			'ollama-llama3.2',
-			'gemma-3-27b',
+			'gemini-3.5-flash-lite',
 			'groq-llama-3.3-70b'
 		]);
 	});
@@ -111,12 +122,30 @@ describe('buildOllamaProvider: request shape', () => {
 });
 
 describe('cloud provider invariants (regression net)', () => {
-	it('google provider keeps its 90s timeout', () => {
-		expect(buildGoogleProvider('x', 'm').timeoutMs).toBe(90_000);
+	// timeouts must sum to less than the route's maxDuration or the last leg can
+	// never run: 25 + 25 + 15 = 65s. raising any of these means raising that too.
+	it('google provider keeps its 25s timeout', () => {
+		expect(buildGoogleProvider('x', 'm').timeoutMs).toBe(25_000);
 	});
 
-	it('groq provider keeps its 30s timeout', () => {
-		expect(buildGroqProvider('x', 'm').timeoutMs).toBe(30_000);
+	it('groq provider keeps its 15s timeout', () => {
+		expect(buildGroqProvider('x', 'm').timeoutMs).toBe(15_000);
+	});
+
+	// the bug that took the whole chain down: Groq reserves (input + max_tokens)
+	// against its per-minute ceiling, so a max_tokens above the TPM limit 413s every
+	// request no matter how small the input. free-tier TPM is 12,000.
+	it('groq max_tokens stays well under the free-tier TPM ceiling', () => {
+		const body = JSON.parse(buildGroqProvider('x', 'm').buildRequest('p', 'k').init.body as string);
+		expect(body.max_tokens).toBeLessThan(12_000);
+	});
+
+	// without this the model returns prose and extractJSON has to salvage it
+	it('google provider requests JSON natively by default', () => {
+		const body = JSON.parse(
+			buildGoogleProvider('x', 'm').buildRequest('p', 'k').init.body as string
+		);
+		expect(body.generationConfig.responseMimeType).toBe('application/json');
 	});
 
 	it('google provider configKey is GEMINI_API_KEY', () => {

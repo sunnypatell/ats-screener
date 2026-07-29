@@ -293,7 +293,7 @@ The spread here is 5.30 points from highest to lowest. All pass in this example,
 
 ## AI vs Rule-Based Scoring
 
-Everything above describes the **rule-based fallback engine**. When AI scoring is available (Gemma 3 27B via Google's Generative Language API), the LLM evaluates each dimension using the same platform profiles as context. The AI can pick up on nuances that rule-based scoring can't, things like contextual relevance, phrasing quality, and role-specific terminology.
+Everything above describes the **rule-based fallback engine**. When AI scoring is available (Gemini 3.5 Flash Lite via Google's Generative Language API), the LLM evaluates each dimension using the same platform profiles as context. The AI can pick up on nuances that rule-based scoring can't, things like contextual relevance, phrasing quality, and role-specific terminology.
 
 The rule-based engine exists as a fallback for when the AI is unavailable (rate limits, timeouts, etc.). It produces serviceable scores using the exact formulas on this page, but AI scoring is generally more nuanced and accurate for real-world resume evaluation.
 

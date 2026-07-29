@@ -1,7 +1,10 @@
 // LLM provider abstraction for /api/analyze.
 //
-// cloud chain is Gemma 3 27B (Google) -> Llama 3.3 70B (Groq); cross-provider
-// fallback gives independent quotas so one provider's limits don't cascade.
+// cloud chain is Gemini 3.5 Flash Lite (Google) -> Llama 3.3 70B (Groq): one model
+// per vendor, because a second model on the same key shares that key's quota and adds
+// no real redundancy. crossing vendors is what keeps one provider's limits from
+// cascading. both models were measured against the real full-scoring prompt rather
+// than picked from published limits - see buildProviders.
 // self-hosters can prepend Ollama by setting OLLAMA_BASE_URL (and optionally
 // OLLAMA_MODEL, plus OLLAMA_API_KEY for proxied / auth-gated daemons); the
 // request handler treats Ollama as a configured provider so a fork running
@@ -31,16 +34,23 @@ const googleExtractText = (data: unknown) => {
 	return d.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
 };
 
+// measured against the real full-scoring prompt (both slices at their caps):
+// prompt ~5,950 tokens in, ~3,330 tokens out. every budget below is derived from
+// those two numbers rather than guessed, because providers bill reserved output
+// against their per-minute ceiling (see MAX_OUTPUT_TOKENS note on the Groq builder).
+const GOOGLE_MAX_OUTPUT_TOKENS = 8192;
+
 export function buildGoogleProvider(
 	name: string,
 	model: string,
-	opts?: { jsonMode?: boolean }
+	opts?: { jsonMode?: boolean; timeoutMs?: number; maxOutputTokens?: number }
 ): LLMProvider {
 	return {
 		name,
 		configKey: 'GEMINI_API_KEY',
-		// Gemma typically responds in 30-45s but can spike under load
-		timeoutMs: 90_000,
+		// flash-lite answers the full prompt in 7-10s measured; 25s absorbs a spike
+		// while keeping the whole chain inside the route's maxDuration
+		timeoutMs: opts?.timeoutMs ?? 25_000,
 		buildRequest: (prompt, apiKey) => ({
 			url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
 			init: {
@@ -51,8 +61,10 @@ export function buildGoogleProvider(
 					generationConfig: {
 						temperature: 0.3,
 						topP: 0.85,
-						maxOutputTokens: 16384,
-						...(opts?.jsonMode && { responseMimeType: 'application/json' })
+						maxOutputTokens: opts?.maxOutputTokens ?? GOOGLE_MAX_OUTPUT_TOKENS,
+						// default on: the scoring contract is JSON, and without this the
+						// model returns prose that extractJSON has to salvage
+						...(opts?.jsonMode !== false && { responseMimeType: 'application/json' })
 					}
 				})
 			}
@@ -61,12 +73,22 @@ export function buildGoogleProvider(
 	};
 }
 
-export function buildGroqProvider(name: string, model: string): LLMProvider {
+// Groq reserves (input + max_tokens) against its per-minute ceiling BEFORE running
+// the model, so an oversized max_tokens alone can exceed the whole TPM budget and
+// every request 413s regardless of input size. free-tier llama TPM is 12,000 and
+// the real prompt measures ~5,950 in / ~2,020 out, so 4,096 leaves working room.
+const GROQ_MAX_TOKENS = 4096;
+
+export function buildGroqProvider(
+	name: string,
+	model: string,
+	opts?: { maxTokens?: number }
+): LLMProvider {
 	return {
 		name,
 		configKey: 'GROQ_API_KEY',
 		// Groq is <1s typical but gets headroom for cold path
-		timeoutMs: 30_000,
+		timeoutMs: 15_000,
 		buildRequest: (prompt, apiKey) => ({
 			url: 'https://api.groq.com/openai/v1/chat/completions',
 			init: {
@@ -80,7 +102,7 @@ export function buildGroqProvider(name: string, model: string): LLMProvider {
 					messages: [{ role: 'user', content: prompt }],
 					temperature: 0.3,
 					top_p: 0.85,
-					max_tokens: 16384,
+					max_tokens: opts?.maxTokens ?? GROQ_MAX_TOKENS,
 					response_format: { type: 'json_object' }
 				})
 			}
@@ -164,11 +186,21 @@ export function buildProviders(env: Record<string, string>): LLMProvider[] {
 		providers.push(buildOllamaProvider(`ollama-${model}`, model, { apiKey }));
 	}
 	if (env.GEMINI_API_KEY) {
-		// primary cloud: Gemma 3 27B via Google - 14,400 RPD, 30 RPM, 15K TPM
-		providers.push(buildGoogleProvider('gemma-3-27b', 'gemma-3-27b-it'));
+		// exactly one Google model. a second Gemini leg on the same key does NOT buy a
+		// second quota pool - when the key is exhausted it is exhausted for every model
+		// on it - so stacking them just burns latency before the real fallback.
+		// 500 RPD / 250K TPM / 15 RPM against ~130 scans/day of observed demand.
+		// the full Flash tiers are unusable no matter how good they are: 20 RPD.
+		// Gemma 4 31B looks tempting on paper (14,400 RPD) but measured ~110s per call,
+		// returned markdown-fenced output instead of JSON, and its free tier trains on
+		// submitted data - disqualifying for resume text. deliberately excluded.
+		providers.push(buildGoogleProvider('gemini-3.5-flash-lite', 'gemini-3.5-flash-lite'));
 	}
 	if (env.GROQ_API_KEY) {
-		// fallback cloud: Llama 3.3 70B via Groq - 100-600ms, native JSON mode, 1K RPD
+		// cross-vendor last resort so a total Google outage still scores.
+		// EXPIRES 2026-08-16: llama-3.3-70b-versatile shuts down then, and no remaining
+		// Groq free-tier model fits this prompt (8K TPM ceiling vs ~9.3K needed), so
+		// this leg has to be dropped or the prompt shrunk before that date.
 		providers.push(buildGroqProvider('groq-llama-3.3-70b', 'llama-3.3-70b-versatile'));
 	}
 	return providers;
