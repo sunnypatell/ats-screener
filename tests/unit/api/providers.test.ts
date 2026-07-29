@@ -123,13 +123,26 @@ describe('buildOllamaProvider: request shape', () => {
 
 describe('cloud provider invariants (regression net)', () => {
 	// timeouts must sum to less than the route's maxDuration or the last leg can
-	// never run: 25 + 25 + 15 = 65s. raising any of these means raising that too.
-	it('google provider keeps its 25s timeout', () => {
-		expect(buildGoogleProvider('x', 'm').timeoutMs).toBe(25_000);
+	// never run: 30 + 15 = 45s against maxDuration 60. raising either means raising that.
+	it('google provider keeps its 30s timeout', () => {
+		expect(buildGoogleProvider('x', 'm').timeoutMs).toBe(30_000);
 	});
 
 	it('groq provider keeps its 15s timeout', () => {
 		expect(buildGroqProvider('x', 'm').timeoutMs).toBe(15_000);
+	});
+
+	// a provider must never be allowed to generate more than its timeout permits, or a
+	// full-budget response is aborted mid-flight and burns the fallback with it.
+	// throughputs are the slowest observed: Google 311 tok/s, Groq 290 tok/s.
+	it('token budgets are reachable within each provider timeout', () => {
+		const g = buildGoogleProvider('x', 'm');
+		const gBody = JSON.parse(g.buildRequest('p', 'k').init.body as string);
+		expect((gBody.generationConfig.maxOutputTokens / 311) * 1000).toBeLessThan(g.timeoutMs);
+
+		const q = buildGroqProvider('x', 'm');
+		const qBody = JSON.parse(q.buildRequest('p', 'k').init.body as string);
+		expect((qBody.max_tokens / 290) * 1000).toBeLessThan(q.timeoutMs);
 	});
 
 	// the bug that took the whole chain down: Groq reserves (input + max_tokens)

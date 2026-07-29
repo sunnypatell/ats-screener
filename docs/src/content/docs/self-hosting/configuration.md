@@ -118,17 +118,26 @@ Adjust these values based on your expected traffic and API key limits.
 Each provider has its own timeout. [Vercel Fluid Compute](https://vercel.com/docs/fluid-compute) is enabled by default and allows up to 300 seconds on the Hobby plan:
 
 ```typescript
-// Google: 25s, Groq: 15s → worst case total: 40s
-timeoutMs: 25_000; // buildGoogleProvider
+// Google: 30s, Groq: 15s → worst case total: 45s
+timeoutMs: 30_000; // buildGoogleProvider
 timeoutMs: 15_000; // buildGroqProvider
 ```
 
-Flash Lite answers the full scoring prompt in 7-10s measured, so 25s absorbs a spike
-without stalling the chain. Groq responds in under a second but gets 15s for the cold path.
+Two constraints govern these numbers.
 
-These must sum to less than the route's `maxDuration` (60s) or the platform kills the
+**They must sum to less than the route's `maxDuration` (60s)**, or the platform kills the
 function before the last leg can run, silently turning a two-provider chain into a
-one-provider one. Raising either timeout means raising `maxDuration` with it.
+one-provider one.
+
+**Each provider's token budget must be reachable inside its own timeout.** Measured
+throughput is 311 tok/s on Flash Lite and ~290 tok/s on Groq, so a 6,144-token Google
+budget needs 19.8s and a 3,072-token Groq budget needs 10.6s. If a budget were raised
+above what its timeout allows, any response that ran to full length would be aborted
+mid-flight, wasting the call and the fallback behind it. A unit test enforces this.
+
+Typical requests are far below the ceiling: Flash Lite answers in 9-11s and Groq in
+about 7s. Output size tracks the fixed 6-platform schema rather than resume length, so a
+short resume and a maxed-out one produce within 5% of the same number of output tokens.
 
 If every provider fails the route returns `503` and logs `llm.all_providers_failed` at
 error level, and the client falls back to rule-based scoring.

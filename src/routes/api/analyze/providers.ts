@@ -35,10 +35,15 @@ const googleExtractText = (data: unknown) => {
 };
 
 // measured against the real full-scoring prompt (both slices at their caps):
-// prompt ~5,950 tokens in, ~3,330 tokens out. every budget below is derived from
-// those two numbers rather than guessed, because providers bill reserved output
-// against their per-minute ceiling (see MAX_OUTPUT_TOKENS note on the Groq builder).
-const GOOGLE_MAX_OUTPUT_TOKENS = 8192;
+// ~5,950 tokens in, 2,950-3,419 out over repeated runs at 311-338 tok/s. output size
+// tracks the fixed 6-platform schema, not the user's resume length - a minimal resume
+// produced within 5% of a maxed-out one - so both directions are already bounded.
+//
+// INVARIANT: maxOutputTokens / slowest-observed-throughput must stay under timeoutMs,
+// or a response that legitimately runs to its full budget gets aborted mid-flight and
+// burns the fallback too. 6144 / 311 tok/s = 19.8s against a 30s timeout.
+// 6144 is ~1.8x the largest output ever observed, so truncation risk stays remote.
+const GOOGLE_MAX_OUTPUT_TOKENS = 6144;
 
 export function buildGoogleProvider(
 	name: string,
@@ -48,9 +53,10 @@ export function buildGoogleProvider(
 	return {
 		name,
 		configKey: 'GEMINI_API_KEY',
-		// flash-lite answers the full prompt in 7-10s measured; 25s absorbs a spike
+		// flash-lite answers the full prompt in 9-11s measured. 30s covers the worst
+		// case where the model runs to the full token budget (19.8s) with margin,
 		// while keeping the whole chain inside the route's maxDuration
-		timeoutMs: opts?.timeoutMs ?? 25_000,
+		timeoutMs: opts?.timeoutMs ?? 30_000,
 		buildRequest: (prompt, apiKey) => ({
 			url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
 			init: {
@@ -75,9 +81,13 @@ export function buildGoogleProvider(
 
 // Groq reserves (input + max_tokens) against its per-minute ceiling BEFORE running
 // the model, so an oversized max_tokens alone can exceed the whole TPM budget and
-// every request 413s regardless of input size. free-tier llama TPM is 12,000 and
-// the real prompt measures ~5,950 in / ~2,020 out, so 4,096 leaves working room.
-const GROQ_MAX_TOKENS = 4096;
+// every request 413s regardless of input size. free-tier llama TPM is 12,000 and the
+// real prompt measures ~5,950 in / ~2,020 out at ~290 tok/s.
+//
+// 3072 serves two masters: it keeps 5,950 + 3,072 = 9,022 under the 12k TPM ceiling
+// (leaving room for a second request in the same minute), and 3072 / 290 tok/s = 10.6s
+// stays under the 15s timeout so a full-budget response is never cut off.
+const GROQ_MAX_TOKENS = 3072;
 
 export function buildGroqProvider(
 	name: string,

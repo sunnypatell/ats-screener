@@ -100,7 +100,7 @@ function extractJSON(raw: string): unknown {
 	return null;
 }
 
-// must exceed the sum of every provider timeout in the chain (25 + 15 = 40s) or the
+// must exceed the sum of every provider timeout in the chain (30 + 15 = 45s) or the
 // last leg gets killed by the platform before it can answer, which silently turns a
 // 2-provider chain into a 1-provider one
 export const config = {
