@@ -100,8 +100,9 @@ function extractJSON(raw: string): unknown {
 	return null;
 }
 
-// vercel hobby plan defaults to 10s function timeout
-// gemini can take 12-15s so we need to extend this
+// must exceed the sum of every provider timeout in the chain (30 + 15 = 45s) or the
+// last leg gets killed by the platform before it can answer, which silently turns a
+// 2-provider chain into a 1-provider one
 export const config = {
 	maxDuration: 60
 };
@@ -231,6 +232,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const result = await callLLM(prompt, keys);
 
 	if (!result) {
+		// every leg failing is an outage, not a retryable blip - the per-provider
+		// warnings above are individually unremarkable, so this is the only line
+		// that distinguishes "one provider hiccuped" from "nobody is scoring"
+		logger.error('llm.all_providers_failed', {
+			providers: buildProviders(keys).map((p) => p.name),
+			mode: body.mode
+		});
 		return json({ error: 'all LLM providers failed', fallback: true }, { status: 503 });
 	}
 

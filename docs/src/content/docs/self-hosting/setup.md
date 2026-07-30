@@ -9,7 +9,7 @@ ATS Screener can be self-hosted for free. You'll need at least one LLM API key.
 
 - **Node.js** 18+ (20 recommended)
 - **pnpm** 8+ (package manager)
-- A free API key from [Google AI Studio](https://aistudio.google.com/apikey) (required for Gemma 3 27B)
+- A free API key from [Google AI Studio](https://aistudio.google.com/apikey) (required for Gemini 3.5 Flash Lite)
 
 ## Installation
 
@@ -40,7 +40,7 @@ cp .env.example .env
 3. Add to `.env`: `GROQ_API_KEY=your_key_here`
 
 :::tip
-You need the **Google AI API key** to run the app (Gemma 3 27B primary, 14,400 RPD). Adding a **Groq API key** is strongly recommended as it provides a completely independent fallback (Llama 3.3 70B, 1,000 RPD) so users never see failures during peak traffic.
+You need the **Google AI API key** to run the app (Gemini 3.5 Flash Lite, 500 RPD). Adding a **Groq API key** is strongly recommended as a completely independent fallback (Llama 3.3 70B, 1,000 RPD) so users never see failures when Google's quota is spent or its API is down.
 :::
 
 ## Run Locally

@@ -9,7 +9,7 @@ All configuration is done through environment variables in the `.env` file. At l
 
 | Variable          | Required     | Description                                                                                                            |
 | ----------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| `GEMINI_API_KEY`  | One of these | Google AI API key (Gemma 3 27B)                                                                                        |
+| `GEMINI_API_KEY`  | One of these | Google AI API key (Gemini 3.5 Flash Lite)                                                                              |
 | `GROQ_API_KEY`    | One of these | Groq API key (Llama 3.3 70B)                                                                                           |
 | `OLLAMA_BASE_URL` | One of these | Base URL of a local Ollama daemon (e.g. `http://127.0.0.1:11434`)                                                      |
 | `OLLAMA_MODEL`    | Optional     | Ollama model tag, defaults to `llama3.2`. Use any tag from `ollama list`.                                              |
@@ -24,8 +24,12 @@ Never commit your `.env` file to version control. It's already in `.gitignore`, 
 The LLM chain composes from whatever's configured in env. Ordering is fixed:
 
 1. **Ollama** (`OLLAMA_BASE_URL`), local first when configured
-2. **Gemma 3 27B** via Google (`GEMINI_API_KEY`)
+2. **Gemini 3.5 Flash Lite** via Google (`GEMINI_API_KEY`)
 3. **Llama 3.3 70B** via Groq (`GROQ_API_KEY`)
+
+Exactly one model per vendor. A second model on the same API key shares that key's
+quota, so it adds latency without adding redundancy; crossing vendors is what makes
+the fallback meaningful.
 
 If a provider fails (timeout, rate limit, malformed response), the system automatically tries the next one. Because each provider uses a separate credential, their quotas are completely independent. Self-hosters who want a fully offline scanner should set only `OLLAMA_BASE_URL` and leave the cloud keys unset.
 
@@ -84,10 +88,10 @@ PUBLIC_FIREBASE_APP_ID=1:1234567890:web:abc
 
 ## Free Tier Limits
 
-| Provider | Model         | RPM  | RPD    | TPM | Cost |
-| -------- | ------------- | ---- | ------ | --- | ---- |
-| Google   | Gemma 3 27B   | 30   | 14,400 | 15K | Free |
-| Groq     | Llama 3.3 70B | 1000 | 14,400 | 12K | Free |
+| Provider | Model                 | RPM | RPD   | TPM  | Cost |
+| -------- | --------------------- | --- | ----- | ---- | ---- |
+| Google   | Gemini 3.5 Flash Lite | 15  | 500   | 250K | Free |
+| Groq     | Llama 3.3 70B         | 30  | 1,000 | 12K  | Free |
 
 Both providers block at their limits and never auto-charge. You cannot accidentally incur costs.
 
@@ -114,8 +118,26 @@ Adjust these values based on your expected traffic and API key limits.
 Each provider has its own timeout. [Vercel Fluid Compute](https://vercel.com/docs/fluid-compute) is enabled by default and allows up to 300 seconds on the Hobby plan:
 
 ```typescript
-// Gemma: 90s, Groq: 30s → worst case total: 120s
-const PROVIDER_TIMEOUTS_MS = [90_000, 30_000];
+// Google: 30s, Groq: 15s → worst case total: 45s
+timeoutMs: 30_000; // buildGoogleProvider
+timeoutMs: 15_000; // buildGroqProvider
 ```
 
-Gemma 3 27B typically takes 30-45 seconds for the full scoring prompt but can spike under load. The 90s timeout gives generous headroom. Groq responds in under 1 second but gets 30s for safety. If both providers fail, the system falls back to rule-based scoring on the client side.
+Two constraints govern these numbers.
+
+**They must sum to less than the route's `maxDuration` (60s)**, or the platform kills the
+function before the last leg can run, silently turning a two-provider chain into a
+one-provider one.
+
+**Each provider's token budget must be reachable inside its own timeout.** Measured
+throughput is 311 tok/s on Flash Lite and ~290 tok/s on Groq, so a 6,144-token Google
+budget needs 19.8s and a 3,072-token Groq budget needs 10.6s. If a budget were raised
+above what its timeout allows, any response that ran to full length would be aborted
+mid-flight, wasting the call and the fallback behind it. A unit test enforces this.
+
+Typical requests are far below the ceiling: Flash Lite answers in 9-11s and Groq in
+about 7s. Output size tracks the fixed 6-platform schema rather than resume length, so a
+short resume and a maxed-out one produce within 5% of the same number of output tokens.
+
+If every provider fails the route returns `503` and logs `llm.all_providers_failed` at
+error level, and the client falls back to rule-based scoring.
