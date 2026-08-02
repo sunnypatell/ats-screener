@@ -58,10 +58,11 @@ export function buildGoogleProvider(
 		// while keeping the whole chain inside the route's maxDuration
 		timeoutMs: opts?.timeoutMs ?? 30_000,
 		buildRequest: (prompt, apiKey) => ({
-			url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+			url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
 			init: {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+				// key goes in the header, not ?key=, so it never lands in request logs
+				headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
 				body: JSON.stringify({
 					contents: [{ parts: [{ text: prompt }] }],
 					generationConfig: {

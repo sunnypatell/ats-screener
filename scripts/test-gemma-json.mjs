@@ -59,10 +59,10 @@ console.log('');
 async function test() {
 	const start = Date.now();
 	const res = await fetch(
-		`https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=${GEMINI_KEY}`,
+		`https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent`,
 		{
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+			headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
 			body: JSON.stringify({
 				contents: [{ parts: [{ text: scoringPrompt }] }],
 				generationConfig: { temperature: 0.3, topP: 0.85, maxOutputTokens: 16384 }
