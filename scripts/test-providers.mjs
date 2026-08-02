@@ -1,11 +1,15 @@
 /**
- * dry run: tests each LLM provider matching the fallback chain in +server.ts
+ * dry run against the real provider chain. imports buildProviders from
+ * providers.ts rather than redeclaring models and token budgets, so this can
+ * never drift from production and report a healthy provider as broken.
+ *
  * reads keys from .env, never logs them.
  *
- * usage: node scripts/test-providers.mjs
+ * usage: node scripts/test-providers.mjs   (needs node 22.18+ or 24 for type stripping)
  */
 
 import { readFileSync } from 'fs';
+import { buildProviders } from '../src/routes/api/analyze/providers.ts';
 
 const envFile = readFileSync('.env', 'utf-8');
 const envVars = Object.fromEntries(
@@ -18,9 +22,6 @@ const envVars = Object.fromEntries(
 		})
 		.filter(Boolean)
 );
-
-const GEMINI_KEY = envVars.GEMINI_API_KEY;
-const GROQ_KEY = envVars.GROQ_API_KEY;
 
 function extractJSON(raw) {
 	const trimmed = raw.trim();
@@ -50,85 +51,42 @@ const BIG_RESUME = (
 ).repeat(60);
 const BIG_PROMPT = `You are an ATS scoring engine. Analyze this resume against 6 ATS platforms (Workday, Taleo, iCIMS, Greenhouse, Lever, SuccessFactors). Return ONLY valid JSON with a "results" array containing objects with "system", "overallScore", and "passesFilter" fields. Resume: ${BIG_RESUME}`;
 
-const PROVIDERS = [
-	{
-		name: 'gemma-3-27b (Google)',
-		key: GEMINI_KEY,
-		build: (prompt) => ({
-			url: `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent`,
-			opts: {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
-				body: JSON.stringify({
-					contents: [{ parts: [{ text: prompt }] }],
-					generationConfig: { temperature: 0.3, topP: 0.85, maxOutputTokens: 16384 }
-				})
-			}
-		}),
-		extract: (d) => d.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
-	},
-	{
-		name: 'llama-3.3-70b (Groq)',
-		key: GROQ_KEY,
-		build: (prompt) => ({
-			url: 'https://api.groq.com/openai/v1/chat/completions',
-			opts: {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${GROQ_KEY}` },
-				body: JSON.stringify({
-					model: 'llama-3.3-70b-versatile',
-					messages: [{ role: 'user', content: prompt }],
-					temperature: 0.3,
-					top_p: 0.85,
-					max_tokens: 16384,
-					response_format: { type: 'json_object' }
-				})
-			}
-		}),
-		extract: (d) => d.choices?.[0]?.message?.content ?? ''
-	},
-	{
-		name: 'gemini-2.5-flash (Google)',
-		key: GEMINI_KEY,
-		build: (prompt) => ({
-			url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
-			opts: {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
-				body: JSON.stringify({
-					contents: [{ parts: [{ text: prompt }] }],
-					generationConfig: {
-						temperature: 0.3,
-						topP: 0.85,
-						maxOutputTokens: 16384,
-						responseMimeType: 'application/json'
-					}
-				})
-			}
-		}),
-		extract: (d) => d.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
-	}
-];
+const providers = buildProviders(envVars);
 
-async function callProvider(provider, prompt, timeoutMs = 30000) {
-	if (!provider.key) return { status: 'SKIP', ms: 0, detail: 'no key' };
+// throttling is not a broken provider. groq reserves (input + max_tokens) against its
+// per-minute ceiling, so back-to-back runs of this script can legitimately 413/429
+function classify(httpStatus) {
+	if (httpStatus === 429 || httpStatus === 413) return 'RATE_LIMIT';
+	return 'HTTP_ERR';
+}
 
-	const { url, opts } = provider.build(prompt);
+async function callProvider(provider, prompt, timeoutMs) {
+	const secret = envVars[provider.configKey];
+	if (!secret) return { status: 'SKIP', ms: 0, detail: `no ${provider.configKey}` };
+
+	// default to the provider's own production timeout so this mirrors the real chain
+	const budget = timeoutMs ?? provider.timeoutMs;
+	const { url, init } = provider.buildRequest(prompt, secret);
 	const t = performance.now();
 	try {
 		const ctrl = new AbortController();
-		const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-		const res = await fetch(url, { ...opts, signal: ctrl.signal });
+		const timer = setTimeout(() => ctrl.abort(), budget);
+		const res = await fetch(url, { ...init, signal: ctrl.signal });
 		clearTimeout(timer);
 		const ms = Math.round(performance.now() - t);
 
 		if (!res.ok) {
 			const err = await res.text().catch(() => '');
-			return { status: 'HTTP_ERR', ms, httpStatus: res.status, detail: err.slice(0, 150) };
+			return {
+				status: classify(res.status),
+				ms,
+				httpStatus: res.status,
+				detail: err.slice(0, 160)
+			};
 		}
 
 		const data = await res.json();
-		const text = provider.extract(data);
+		const text = provider.extractText(data);
 		if (!text) return { status: 'EMPTY', ms };
 
 		const parsed = extractJSON(text);
@@ -144,31 +102,57 @@ async function callProvider(provider, prompt, timeoutMs = 30000) {
 }
 
 function log(name, r) {
-	const tag = r.status === 'OK' ? 'OK' : r.status === 'SKIP' ? 'SKIP' : 'FAIL';
+	const tag =
+		r.status === 'OK'
+			? 'OK'
+			: r.status === 'SKIP'
+				? 'SKIP'
+				: r.status === 'RATE_LIMIT'
+					? 'THROT'
+					: 'FAIL';
 	const info = r.status === 'OK' ? `keys: [${r.keys}]` : r.detail || r.httpStatus || '';
-	console.log(`  ${tag.padEnd(4)} ${name.padEnd(28)} ${String(r.ms).padStart(5)}ms  ${info}`);
+	console.log(`  ${tag.padEnd(5)} ${name.padEnd(24)} ${String(r.ms).padStart(5)}ms  ${info}`);
 }
 
-console.log('=== test 1: small prompt (connectivity) ===\n');
-for (const p of PROVIDERS) log(p.name, await callProvider(p, SMALL_PROMPT));
+if (providers.length === 0) {
+	console.log(
+		'no providers configured. set GEMINI_API_KEY, GROQ_API_KEY or OLLAMA_BASE_URL in .env'
+	);
+	process.exit(1);
+}
+
+console.log('chain (in fallback order), taken from buildProviders:\n');
+for (const p of providers) {
+	const { init } = p.buildRequest('x', 'x');
+	const b = JSON.parse(init.body);
+	const tokens =
+		b.max_tokens ?? b.generationConfig?.maxOutputTokens ?? b.options?.num_predict ?? '?';
+	console.log(`  ${p.name.padEnd(24)} timeout ${p.timeoutMs}ms  max output ${tokens}`);
+}
+
+console.log('\n=== test 1: small prompt (connectivity) ===\n');
+for (const p of providers) log(p.name, await callProvider(p, SMALL_PROMPT));
 
 console.log('\n=== test 2: large prompt (~6K tokens, realistic resume) ===\n');
 console.log(
 	`  prompt size: ${BIG_PROMPT.length} chars (~${Math.round(BIG_PROMPT.length / 4)} tokens)\n`
 );
-for (const p of PROVIDERS) log(p.name, await callProvider(p, BIG_PROMPT, 45000));
+for (const p of providers) log(p.name, await callProvider(p, BIG_PROMPT, 45000));
 
 console.log('\n=== test 3: fallback chain simulation ===\n');
 let resolved = false;
-for (const p of PROVIDERS) {
+for (const p of providers) {
 	const r = await callProvider(p, BIG_PROMPT, 45000);
 	if (r.status === 'OK') {
 		console.log(`  resolved: ${p.name} (${r.ms}ms)`);
 		resolved = true;
 		break;
 	}
-	console.log(`  ${p.name}: ${r.status} (${r.ms}ms) → next`);
+	console.log(`  ${p.name}: ${r.status} (${r.ms}ms) -> next`);
 }
-if (!resolved) console.log('  ALL FAILED → 503');
+if (!resolved) console.log('  ALL FAILED -> 503');
 
+console.log(
+	'\nnote: THROT is a per-minute token ceiling, not a broken provider. re-run after a minute.'
+);
 console.log('\n=== done ===');
