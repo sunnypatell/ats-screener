@@ -4,7 +4,8 @@ import {
 	buildOllamaProvider,
 	buildGoogleProvider,
 	buildGroqProvider,
-	buildCerebrasProvider
+	buildCerebrasProvider,
+	PROVIDER_ENV_KEYS
 } from '../../../src/routes/api/analyze/providers';
 
 describe('buildProviders: chain composition', () => {
@@ -322,5 +323,47 @@ describe('buildProviders: cerebras leg', () => {
 	it('still pairs with google once groq is dropped', () => {
 		const chain = buildProviders({ GEMINI_API_KEY: 'k', CEREBRAS_API_KEY: 'k' });
 		expect(chain.map((p) => p.name)).toEqual(['gemini-3.5-flash-lite', 'cerebras-llama-3.3-70b']);
+	});
+});
+
+describe('PROVIDER_ENV_KEYS covers every leg', () => {
+	// deliberately hardcoded and NOT derived from PROVIDER_ENV_KEYS. deriving it makes
+	// the assertion circular: dropping a name from the list would also drop it from the
+	// env, the leg would never build, and the test would pass while the route broke
+	const EVERY_PROVIDER_ENV: Record<string, string> = {
+		GEMINI_API_KEY: 'k',
+		GROQ_API_KEY: 'k',
+		CEREBRAS_API_KEY: 'k',
+		OLLAMA_BASE_URL: 'http://127.0.0.1:11434',
+		OLLAMA_MODEL: 'llama3.2',
+		OLLAMA_API_KEY: 'k'
+	};
+
+	// the bug this exists to stop: the route copies env into a plain object before
+	// calling buildProviders, so a configKey missing from that copy silently disables
+	// a whole provider no matter how the deployment sets the variable
+	it('contains the configKey of every provider the chain can produce', () => {
+		const chain = buildProviders(EVERY_PROVIDER_ENV);
+		expect(chain.length).toBeGreaterThan(0);
+		for (const p of chain) {
+			expect(PROVIDER_ENV_KEYS).toContain(p.configKey);
+		}
+	});
+
+	// guards the hardcoded env above from going stale when a provider is added
+	it('builds one leg per vendor from a fully populated env', () => {
+		expect(buildProviders(EVERY_PROVIDER_ENV).map((p) => p.name)).toEqual([
+			'ollama-llama3.2',
+			'gemini-3.5-flash-lite',
+			'groq-llama-3.3-70b',
+			'cerebras-llama-3.3-70b'
+		]);
+	});
+
+	// read inside buildProviders but not a configKey any provider keys on, so they
+	// would be silently dropped by the route without being listed
+	it('lists the ollama tuning vars that no provider keys on', () => {
+		expect(PROVIDER_ENV_KEYS).toContain('OLLAMA_MODEL');
+		expect(PROVIDER_ENV_KEYS).toContain('OLLAMA_API_KEY');
 	});
 });
