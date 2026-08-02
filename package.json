@@ -38,7 +38,7 @@
 		"mammoth": "^1.12.0",
 		"motion": "^12.43.0",
 		"motion-sv": "^0.1.13",
-		"pdfjs-dist": "^4.10.38"
+		"pdfjs-dist": "^6.2.108"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
