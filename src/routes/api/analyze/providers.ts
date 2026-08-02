@@ -61,7 +61,7 @@ export function buildGoogleProvider(
 			url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
 			init: {
 				method: 'POST',
-				// key goes in the header, not ?key=, so it never lands in request logs
+				// key goes in the header, not ?key=, so it stays out of urls and request lines
 				headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
 				body: JSON.stringify({
 					contents: [{ parts: [{ text: prompt }] }],

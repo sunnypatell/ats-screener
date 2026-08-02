@@ -66,10 +66,13 @@ function rfc822(isoDate: string): string {
 	return d.toUTCString();
 }
 
-let cached: { xml: string; etag: string } | null = null;
+// keyed by origin: one deployment answers on both the project domain and the generated
+// one, and origin is baked into the channel link and the atom self-link below
+const cache = new Map<string, { xml: string; etag: string }>();
 
 function buildFeed(origin: string): { xml: string; etag: string } {
-	if (cached) return cached;
+	const hit = cache.get(origin);
+	if (hit) return hit;
 
 	const releases = parseChangelog(changelogRaw);
 	const buildDate = new Date().toUTCString();
@@ -107,8 +110,9 @@ ${items}
 	// content-addressed-ish etag based on the version+date pairs. cheap to
 	// compute, stable across cold starts as long as CHANGELOG.md is unchanged.
 	const etag = `"rel-${releases.map((r) => `${r.version}@${r.date}`).join(',')}"`;
-	cached = { xml, etag };
-	return cached;
+	const feed = { xml, etag };
+	cache.set(origin, feed);
+	return feed;
 }
 
 export const GET: RequestHandler = ({ url, request }) => {
