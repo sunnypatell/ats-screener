@@ -1,5 +1,6 @@
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
+// vitest 4 dropped `test` from vite's UserConfig type, so defineConfig comes from vitest
+import { defineConfig } from 'vitest/config';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -24,6 +25,8 @@ export default defineConfig({
 		include: ['tests/unit/**/*.test.ts'],
 		environment: 'jsdom',
 		globals: true,
+		// vitest 4 stopped resetting vi.fn() mocks in restoreAllMocks, so call history leaks between tests
+		clearMocks: true,
 		setupFiles: ['tests/setup.ts']
 	},
 	worker: {

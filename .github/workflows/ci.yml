@@ -10,8 +10,10 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [20]
+        # 22 is the engines floor, 24 is what vercel actually builds on
+        node-version: [22, 24]
 
     env:
       PUBLIC_FIREBASE_API_KEY: ci-placeholder

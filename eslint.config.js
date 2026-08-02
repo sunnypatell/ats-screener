@@ -18,7 +18,8 @@ export default ts.config(
 		}
 	},
 	{
-		files: ['**/*.svelte'],
+		// rune modules need the svelte parser too, else v3 falls back to espree and can't parse them
+		files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
 		languageOptions: {
 			parserOptions: {
 				parser: ts.parser
@@ -29,7 +30,11 @@ export default ts.config(
 		rules: {
 			'no-console': ['warn', { allow: ['warn', 'error'] }],
 			'@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-			'@typescript-eslint/no-explicit-any': 'warn'
+			'@typescript-eslint/no-explicit-any': 'warn',
+			// new in eslint-plugin-svelte v3. warn (not off) until each site is migrated deliberately:
+			// keying an each block changes dom reuse, and resolve() changes routing calls
+			'svelte/require-each-key': 'warn',
+			'svelte/no-navigation-without-resolve': 'warn'
 		}
 	},
 	{

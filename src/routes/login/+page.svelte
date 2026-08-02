@@ -127,7 +127,7 @@
 						type="text"
 						name="username"
 						value={form?.username ?? ''}
-						placeholder={'DOMAIN\\username or you@domain.com'}
+						placeholder="DOMAIN\username or you@domain.com"
 						required
 						autocomplete="username"
 						autocapitalize="none"

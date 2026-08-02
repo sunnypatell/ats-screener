@@ -45,7 +45,7 @@ pnpm add -D @sveltejs/adapter-netlify
 ## Docker
 
 ```dockerfile
-FROM node:20-slim AS base
+FROM node:24-slim AS base
 RUN npm i -g pnpm
 
 WORKDIR /app
@@ -55,7 +55,7 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm build
 
-FROM node:20-slim
+FROM node:24-slim
 WORKDIR /app
 COPY --from=base /app/build ./build
 COPY --from=base /app/package.json .

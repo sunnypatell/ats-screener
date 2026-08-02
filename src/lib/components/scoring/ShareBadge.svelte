@@ -128,6 +128,7 @@
 	function shareToTwitter() {
 		// X has a 280-char tweet cap; build a tighter version of shareText
 		const tight = `Just scored ${avgScore}/100 on ATS Screener (free, simulates how Workday, Lever, iCIMS and others actually parse resumes). ${passCount}/${totalCount} systems passed.`;
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and stringified in the same tick
 		const params = new URLSearchParams({ text: tight });
 		if (shareUrl) params.set('url', shareUrl);
 		const url = `https://twitter.com/intent/tweet?${params.toString()}`;

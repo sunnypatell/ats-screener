@@ -11,6 +11,7 @@
 	// generated client-side via $effect so SSR renders an empty sparkle layer
 	// and hydration matches; otherwise random positions diverge between server
 	// and client and svelte logs a hydration_mismatch warning
+	// eslint-disable-next-line svelte/prefer-writable-derived -- $derived runs during ssr and reintroduces the mismatch
 	let sparkles = $state<Sparkle[]>([]);
 	$effect(() => {
 		sparkles = Array.from({ length: 5 }, (_, i) => ({

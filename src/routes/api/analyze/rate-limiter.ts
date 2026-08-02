@@ -27,8 +27,7 @@ const stats = {
 };
 
 export type RateLimitResult =
-	| { allowed: true }
-	| { allowed: false; reason: 'minute' | 'daily'; retryAfterSec: number };
+	{ allowed: true } | { allowed: false; reason: 'minute' | 'daily'; retryAfterSec: number };
 
 export function checkRateLimit(ip: string): RateLimitResult {
 	stats.totalChecks += 1;
