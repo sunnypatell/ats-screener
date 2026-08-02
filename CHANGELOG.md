@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-08-02
+
+maintenance cycle. the dependency tree had drifted far enough to carry 137 advisories across the two manifests, dependabot had never been configured and its alerts were switched off, and there was no code scanning at all. this brings the tree current and adds the automation so it cannot drift back. no user-facing behaviour changes: the scoring engine, parsers, ATS profiles and UI are untouched.
+
+**breaking for self-hosters.** the node floor moves from `>=20.0.0` to `^22.13.0 || >=24.0.0`. node 20 [reached end-of-life on 2026-04-30](https://github.com/nodejs/release#end-of-life-releases) and vercel already builds this project on node 24, so ci was the only thing still pinned to 20. because `.npmrc` sets `engine-strict=true`, installing on node 20 now fails immediately at install rather than halfway through a build. `.nvmrc` moves to 24, and the self-hosting docs and dockerfile follow.
+
+### Removed
+
+- **`@selemondev/svelte-marquee`**, a production dependency that was never imported anywhere in the repo. `LogoMarquee.svelte` is a hand-written css marquee with no imports, and the package appeared exactly once: the line in `package.json` declaring it. it was pulling `tailwindcss` 4 and `@tailwindcss/vite` into a codebase that deliberately uses css custom properties and no tailwind, plus `shiki-block-svelte`, a syntax highlighter, which was the sole source of all 17 dompurify advisories in the tree.
+
+### Security
+
+- **the gemini api key no longer travels in the request url.** `src/routes/api/analyze/providers.ts` passed `GEMINI_API_KEY` as a `?key=` query parameter, which puts the secret in the request line and therefore into vercel function logs and any intermediary proxy log. it now goes in the `x-goog-api-key` header, matching how the groq provider already used `Authorization`. verified against the live api on the real production model `gemini-3.5-flash-lite`, and end-to-end through `POST /api/analyze`, before and after.
+- **dependabot alerts, security updates and private vulnerability reporting enabled**, plus a `.github/dependabot.yml` tailored to this repo. updates are grouped rather than per-package, because ungrouped the root manifest alone would open roughly 25 pull requests a month: `toolchain` moves every dev dependency together (they are peer-locked to each other, so `vite-plugin-svelte` 7 without `vite` 8 simply fails to install), `runtime` groups production dependencies up to minor while majors land solo for individual review, and the docs manifest moves astro and starlight together because starlight peers on an exact astro major. a 7-day cooldown (21 for majors) means a compromised release has time to be yanked before it is ever adopted.
+- **codeql code scanning** on push, pull request and a weekly schedule, using the `extended` query suite and covering the `actions` language so workflow script injection is in scope.
+- **`dependency-review` on pull requests** at `fail-on-severity: high`, so the cleanup cannot silently regress, dependabot's own pull requests included. both workflows also gained least-privilege `permissions` blocks and concurrency groups, and `pnpm/action-setup` is now sha-pinned since a mutable tag on a third-party action can be repointed at new code.
+- **advisory count: 101 to 2 on the root manifest, 36 to 0 on docs.** almost all of it came from refreshing a stale lockfile within version ranges that were already declared, not from overrides; the single override added is `rollup@<4.59.0`, build-time only. the two remaining root findings are dismissed on the security tab with reasoning rather than left open: `sharp` (high) is an optional dependency of `@vercel/og`, whose libvips cves are image-decode bugs, and `/api/og` accepts four clamped integers and renders a satori tree without ever decoding an untrusted image; `cookie` (low) is pinned by `@sveltejs/kit` at `^0.6.0`, and kit sets the cookie names itself so the out-of-bounds character issue is unreachable from user input.
+
+### Changed
+
+- **build toolchain majors**: vite 6 to 8 (now rolldown-backed), vitest 3 to 4, eslint 9 to 10, `@sveltejs/vite-plugin-svelte` 5 to 7, `eslint-plugin-svelte` 2 to 3, jsdom 25 to 29, `prettier-plugin-svelte` 3 to 4, typescript 5 to 6, plus every in-range minor across the tree.
+- **`pdfjs-dist` 4 to 6.** this is the core resume-parsing path with no security driver behind the bump, so it was verified rather than assumed: the exact api surface the parser uses (`getDocument`, `getTextContent`, `getOperatorList`, `OPS.paintImage*`, `page.objs.get`, `TextItem`) was diffed across both versions against a two-page fixture with right-aligned columns and a four-column skills row, producing byte-identical line reconstruction. the emitted worker chunk and its hashed reference were also checked, since a broken worker url fails at runtime in the browser with no build error.
+- **docs**: astro 5 to 7, starlight 0.37 to 0.41, sharp 0.34 to 0.35. no config migration was required.
+- **ci** runs a `[22, 24]` node matrix instead of a single node 20 leg, covering the engines floor and the version vercel actually builds on.
+- **`build:docs` installs with `--frozen-lockfile`.** it previously ran a plain `pnpm install`, so the docs lockfile could drift silently during a production build.
+- **`svelte/require-each-key` and `svelte/no-navigation-without-resolve` are warnings, not errors.** both are new in `eslint-plugin-svelte` 3 and account for 76 of the 85 errors the upgrade surfaced. most sites are static lists like `{#each [0,1]}` where a key is ceremony, but a handful genuinely change dom reuse, so migrating them belongs in its own reviewable change rather than buried in a dependency bump.
+- **held deliberately**: typescript above 6.1 (typescript-eslint peers cap at `<6.1.0`), jsdom 30 (requires node `^24.15.0` while vercel builds on 24.13.x), `@types/node` majors (should track the deployed runtime, not npm latest, or the types describe apis that do not exist at runtime), and pnpm 11 (a package-manager major does not belong in a dependency refresh). each is encoded as a dependabot ignore rule so they are not re-proposed.
+
+### Fixed
+
+- **clean-checkout builds no longer fail on a missing tsconfig.** the root `tsconfig.json` extends the sveltekit-generated `./.svelte-kit/tsconfig.json`, and astro 7 (via vite 8) walks up out of `docs/` and reads it while loading its own config. because `build:docs` ran before anything generated that file, a fresh checkout died with `Tsconfig not found`. astro 5 never walked up, so the upgrade exposed a latent landmine rather than causing one. a `prepare` script now runs `svelte-kit sync` after install, and `build` syncs explicitly so the production path does not depend on install lifecycle behaviour.
+- **`.nvmrc` pointed at node 20** while `engines` required 22 or 24. combined with `engine-strict=true` that made `nvm use && pnpm install` fail outright with `ERR_PNPM_UNSUPPORTED_ENGINE` for anyone setting the repo up fresh.
+- **five rune store modules were not being linted at all.** `eslint-plugin-svelte` 3 needs `.svelte.ts` and `.svelte.js` routed through the svelte parser; without that entry in `eslint.config.js` it silently fell back to espree and emitted parse errors instead of lint results for `auth.svelte.ts`, `jd-library.svelte.ts`, `resume.svelte.ts`, `scores.svelte.ts` and `settings.svelte.ts`.
+- **cross-test mock leakage.** vitest 4 narrowed `restoreAllMocks()` to spies created with `vi.spyOn`, so `vi.fn()` call history stopped being reset between tests and a logger assertion began counting 2 invocations instead of 1. fixed with `clearMocks: true` in the vitest config rather than per-file, since all 46 test files shared the latent assumption.
+
+### Tests
+
+- 468 passing, unchanged in count. this cycle adds no new suites; the vitest 4 isolation fix above repairs a real cross-test dependency that the old `restoreAllMocks` semantics had been masking, and the full gate was run on both node 22 and node 24.
+
 ## [0.4.0] - 2026-06-02
 
 self-host authentication cycle: active directory / ldap sign-in (closes [#16](https://github.com/sunnypatell/ats-screener/issues/16)) and a true firebase-free self-host (closes [#13](https://github.com/sunnypatell/ats-screener/issues/13)). purely additive: the hosted firebase deployment is byte-identical, and the anonymous self-host path is unchanged.
