@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-08-02
+
+### Fixed
+
+- **the `/releases.xml` rss feed served zero items in production.** the endpoint read `CHANGELOG.md` with `readFileSync(join(process.cwd(), ...))` at request time, wrapped in a `catch` that fell back to an empty string. that works locally, where `process.cwd()` is the repo root, but on vercel the changelog is never traced into the function bundle because `@vercel/nft` cannot statically resolve a `process.cwd()` path, so every request silently produced a valid but empty feed. the changelog is now inlined at build time via a vite `?raw` import, which puts it in the serverless bundle and removes the runtime filesystem read entirely. present since the feed was introduced in 0.3.0, and invisible because the failure path was a silent fallback rather than an error.
+
 ## [0.5.0] - 2026-08-02
 
 maintenance cycle. the dependency tree had drifted far enough to carry 137 advisories across the two manifests, dependabot had never been configured and its alerts were switched off, and there was no code scanning at all. this brings the tree current and adds the automation so it cannot drift back. no user-facing behaviour changes: the scoring engine, parsers, ATS profiles and UI are untouched.

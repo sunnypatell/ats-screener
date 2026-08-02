@@ -1,5 +1,6 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+// ?raw inlines the changelog at build time. reading it from process.cwd() at runtime
+// silently yielded an empty feed on vercel, where nft cannot trace a dynamic path
+import changelogRaw from '../../../CHANGELOG.md?raw';
 import type { RequestHandler } from './$types';
 
 // rss 2.0 feed of releases parsed from CHANGELOG.md.
@@ -70,13 +71,7 @@ let cached: { xml: string; etag: string } | null = null;
 function buildFeed(origin: string): { xml: string; etag: string } {
 	if (cached) return cached;
 
-	let raw: string;
-	try {
-		raw = readFileSync(join(process.cwd(), 'CHANGELOG.md'), 'utf-8');
-	} catch {
-		raw = '';
-	}
-	const releases = parseChangelog(raw);
+	const releases = parseChangelog(changelogRaw);
 	const buildDate = new Date().toUTCString();
 
 	const items = releases
