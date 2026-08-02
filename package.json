@@ -5,14 +5,15 @@
 	"license": "MIT",
 	"type": "module",
 	"engines": {
-		"node": ">=20.0.0",
+		"node": "^22.13.0 || >=24.0.0",
 		"pnpm": ">=10.0.0"
 	},
 	"packageManager": "pnpm@10.32.1",
 	"scripts": {
+		"prepare": "svelte-kit sync || echo ''",
 		"dev": "vite dev",
-		"build": "pnpm build:docs && vite build",
-		"build:docs": "cd docs && pnpm install && pnpm build && cd .. && rm -rf static/docs && cp -r docs/dist static/docs",
+		"build": "svelte-kit sync && pnpm build:docs && vite build",
+		"build:docs": "cd docs && pnpm install --frozen-lockfile && pnpm build && cd .. && rm -rf static/docs && cp -r docs/dist static/docs",
 		"build:app": "vite build",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -29,48 +30,50 @@
 		"gate": "pnpm validate"
 	},
 	"dependencies": {
-		"@number-flow/svelte": "^0.3.11",
-		"@selemondev/svelte-marquee": "^0.1.1",
+		"@number-flow/svelte": "^0.4.2",
 		"@vercel/og": "^0.11.1",
-		"bits-ui": "^2.16.0",
-		"compromise": "^14.14.3",
-		"firebase": "^12.12.1",
+		"bits-ui": "^2.18.1",
+		"compromise": "^14.16.0",
+		"firebase": "^12.17.0",
 		"jspdf": "^4.2.1",
 		"mammoth": "^1.12.0",
-		"motion": "^12.0.0",
-		"motion-sv": "^0.1.10",
-		"pdfjs-dist": "^4.10.38"
+		"motion": "^12.43.0",
+		"motion-sv": "^0.1.13",
+		"pdfjs-dist": "^6.2.108"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
-		"@playwright/test": "^1.49.0",
-		"@sveltejs/adapter-vercel": "^6.3.2",
-		"@sveltejs/kit": "^2.16.0",
-		"@sveltejs/vite-plugin-svelte": "^5.0.0",
-		"@testing-library/svelte": "^5.2.0",
-		"@types/node": "^22.10.0",
-		"eslint": "^9.16.0",
-		"eslint-plugin-svelte": "^2.46.0",
-		"globals": "^15.14.0",
-		"jsdom": "^25.0.0",
-		"open-props": "^1.7.0",
-		"prettier": "^3.4.0",
-		"prettier-plugin-svelte": "^3.3.0",
-		"svelte": "^5.16.0",
-		"svelte-check": "^4.1.0",
-		"typescript": "^5.7.0",
-		"typescript-eslint": "^8.18.0",
-		"vite": "^6.0.0",
-		"vitest": "^3.2.4"
+		"@playwright/test": "^1.62.1",
+		"@sveltejs/adapter-vercel": "^6.3.4",
+		"@sveltejs/kit": "^2.70.2",
+		"@sveltejs/vite-plugin-svelte": "^7.2.0",
+		"@testing-library/svelte": "^5.4.2",
+		"@types/node": "^24.13.3",
+		"eslint": "^10.8.0",
+		"eslint-plugin-svelte": "^3.22.0",
+		"globals": "^17.9.0",
+		"jsdom": "^29.1.1",
+		"open-props": "^1.7.23",
+		"prettier": "^3.9.6",
+		"prettier-plugin-svelte": "^4.1.1",
+		"svelte": "^5.56.8",
+		"svelte-check": "^4.7.4",
+		"typescript": "^5.9.3",
+		"typescript-eslint": "^8.65.0",
+		"vite": "^8.2.0",
+		"vitest": "^4.1.10"
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": [
 			"esbuild",
 			"sharp",
 			"workerd"
-		]
+		],
+		"overrides": {
+			"rollup@<4.59.0": "^4.59.0"
+		}
 	},
 	"optionalDependencies": {
-		"ldapts": "^8.1.8"
+		"ldapts": "^9.0.0"
 	}
 }

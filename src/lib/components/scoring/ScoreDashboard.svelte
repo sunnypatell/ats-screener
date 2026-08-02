@@ -52,6 +52,7 @@
 
 	// deduplicate suggestions across all platforms
 	const allSuggestions = $derived.by(() => {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local dedup accumulator, never read reactively
 		const seen = new Set<string>();
 		const suggestions: Suggestion[] = [];
 		for (const r of scoresStore.results) {

@@ -15,6 +15,7 @@
 	// og:image points at the dynamic edge endpoint with the same query, so when
 	// LinkedIn/Twitter fetches this page they get a per-share PNG preview
 	const ogImageQuery = $derived.by(() => {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and stringified in the same tick
 		const params = new URLSearchParams();
 		params.set('score', String(score));
 		params.set('pass', String(pass));

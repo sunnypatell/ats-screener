@@ -7,8 +7,8 @@ ATS Screener can be self-hosted for free. You'll need at least one LLM API key.
 
 ## Prerequisites
 
-- **Node.js** 18+ (20 recommended)
-- **pnpm** 8+ (package manager)
+- **Node.js** 22.13+ or 24+ ([Node 20 reached end-of-life on 2026-04-30](https://github.com/nodejs/release#end-of-life-releases))
+- **pnpm** 10+ (package manager)
 - A free API key from [Google AI Studio](https://aistudio.google.com/apikey) (required for Gemini 3.5 Flash Lite)
 
 ## Installation

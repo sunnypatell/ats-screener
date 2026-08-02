@@ -24,6 +24,7 @@
 	// SSR renders an empty field; client fills in after hydration to keep the
 	// rendered output deterministic across server and client renders. tracking
 	// count/maxSize/speed inside $effect keeps the array in sync with prop changes.
+	// eslint-disable-next-line svelte/prefer-writable-derived
 	let particles = $state<Particle[]>([]);
 	$effect(() => {
 		particles = Array.from({ length: count }, () => ({

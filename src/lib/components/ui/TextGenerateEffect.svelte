@@ -28,6 +28,7 @@
 
 <span class="text-generate {className}">
 	{#each words as word, i}
+		<!-- eslint-disable-next-line svelte/no-useless-mustaches -- forces a space svelte would otherwise collapse -->
 		<span class="word" class:visible={started && i < visibleCount}>{word}{' '}</span>
 	{/each}
 </span>

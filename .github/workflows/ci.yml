@@ -6,12 +6,21 @@ on:
   pull_request:
     branches: [main, dev]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   validate:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [20]
+        # 22 is the engines floor, 24 is what vercel actually builds on
+        node-version: [22, 24]
 
     env:
       PUBLIC_FIREBASE_API_KEY: ci-placeholder
@@ -22,11 +31,12 @@ jobs:
       PUBLIC_FIREBASE_APP_ID: '1:000000000000:web:0000000000000000'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      # no version input: action-setup reads the packageManager field in package.json
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
@@ -48,3 +58,20 @@ jobs:
 
       - name: build
         run: pnpm build
+
+  # stops a pr reintroducing a vulnerable dependency, dependabot's own prs included
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure

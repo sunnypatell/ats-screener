@@ -277,8 +277,7 @@
 							placeholder="Paste your resume text here. Plain text works best; section headings (Experience, Education, Skills) help us identify structure."
 							bind:value={pastedText}
 							rows="10"
-							aria-label="Paste resume text"
-						></textarea>
+							aria-label="Paste resume text"></textarea>
 						<div class="paste-actions">
 							<span class="paste-count">{pastedText.length} characters</span>
 							<button
