@@ -31,8 +31,7 @@ export default ts.config(
 			'no-console': ['warn', { allow: ['warn', 'error'] }],
 			'@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
 			'@typescript-eslint/no-explicit-any': 'warn',
-			// new in eslint-plugin-svelte v3. warn (not off) until each site is migrated deliberately:
-			// keying an each block changes dom reuse, and resolve() changes routing calls
+			// new in v3, warn until migrated: keys change dom reuse and resolve() changes routing
 			'svelte/require-each-key': 'warn',
 			'svelte/no-navigation-without-resolve': 'warn'
 		}

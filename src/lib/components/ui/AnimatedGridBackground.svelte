@@ -14,7 +14,7 @@
 	type Highlight = { x: number; y: number; delay: number; duration: number };
 	// generated in $effect so SSR and the initial client render match;
 	// otherwise random coords diverge and svelte logs a hydration_mismatch.
-	// eslint-disable-next-line svelte/prefer-writable-derived -- $derived runs during ssr and reintroduces the mismatch
+	// eslint-disable-next-line svelte/prefer-writable-derived
 	let highlights = $state<Highlight[]>([]);
 	$effect(() => {
 		highlights = Array.from({ length: highlightCount }, () => ({

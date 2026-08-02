@@ -18,7 +18,7 @@
 	// generated in $effect so SSR and the initial client render match. inline
 	// random calls in the template (e.g. tail height) would also diverge, so
 	// every random value is precomputed once per meteor here.
-	// eslint-disable-next-line svelte/prefer-writable-derived -- $derived runs during ssr and reintroduces the mismatch
+	// eslint-disable-next-line svelte/prefer-writable-derived
 	let meteors = $state<Meteor[]>([]);
 	$effect(() => {
 		meteors = Array.from({ length: count }, () => ({

@@ -1,0 +1,87 @@
+version: 2
+
+# three manifests: the app at /, the starlight docs at /docs (own lockfile, not a workspace), the actions in ci.yml
+
+updates:
+  # ---------------------------------------------------------------- app
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+    labels:
+      - dependencies
+    commit-message:
+      prefix: chore
+      prefix-development: chore
+      include: scope
+    # a compromised release is usually yanked within hours, so never adopt one on publish day
+    cooldown:
+      default-days: 7
+      semver-major-days: 21
+    groups:
+      # peer-locked to itself (vite-plugin-svelte 7 needs vite 8, eslint-plugin-svelte 3 needs eslint 10)
+      toolchain:
+        dependency-type: development
+        patterns:
+          - '*'
+      # majors land solo, they carry real behavioural risk here
+      runtime:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # typescript-eslint peers cap at <6.1.0, so ts 7 breaks pnpm lint outright
+      - dependency-name: typescript
+        versions:
+          - '>=7'
+      # jsdom 30 wants node ^22.22.2 || ^24.15.0 and vercel builds on 24.13.x
+      - dependency-name: jsdom
+        versions:
+          - '>=30'
+      # tracks the deployed runtime, not npm latest, else the types describe missing apis
+      - dependency-name: '@types/node'
+        update-types:
+          - version-update:semver-major
+
+  # --------------------------------------------------------------- docs
+  - package-ecosystem: npm
+    directory: /docs
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    versioning-strategy: increase
+    labels:
+      - dependencies
+      - docs
+    commit-message:
+      prefix: chore
+      include: scope
+    cooldown:
+      default-days: 7
+      semver-major-days: 21
+    groups:
+      # starlight peers on an exact astro major, so a solo astro bump never installs
+      astro:
+        patterns:
+          - '*'
+
+  # ------------------------------------------------------------- actions
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    labels:
+      - ci
+    commit-message:
+      prefix: ci
+      include: scope
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns:
+          - '*'
