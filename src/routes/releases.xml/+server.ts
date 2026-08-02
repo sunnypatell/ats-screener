@@ -66,13 +66,12 @@ function rfc822(isoDate: string): string {
 	return d.toUTCString();
 }
 
-// keyed by origin: one deployment answers on both the project domain and the generated
-// one, and origin is baked into the channel link and the atom self-link below
-const cache = new Map<string, { xml: string; etag: string }>();
+// only the two links below depend on origin, so memoise the origin-independent work and
+// interpolate the wrapper per request. caching whole feeds per host would grow unbounded
+let memo: { items: string; etag: string; buildDate: string } | null = null;
 
-function buildFeed(origin: string): { xml: string; etag: string } {
-	const hit = cache.get(origin);
-	if (hit) return hit;
+function buildItems(): { items: string; etag: string; buildDate: string } {
+	if (memo) return memo;
 
 	const releases = parseChangelog(changelogRaw);
 	const buildDate = new Date().toUTCString();
@@ -94,6 +93,16 @@ function buildFeed(origin: string): { xml: string; etag: string } {
 		})
 		.join('\n');
 
+	// content-addressed-ish etag based on the version+date pairs. cheap to
+	// compute, stable across cold starts as long as CHANGELOG.md is unchanged.
+	const etag = `"rel-${releases.map((r) => `${r.version}@${r.date}`).join(',')}"`;
+	memo = { items, etag, buildDate };
+	return memo;
+}
+
+function buildFeed(origin: string): { xml: string; etag: string } {
+	const { items, etag, buildDate } = buildItems();
+
 	const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
 	<channel>
@@ -107,12 +116,7 @@ ${items}
 	</channel>
 </rss>
 `;
-	// content-addressed-ish etag based on the version+date pairs. cheap to
-	// compute, stable across cold starts as long as CHANGELOG.md is unchanged.
-	const etag = `"rel-${releases.map((r) => `${r.version}@${r.date}`).join(',')}"`;
-	const feed = { xml, etag };
-	cache.set(origin, feed);
-	return feed;
+	return { xml, etag };
 }
 
 export const GET: RequestHandler = ({ url, request }) => {
