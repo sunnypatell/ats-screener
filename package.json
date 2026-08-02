@@ -45,7 +45,7 @@
 		"@eslint/js": "^10.0.1",
 		"@playwright/test": "^1.49.0",
 		"@sveltejs/adapter-vercel": "^6.3.2",
-		"@sveltejs/kit": "^2.16.0",
+		"@sveltejs/kit": "^2.69.1",
 		"@sveltejs/vite-plugin-svelte": "^5.0.0",
 		"@testing-library/svelte": "^5.2.0",
 		"@types/node": "^22.10.0",
