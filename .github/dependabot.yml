@@ -33,10 +33,10 @@ updates:
           - minor
           - patch
     ignore:
-      # typescript-eslint peers cap at <6.1.0, so ts 7 breaks pnpm lint outright
+      # typescript-eslint peers cap at <6.1.0, so 6.1 breaks pnpm lint, not just 7
       - dependency-name: typescript
         versions:
-          - '>=7'
+          - '>=6.1'
       # jsdom 30 wants node ^22.22.2 || ^24.15.0 and vercel builds on 24.13.x
       - dependency-name: jsdom
         versions:
