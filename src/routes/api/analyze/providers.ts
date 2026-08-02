@@ -228,6 +228,17 @@ export function buildOllamaProvider(
 // intentional: when Ollama is configured we put it first so a self-hoster who
 // also has cloud keys still defaults to local. callers without any of the
 // three configured will see an empty array and the route returns 503.
+// every env var buildProviders reads. the route copies exactly these out of $env, so a
+// name missing here silently disables a whole leg no matter how the var is configured
+export const PROVIDER_ENV_KEYS = [
+	'GEMINI_API_KEY',
+	'GROQ_API_KEY',
+	'CEREBRAS_API_KEY',
+	'OLLAMA_BASE_URL',
+	'OLLAMA_MODEL',
+	'OLLAMA_API_KEY'
+] as const;
+
 export function buildProviders(env: Record<string, string>): LLMProvider[] {
 	const providers: LLMProvider[] = [];
 	if (env.OLLAMA_BASE_URL) {

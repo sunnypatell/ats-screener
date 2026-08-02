@@ -64,8 +64,9 @@ async function callProvider(provider, prompt, timeoutMs) {
 	const secret = envVars[provider.configKey];
 	if (!secret) return { status: 'SKIP', ms: 0, detail: `no ${provider.configKey}` };
 
-	// default to the provider's own production timeout so this mirrors the real chain
-	const budget = timeoutMs ?? provider.timeoutMs;
+	// never exceed the provider's production timeout, or this reports OK for a call the
+	// real chain would have aborted and fallen through
+	const budget = Math.min(timeoutMs ?? provider.timeoutMs, provider.timeoutMs);
 	const { url, init } = provider.buildRequest(prompt, secret);
 	const t = performance.now();
 	try {
@@ -137,12 +138,12 @@ console.log('\n=== test 2: large prompt (~6K tokens, realistic resume) ===\n');
 console.log(
 	`  prompt size: ${BIG_PROMPT.length} chars (~${Math.round(BIG_PROMPT.length / 4)} tokens)\n`
 );
-for (const p of providers) log(p.name, await callProvider(p, BIG_PROMPT, 45000));
+for (const p of providers) log(p.name, await callProvider(p, BIG_PROMPT));
 
 console.log('\n=== test 3: fallback chain simulation ===\n');
 let resolved = false;
 for (const p of providers) {
-	const r = await callProvider(p, BIG_PROMPT, 45000);
+	const r = await callProvider(p, BIG_PROMPT);
 	if (r.status === 'OK') {
 		console.log(`  resolved: ${p.name} (${r.ms}ms)`);
 		resolved = true;

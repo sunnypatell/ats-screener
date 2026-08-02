@@ -5,7 +5,7 @@ import { buildFullScoringPrompt, buildJDAnalysisPrompt } from '$engine/llm/promp
 import { logger } from '$lib/log';
 import { hashPrompt, getCached, setCached } from './cache';
 import { checkRateLimit } from './rate-limiter';
-import { buildProviders } from './providers';
+import { buildProviders, PROVIDER_ENV_KEYS } from './providers';
 import { resolveAuthMode } from '$lib/server/auth/config';
 
 // tries each provider in sequence until one succeeds and returns valid JSON
@@ -100,9 +100,9 @@ function extractJSON(raw: string): unknown {
 	return null;
 }
 
-// must exceed the sum of every provider timeout in the chain (30 + 15 = 45s) or the
-// last leg gets killed by the platform before it can answer, which silently turns a
-// 2-provider chain into a 1-provider one
+// must exceed the sum of every provider timeout in the chain (30 + 15 + 12 = 57s) or
+// the last leg gets killed by the platform before it can answer, which silently turns
+// a 3-provider chain into a shorter one
 export const config = {
 	maxDuration: 60
 };
@@ -127,20 +127,18 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	// buildProviders() and defaults to llama3.2 when unset; OLLAMA_API_KEY is
 	// optional and, when set, attaches Authorization: Bearer {key} for forks
 	// running Ollama behind a reverse-proxy or hosted Ollama-compatible API.
-	const keys: Record<string, string> = {
-		GEMINI_API_KEY: env.GEMINI_API_KEY ?? '',
-		GROQ_API_KEY: env.GROQ_API_KEY ?? '',
-		OLLAMA_BASE_URL: env.OLLAMA_BASE_URL ?? '',
-		OLLAMA_MODEL: env.OLLAMA_MODEL ?? '',
-		OLLAMA_API_KEY: env.OLLAMA_API_KEY ?? ''
-	};
+	// driven off PROVIDER_ENV_KEYS so adding a provider cannot leave its key behind here
+	const keys: Record<string, string> = Object.fromEntries(
+		PROVIDER_ENV_KEYS.map((k) => [k, env[k] ?? ''])
+	);
 
 	// at least one provider must be configured. cloud-hosted instances set
-	// GEMINI/GROQ; self-hosted forks can opt into Ollama-only by setting
+	// GEMINI/GROQ/CEREBRAS; self-hosted forks can opt into Ollama-only by setting
 	// OLLAMA_BASE_URL with no cloud keys.
 	const hasAnyProvider =
 		keys.GEMINI_API_KEY.length > 0 ||
 		keys.GROQ_API_KEY.length > 0 ||
+		keys.CEREBRAS_API_KEY.length > 0 ||
 		keys.OLLAMA_BASE_URL.length > 0;
 	if (!hasAnyProvider) {
 		return json({ error: 'no LLM providers configured', fallback: true }, { status: 503 });
