@@ -10,8 +10,9 @@
 	},
 	"packageManager": "pnpm@10.32.1",
 	"scripts": {
+		"prepare": "svelte-kit sync || echo ''",
 		"dev": "vite dev",
-		"build": "pnpm build:docs && vite build",
+		"build": "svelte-kit sync && pnpm build:docs && vite build",
 		"build:docs": "cd docs && pnpm install --frozen-lockfile && pnpm build && cd .. && rm -rf static/docs && cp -r docs/dist static/docs",
 		"build:app": "vite build",
 		"preview": "vite preview",
