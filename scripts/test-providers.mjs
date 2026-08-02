@@ -55,10 +55,10 @@ const PROVIDERS = [
 		name: 'gemma-3-27b (Google)',
 		key: GEMINI_KEY,
 		build: (prompt) => ({
-			url: `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=${GEMINI_KEY}`,
+			url: `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent`,
 			opts: {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+				headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
 				body: JSON.stringify({
 					contents: [{ parts: [{ text: prompt }] }],
 					generationConfig: { temperature: 0.3, topP: 0.85, maxOutputTokens: 16384 }
@@ -91,10 +91,10 @@ const PROVIDERS = [
 		name: 'gemini-2.5-flash (Google)',
 		key: GEMINI_KEY,
 		build: (prompt) => ({
-			url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
+			url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
 			opts: {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+				headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
 				body: JSON.stringify({
 					contents: [{ parts: [{ text: prompt }] }],
 					generationConfig: {

@@ -33,8 +33,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # no version input: action-setup reads the packageManager field in package.json
-      - uses: pnpm/action-setup@v6
+      # sha-pinned third-party action. no version input, it reads packageManager from package.json
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
 
       - uses: actions/setup-node@v7
         with:
