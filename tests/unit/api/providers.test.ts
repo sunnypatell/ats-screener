@@ -3,7 +3,8 @@ import {
 	buildProviders,
 	buildOllamaProvider,
 	buildGoogleProvider,
-	buildGroqProvider
+	buildGroqProvider,
+	buildCerebrasProvider
 } from '../../../src/routes/api/analyze/providers';
 
 describe('buildProviders: chain composition', () => {
@@ -168,6 +169,38 @@ describe('cloud provider invariants (regression net)', () => {
 	it('groq provider configKey is GROQ_API_KEY', () => {
 		expect(buildGroqProvider('x', 'm').configKey).toBe('GROQ_API_KEY');
 	});
+
+	it('cerebras provider configKey is CEREBRAS_API_KEY', () => {
+		expect(buildCerebrasProvider('x', 'm').configKey).toBe('CEREBRAS_API_KEY');
+	});
+
+	// the whole chain has to fit the route's maxDuration of 60s or the last leg is
+	// unreachable. 30 + 15 + 12 = 57. raising any of them means raising maxDuration too
+	it('every configured leg fits inside the route maxDuration', () => {
+		const total = buildProviders({
+			GEMINI_API_KEY: 'k',
+			GROQ_API_KEY: 'k',
+			CEREBRAS_API_KEY: 'k'
+		}).reduce((sum, p) => sum + p.timeoutMs, 0);
+		expect(total).toBeLessThan(60_000);
+	});
+
+	// same reachability rule as the other cloud legs. cerebras sustains far more than
+	// this, 500 tok/s is a deliberately pessimistic floor
+	it('cerebras token budget is reachable within its timeout', () => {
+		const c = buildCerebrasProvider('x', 'm');
+		const body = JSON.parse(c.buildRequest('p', 'k').init.body as string);
+		expect((body.max_tokens / 500) * 1000).toBeLessThan(c.timeoutMs);
+	});
+
+	it('cerebras requests JSON natively and sends the key as a bearer header', () => {
+		const req = buildCerebrasProvider('x', 'm').buildRequest('p', 'secret-key');
+		const body = JSON.parse(req.init.body as string);
+		expect(body.response_format).toEqual({ type: 'json_object' });
+		expect(headersOf(req.init).Authorization).toBe('Bearer secret-key');
+		// the key must never reach the url, only the header
+		expect(req.url).not.toContain('secret-key');
+	});
 });
 
 // helper because headers init is HeadersInit (object literal in our case);
@@ -261,5 +294,33 @@ describe('buildProviders: OLLAMA_API_KEY passthrough', () => {
 			OLLAMA_API_KEY: 'sk-stranded'
 		});
 		expect(chain).toEqual([]);
+	});
+});
+
+describe('buildProviders: cerebras leg', () => {
+	// inert until the key is set, exactly like the ollama leg
+	it('is absent when CEREBRAS_API_KEY is unset', () => {
+		const chain = buildProviders({ GEMINI_API_KEY: 'k', GROQ_API_KEY: 'k' });
+		expect(chain.map((p) => p.name)).toEqual(['gemini-3.5-flash-lite', 'groq-llama-3.3-70b']);
+	});
+
+	it('appends after groq so the current chain order is unchanged', () => {
+		const chain = buildProviders({
+			GEMINI_API_KEY: 'k',
+			GROQ_API_KEY: 'k',
+			CEREBRAS_API_KEY: 'k'
+		});
+		expect(chain.map((p) => p.name)).toEqual([
+			'gemini-3.5-flash-lite',
+			'groq-llama-3.3-70b',
+			'cerebras-llama-3.3-70b'
+		]);
+	});
+
+	// groq loses its only viable model on 2026-08-16, so cerebras alone must still
+	// give a cross-vendor fallback next to google
+	it('still pairs with google once groq is dropped', () => {
+		const chain = buildProviders({ GEMINI_API_KEY: 'k', CEREBRAS_API_KEY: 'k' });
+		expect(chain.map((p) => p.name)).toEqual(['gemini-3.5-flash-lite', 'cerebras-llama-3.3-70b']);
 	});
 });

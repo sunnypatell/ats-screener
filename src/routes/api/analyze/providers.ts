@@ -126,6 +126,49 @@ export function buildGroqProvider(
 	};
 }
 
+// Cerebras is the replacement cross-vendor leg for Groq, which loses its only model
+// that fits this prompt on 2026-08-16. same OpenAI-shaped contract, and it serves the
+// same llama-3.3-70b this prompt was already tuned against, so output size carries over.
+// inert until CEREBRAS_API_KEY is set, exactly like the Ollama leg.
+const CEREBRAS_MAX_TOKENS = 3072;
+
+export function buildCerebrasProvider(
+	name: string,
+	model: string,
+	opts?: { maxTokens?: number }
+): LLMProvider {
+	return {
+		name,
+		configKey: 'CEREBRAS_API_KEY',
+		// 30 + 15 + 12 = 57s, inside the route's maxDuration of 60. cerebras is the
+		// fastest leg in the chain, so 12s is already generous for a 3072 token budget
+		timeoutMs: 12_000,
+		buildRequest: (prompt, apiKey) => ({
+			url: 'https://api.cerebras.ai/v1/chat/completions',
+			init: {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${apiKey}`
+				},
+				body: JSON.stringify({
+					model,
+					messages: [{ role: 'user', content: prompt }],
+					temperature: 0.3,
+					top_p: 0.85,
+					max_tokens: opts?.maxTokens ?? CEREBRAS_MAX_TOKENS,
+					response_format: { type: 'json_object' }
+				})
+			}
+		}),
+		extractText: (data: unknown) => {
+			if (!data || typeof data !== 'object') return '';
+			const d = data as { choices?: { message?: { content?: string } }[] };
+			return d.choices?.[0]?.message?.content ?? '';
+		}
+	};
+}
+
 // Ollama provider for self-hosters. local daemon by default needs no key;
 // reverse-proxied or hosted Ollama-compatible endpoints (OpenWebUI, LiteLLM,
 // Caddy + bearer auth, Cloudflare-tunnel + service token, etc.) take an
@@ -209,10 +252,19 @@ export function buildProviders(env: Record<string, string>): LLMProvider[] {
 	}
 	if (env.GROQ_API_KEY) {
 		// cross-vendor last resort so a total Google outage still scores.
-		// EXPIRES 2026-08-16: llama-3.3-70b-versatile shuts down then, and no remaining
-		// Groq free-tier model fits this prompt (8K TPM ceiling vs ~9.3K needed), so
-		// this leg has to be dropped or the prompt shrunk before that date.
+		// EXPIRES 2026-08-16: llama-3.3-70b-versatile shuts down then. measured against
+		// the real capped prompt (6,000 char resume + 4,000 char JD), nothing left on the
+		// Groq free tier can replace it: input alone is 5,981 tokens on llama and 6,115 on
+		// qwen, the surviving models cap at 8,000 TPM and Groq reserves input + max_tokens
+		// up front, and the response needs 1,944. qwen 413s at Requested 8015 / Limit 8000
+		// even with max_tokens down at 1,900, and both gpt-oss sizes 400 on json_object
+		// with this prompt. Cerebras below is the replacement leg.
 		providers.push(buildGroqProvider('groq-llama-3.3-70b', 'llama-3.3-70b-versatile'));
+	}
+	if (env.CEREBRAS_API_KEY) {
+		// same llama-3.3-70b the prompt is already tuned against, on a free tier whose
+		// per-minute ceiling is not the binding constraint Groq's became.
+		providers.push(buildCerebrasProvider('cerebras-llama-3.3-70b', 'llama-3.3-70b'));
 	}
 	return providers;
 }
