@@ -20,8 +20,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 22 is the engines floor, 24 is what vercel actually builds on, 26 is current
+        # 22 is the engines floor, 24 is what vercel actually builds on, 26 is current.
+        # the vercel adapter hard-rejects node 26 at build time, so the production
+        # build only runs on the node versions it supports; everything else
+        # (check, lint, format, 484 unit tests) runs on all three.
         node-version: [22, 24, 26]
+        include:
+          - node-version: 22
+            build: true
+          - node-version: 24
+            build: true
+          - node-version: 26
+            build: false
 
     env:
       PUBLIC_FIREBASE_API_KEY: ci-placeholder
@@ -51,6 +61,7 @@ jobs:
       - name: unit tests
         run: pnpm test
       - name: build
+        if: matrix.build != false
         run: pnpm build
 
   # stops a pr reintroducing a vulnerable dependency, dependabot's own prs included
