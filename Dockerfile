@@ -17,6 +17,14 @@ RUN pnpm add -D @sveltejs/adapter-node@5.5.7 \
     && sed -i "s#@sveltejs/adapter-vercel#@sveltejs/adapter-node#" svelte.config.js
 
 RUN pnpm build:app
+
+# test stage: snapshot of the builder with full devDependencies, so the whole
+# unit suite runs inside the container. CI builds this target and executes it.
+FROM builder AS test
+CMD ["pnpm", "test"]
+
+# pruned stage: snapshot of the builder with devDependencies removed
+FROM builder AS pruned
 RUN pnpm prune --prod
 
 FROM node:22-bookworm-slim AS runner
@@ -37,9 +45,9 @@ ENV PORT=3000
 ENV OCR_ENABLED=true
 ENV PUBLIC_DETERMINISTIC_ONLY=true
 
-COPY --from=builder /app/build ./build
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
+COPY --from=pruned /app/build ./build
+COPY --from=pruned /app/node_modules ./node_modules
+COPY --from=pruned /app/package.json ./package.json
 
 EXPOSE 3000
 

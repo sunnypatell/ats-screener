@@ -1,0 +1,37 @@
+services:
+  ats-screener:
+    build: .
+    image: ats-screener:latest
+    container_name: ats-screener
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      # deterministic local scoring by default; set to "false" to prefer the
+      # LLM scoring chain (requires a provider key below)
+      PUBLIC_DETERMINISTIC_ONLY: 'true'
+      # self-hosted Tesseract OCR (por+eng) + Poppler rendering, bundled in the image
+      OCR_ENABLED: 'true'
+      # optional LLM provider keys for the fallback/LLM scoring chain
+      # CEREBRAS_API_KEY: ${CEREBRAS_API_KEY:-}
+      # GROQ_API_KEY: ${GROQ_API_KEY:-}
+      # GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      # OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      # OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3}
+      # session signing secret for LDAP sign-in (generate with: openssl rand -hex 32)
+      # SESSION_SECRET: ${SESSION_SECRET:-}
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3

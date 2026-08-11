@@ -19,8 +19,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 22 is the engines floor, 24 is what vercel actually builds on
-        node-version: [22, 24]
+        # 22 is the engines floor, 24 is what vercel actually builds on, 26 is current
+        node-version: [22, 24, 26]
 
     env:
       PUBLIC_FIREBASE_API_KEY: ci-placeholder
@@ -77,17 +77,33 @@ jobs:
       - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
       - name: deterministic scanner e2e
         run: pnpm exec playwright test tests/e2e/deterministic-scanner.spec.ts --project=chromium
 
-  docker-build:
+  docker:
     needs: validate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: build production OCR image
-        run: docker build --tag ats-screener:test .
+
+      - name: build test target and run the unit suite inside the container
+        run: |
+          docker build --target test --tag ats-screener:test .
+          docker run --rm ats-screener:test
+
+      - name: build production OCR runner image
+        run: docker build --tag ats-screener:runner .
+
+      - name: validate docker-compose config
+        run: docker compose config --quiet
+
+      - name: boot the runner image and hit the health endpoint
+        run: |
+          docker run -d --name ats-smoke -p 3000:3000 ats-screener:runner
+          trap 'docker rm -f ats-smoke >/dev/null 2>&1' EXIT
+          timeout 90 bash -c 'until curl -fsS http://127.0.0.1:3000/ >/dev/null 2>&1; do sleep 2; done'
+          curl -fsS http://127.0.0.1:3000/ >/dev/null && echo "runner image responds OK"
