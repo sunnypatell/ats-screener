@@ -34,5 +34,5 @@ test('parses and scores a Portuguese resume without an LLM', async ({ page }) =>
 	await expect(page.getByText('Gupy-like', { exact: true }).first()).toBeVisible({
 		timeout: 30_000
 	});
-	await expect(page.getByText(/Systems passed/i)).toBeVisible();
+	await expect(page.getByText('Systems passed', { exact: true })).toBeVisible();
 });
