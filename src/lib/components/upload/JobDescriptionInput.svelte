@@ -51,7 +51,12 @@
 </script>
 
 <div class="job-description">
-	<button class="toggle" type="button" onclick={() => (expanded = !expanded)} aria-expanded={expanded}>
+	<button
+		class="toggle"
+		type="button"
+		onclick={() => (expanded = !expanded)}
+		aria-expanded={expanded}
+	>
 		<span aria-hidden="true">{expanded ? '⌃' : '⌄'}</span>
 		{expanded ? localeStore.t('jd.hide') : localeStore.t('jd.show')}
 	</button>
@@ -63,8 +68,7 @@
 				placeholder={localeStore.t('jd.placeholder')}
 				value={scoresStore.jobDescription}
 				oninput={(event) =>
-					scoresStore.setJobDescription((event.target as HTMLTextAreaElement).value)}
-			></textarea>
+					scoresStore.setJobDescription((event.target as HTMLTextAreaElement).value)}></textarea>
 
 			<div class="actions">
 				{#if !scoresStore.hasJobDescription}

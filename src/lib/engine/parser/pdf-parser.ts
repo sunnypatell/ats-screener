@@ -53,10 +53,7 @@ export async function parsePDF(file: File): Promise<PDFParseResult> {
 		const textContent = await page.getTextContent();
 		const operators = await page.getOperatorList();
 
-		const imageOps = new Set([
-			pdfjsLib.OPS.paintImageXObject,
-			pdfjsLib.OPS.paintImageMaskXObject
-		]);
+		const imageOps = new Set([pdfjsLib.OPS.paintImageXObject, pdfjsLib.OPS.paintImageMaskXObject]);
 		for (let index = 0; index < operators.fnArray.length; index++) {
 			if (!imageOps.has(operators.fnArray[index])) continue;
 			const objectId = operators.argsArray[index]?.[0];
@@ -68,8 +65,7 @@ export async function parsePDF(file: File): Promise<PDFParseResult> {
 				} | null;
 				const width = image?.width ?? 0;
 				const height = image?.height ?? 0;
-				const areaRatio =
-					(width * height) / Math.max(1, viewport.width * viewport.height);
+				const areaRatio = (width * height) / Math.max(1, viewport.width * viewport.height);
 				if (width >= 80 && height >= 80 && areaRatio >= 0.03) hasImages = true;
 			} catch {
 				// Decorative glyph XObjects may not resolve synchronously. Ignoring them
@@ -160,8 +156,7 @@ function reconstructLines(items: PDFTextItem[]): ReconstructedLine[] {
 			}
 			if (Math.abs(item.y - anchorY) <= tolerance) {
 				current.push(item);
-				anchorY =
-					current.reduce((sum, entry) => sum + entry.y, 0) / current.length;
+				anchorY = current.reduce((sum, entry) => sum + entry.y, 0) / current.length;
 			} else {
 				flush();
 				current = [item];
@@ -182,10 +177,7 @@ function mergeItems(items: PDFTextItem[]): string {
 		const gap = current.x - (previous.x + previous.width);
 		const previousCharWidth = previous.width / Math.max(1, previous.text.length);
 		const currentCharWidth = current.width / Math.max(1, current.text.length);
-		const threshold = Math.max(
-			1.2,
-			Math.min(previousCharWidth, currentCharWidth) * 0.25
-		);
+		const threshold = Math.max(1.2, Math.min(previousCharWidth, currentCharWidth) * 0.25);
 		if (shouldInsertSpace(previous, current, value, gap, threshold)) value += ' ';
 		value += current.text;
 	}
@@ -235,10 +227,7 @@ function detectMultipleColumns(lines: ReconstructedLine[]): boolean {
 			for (let second = first + 1; second < clusters.length; second++) {
 				const gap = clusters[second][0] - clusters[first][0];
 				const pageWidth = candidates[0].pageWidth;
-				if (
-					gap >= Math.max(170, pageWidth * 0.3) &&
-					clusters[second][0] >= pageWidth * 0.42
-				) {
+				if (gap >= Math.max(170, pageWidth * 0.3) && clusters[second][0] >= pageWidth * 0.42) {
 					return true;
 				}
 			}
@@ -254,8 +243,7 @@ function detectTables(lines: ReconstructedLine[]): boolean {
 		const sorted = [...line.items].sort((a, b) => a.x - b.x);
 		const anchors = [sorted[0].x];
 		for (let index = 1; index < sorted.length; index++) {
-			const gap =
-				sorted[index].x - (sorted[index - 1].x + sorted[index - 1].width);
+			const gap = sorted[index].x - (sorted[index - 1].x + sorted[index - 1].width);
 			if (gap >= 35) anchors.push(sorted[index].x);
 		}
 		if (anchors.length < 3) continue;

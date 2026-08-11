@@ -52,23 +52,11 @@ export function extractSkills(sections: ResumeSection[]): string[] {
 				.replace(/[()]/g, ',')
 				.split(/[,|;•·▪]/)
 				.map((item) => item.trim().replace(/[.]$/, ''))
-				.filter(
-					(item) =>
-						item.length >= 1 &&
-						item.length <= 40 &&
-						item.split(/\s+/).length <= 5
-				);
+				.filter((item) => item.length >= 1 && item.length <= 40 && item.split(/\s+/).length <= 5);
 			for (const candidate of candidates) {
-				const key = candidate
-					.normalize('NFKD')
-					.replace(/\p{M}/gu, '')
-					.toLowerCase();
+				const key = candidate.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase();
 				const canonical = SKILL_ALIASES[key] ?? candidate;
-				if (
-					!/workflow automation|automacao de fluxos|automação de fluxos/i.test(
-						canonical
-					)
-				) {
+				if (!/workflow automation|automacao de fluxos|automação de fluxos/i.test(canonical)) {
 					found.push(canonical);
 				}
 			}

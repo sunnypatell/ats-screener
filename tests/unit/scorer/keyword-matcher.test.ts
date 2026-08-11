@@ -2,9 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { matchKeywords, quickKeywordScore } from '$engine/scorer/keyword-matcher';
 
 describe('matchKeywords', () => {
-	it('returns perfect score with no job description', () => {
+	it('returns neutral score with no job description (no fake keyword points)', () => {
 		const result = matchKeywords('some resume text', '', 'exact');
-		expect(result.score).toBe(100);
+		// the engine drops this dimension and re-normalizes when there is no JD;
+		// 0 here means the UI never shows a misleading keyword score
+		expect(result.score).toBe(0);
 		expect(result.matched).toHaveLength(0);
 		expect(result.missing).toHaveLength(0);
 	});

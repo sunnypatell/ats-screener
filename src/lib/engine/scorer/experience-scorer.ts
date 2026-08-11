@@ -1,7 +1,116 @@
 const ACTION_VERBS = new Set([
-	'achieved','accelerated','administered','advanced','analyzed','architected','automated','built','centralized','collaborated','consolidated','coordinated','created','decreased','delivered','designed','developed','directed','drove','enabled','engineered','established','executed','expanded','generated','implemented','improved','increased','integrated','launched','led','managed','mentored','migrated','modernized','operated','optimized','organized','planned','produced','programmed','reduced','refactored','resolved','scaled','secured','simplified','standardized','streamlined','supervised','trained','transformed','upgraded',
-	'alcancei','acelerei','administrei','analisei','arquitetei','automatizei','construí','colaborei','consolidei','coordenei','criei','reduzi','entreguei','projetei','desenvolvi','dirigi','executei','expandi','gerei','implementei','melhorei','aumentei','integrei','lancei','liderei','gerenciei','mentorei','migrei','modernizei','operei','otimizei','organizei','planejei','produzi','programei','refatorei','resolvi','escalei','protegi','simplifiquei','padronizei','supervisionei','treinei','transformei','atualizei',
-	'atuou','construiu','desenvolveu','implementou','criou','organizou','estruturou','processou','gerou','aplicou','executou','operou','manteve','realizou'
+	'achieved',
+	'accelerated',
+	'administered',
+	'advanced',
+	'analyzed',
+	'architected',
+	'automated',
+	'built',
+	'centralized',
+	'collaborated',
+	'consolidated',
+	'coordinated',
+	'created',
+	'decreased',
+	'delivered',
+	'designed',
+	'developed',
+	'directed',
+	'drove',
+	'enabled',
+	'engineered',
+	'established',
+	'executed',
+	'expanded',
+	'generated',
+	'implemented',
+	'improved',
+	'increased',
+	'integrated',
+	'launched',
+	'led',
+	'managed',
+	'mentored',
+	'migrated',
+	'modernized',
+	'operated',
+	'optimized',
+	'organized',
+	'planned',
+	'produced',
+	'programmed',
+	'reduced',
+	'refactored',
+	'resolved',
+	'scaled',
+	'secured',
+	'simplified',
+	'standardized',
+	'streamlined',
+	'supervised',
+	'trained',
+	'transformed',
+	'upgraded',
+	'alcancei',
+	'acelerei',
+	'administrei',
+	'analisei',
+	'arquitetei',
+	'automatizei',
+	'construí',
+	'colaborei',
+	'consolidei',
+	'coordenei',
+	'criei',
+	'reduzi',
+	'entreguei',
+	'projetei',
+	'desenvolvi',
+	'dirigi',
+	'executei',
+	'expandi',
+	'gerei',
+	'implementei',
+	'melhorei',
+	'aumentei',
+	'integrei',
+	'lancei',
+	'liderei',
+	'gerenciei',
+	'mentorei',
+	'migrei',
+	'modernizei',
+	'operei',
+	'otimizei',
+	'organizei',
+	'planejei',
+	'produzi',
+	'programei',
+	'refatorei',
+	'resolvi',
+	'escalei',
+	'protegi',
+	'simplifiquei',
+	'padronizei',
+	'supervisionei',
+	'treinei',
+	'transformei',
+	'atualizei',
+	'atuou',
+	'construiu',
+	'desenvolveu',
+	'implementou',
+	'criou',
+	'organizou',
+	'estruturou',
+	'processou',
+	'gerou',
+	'aplicou',
+	'executou',
+	'operou',
+	'manteve',
+	'realizou'
 ]);
 
 const QUANTIFICATION_PATTERNS = [
@@ -31,7 +140,11 @@ export function scoreExperience(bullets: string[], locale: 'pt-BR' | 'en' = 'en'
 			quantifiedBullets: 0,
 			totalBullets: 0,
 			actionVerbCount: 0,
-			highlights: [locale === 'pt-BR' ? 'nenhum tópico de experiência foi detectado' : 'no experience bullets found']
+			highlights: [
+				locale === 'pt-BR'
+					? 'nenhum tópico de experiência foi detectado'
+					: 'no experience bullets found'
+			]
 		};
 	}
 
@@ -54,16 +167,26 @@ export function scoreExperience(bullets: string[], locale: 'pt-BR' | 'en' = 'en'
 	const actionVerbRatio = actionVerbCount / totalBullets;
 	const quantScore = Math.min(1, quantificationRatio / 0.4) * 40;
 	const actionScore = Math.min(1, actionVerbRatio / 0.7) * 30;
-	const bulletCountScore = totalBullets >= 8 ? 30 : totalBullets >= 5 ? 25 : totalBullets >= 3 ? 20 : 10;
+	const bulletCountScore =
+		totalBullets >= 8 ? 30 : totalBullets >= 5 ? 25 : totalBullets >= 3 ? 20 : 10;
 	const highlights: string[] = [];
 
 	if (locale === 'pt-BR') {
-		highlights.push(`${Math.round(quantificationRatio * 100)}% dos tópicos têm resultados mensuráveis (meta: 40%+)`);
-		highlights.push(`${Math.round(actionVerbRatio * 100)}% dos tópicos começam com verbos de ação (meta: 70%+)`);
-		if (totalBullets < 5) highlights.push(`apenas ${totalBullets} tópicos de experiência foram detectados`);
+		highlights.push(
+			`${Math.round(quantificationRatio * 100)}% dos tópicos têm resultados mensuráveis (meta: 40%+)`
+		);
+		highlights.push(
+			`${Math.round(actionVerbRatio * 100)}% dos tópicos começam com verbos de ação (meta: 70%+)`
+		);
+		if (totalBullets < 5)
+			highlights.push(`apenas ${totalBullets} tópicos de experiência foram detectados`);
 	} else {
-		highlights.push(`${Math.round(quantificationRatio * 100)}% of bullets are quantified (aim for 40%+)`);
-		highlights.push(`${Math.round(actionVerbRatio * 100)}% of bullets start with action verbs (aim for 70%+)`);
+		highlights.push(
+			`${Math.round(quantificationRatio * 100)}% of bullets are quantified (aim for 40%+)`
+		);
+		highlights.push(
+			`${Math.round(actionVerbRatio * 100)}% of bullets start with action verbs (aim for 70%+)`
+		);
 		if (totalBullets < 5) highlights.push(`only ${totalBullets} experience bullets were detected`);
 	}
 

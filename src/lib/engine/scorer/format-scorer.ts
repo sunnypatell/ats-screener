@@ -48,7 +48,8 @@ export function scoreFormatting(input: ScoringInput, strictness: number): Format
 	}
 
 	const text = input.resumeText;
-	const unusualCharacters = text.match(/[^\p{L}\p{N}\s.,;:!?@#$%&*()\-+=/\\'"\[\]{}<>•·▪►➤○●–—]/gu) || [];
+	const unusualCharacters =
+		text.match(/[^\p{L}\p{N}\s.,;:!?@#$%&*()\-+=/\\'"[\]{}<>•·▪►➤○●–—]/gu) || [];
 	const specialCharRatio = unusualCharacters.length / Math.max(1, text.length);
 	if (specialCharRatio > 0.08) {
 		const penalty = 8 * strictness;
@@ -78,8 +79,10 @@ export function scoreFormatting(input: ScoringInput, strictness: number): Format
 		details.push(`${bulletTypes.size} bullet styles detected (-${Math.round(penalty)})`);
 	}
 
-	if (!input.hasMultipleColumns && !input.hasTables && !input.hasImages) details.push('clean parseable layout detected');
+	if (!input.hasMultipleColumns && !input.hasTables && !input.hasImages)
+		details.push('clean single-column layout detected (good)');
 	if (input.pageCount <= 2) details.push('appropriate page length');
-	if (input.wordCount >= 300 && input.wordCount <= 800) details.push('word count is in the usual range');
+	if (input.wordCount >= 300 && input.wordCount <= 800)
+		details.push('word count is in the usual range');
 	return { score: Math.max(0, Math.min(100, 100 - deductions)), issues, details };
 }

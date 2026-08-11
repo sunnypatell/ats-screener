@@ -101,7 +101,8 @@
 
 	const announcement = $derived.by(() => {
 		const pt = localeStore.locale === 'pt-BR';
-		if (scoresStore.error) return pt ? `Falha na análise: ${scoresStore.error}` : `Scan failed: ${scoresStore.error}`;
+		if (scoresStore.error)
+			return pt ? `Falha na análise: ${scoresStore.error}` : `Scan failed: ${scoresStore.error}`;
 		if (scoresStore.isScoring) return pt ? 'Analisando currículo.' : 'Scanning resume.';
 		if (scoresStore.hasResults && !scoresStore.isFromHistory) {
 			const total = scoresStore.results.length;
@@ -116,7 +117,9 @@
 </script>
 
 <SeoHead
-	title={localeStore.locale === 'pt-BR' ? 'Analisador ATS determinístico' : 'Deterministic ATS Scanner'}
+	title={localeStore.locale === 'pt-BR'
+		? 'Analisador ATS determinístico'
+		: 'Deterministic ATS Scanner'}
 	description={localeStore.t('scanner.subtitle')}
 />
 
@@ -129,7 +132,11 @@
 	{:else if !authStore.disabled && !authStore.isAuthenticated}
 		<div class="gate card">
 			<h2>{localeStore.locale === 'pt-BR' ? 'Entre para analisar' : 'Sign in to scan'}</h2>
-			<p>{localeStore.locale === 'pt-BR' ? 'Acesse sua conta para salvar o histórico.' : 'Access your account to save scan history.'}</p>
+			<p>
+				{localeStore.locale === 'pt-BR'
+					? 'Acesse sua conta para salvar o histórico.'
+					: 'Access your account to save scan history.'}
+			</p>
 			<a href="/login">{localeStore.locale === 'pt-BR' ? 'Entrar' : 'Sign in'}</a>
 		</div>
 	{:else}
@@ -138,17 +145,29 @@
 				<div class="topline">
 					<span class="badge">{localeStore.t('scanner.badge')}</span>
 					<div class="language" aria-label={localeStore.t('language.label')}>
-						<button class:active={localeStore.locale === 'pt-BR'} onclick={() => setLocale('pt-BR')}>PT</button>
-						<button class:active={localeStore.locale === 'en'} onclick={() => setLocale('en')}>EN</button>
+						<button class:active={localeStore.locale === 'pt-BR'} onclick={() => setLocale('pt-BR')}
+							>PT</button
+						>
+						<button class:active={localeStore.locale === 'en'} onclick={() => setLocale('en')}
+							>EN</button
+						>
 					</div>
 				</div>
 				<h1>{localeStore.t('scanner.title')}</h1>
 				<p>{localeStore.t('scanner.subtitle')}</p>
 				<div class="steps" aria-label="progress">
-					<div class:done={hasInput}><strong>1</strong><span>{localeStore.t('scanner.upload')}</span></div>
-					<div class:done={resumeStore.isReady}><strong>2</strong><span>{localeStore.t('scanner.parse')}</span></div>
-					<div class:done={hasScanned}><strong>3</strong><span>{localeStore.t('scanner.scan')}</span></div>
-					<div class:done={scoresStore.hasResults}><strong>4</strong><span>{localeStore.t('scanner.results')}</span></div>
+					<div class:done={hasInput}>
+						<strong>1</strong><span>{localeStore.t('scanner.upload')}</span>
+					</div>
+					<div class:done={resumeStore.isReady}>
+						<strong>2</strong><span>{localeStore.t('scanner.parse')}</span>
+					</div>
+					<div class:done={hasScanned}>
+						<strong>3</strong><span>{localeStore.t('scanner.scan')}</span>
+					</div>
+					<div class:done={scoresStore.hasResults}>
+						<strong>4</strong><span>{localeStore.t('scanner.results')}</span>
+					</div>
 				</div>
 			</header>
 
@@ -161,8 +180,7 @@
 						rows="9"
 						bind:value={pastedText}
 						placeholder={localeStore.t('scanner.pastePlaceholder')}
-						aria-label="Paste resume text"
-					></textarea>
+						aria-label="Paste resume text"></textarea>
 					<div class="paste-actions">
 						<span>{pastedText.length} {localeStore.t('scanner.characters')}</span>
 						<button disabled={pastedText.trim().length < 50} onclick={usePastedText}>
@@ -181,7 +199,9 @@
 
 				<div class="actions">
 					{#if scoresStore.hasResults}
-						<button class="secondary" onclick={handleReset}>{localeStore.t('scanner.startOver')}</button>
+						<button class="secondary" onclick={handleReset}
+							>{localeStore.t('scanner.startOver')}</button
+						>
 					{/if}
 					<button class="primary" disabled={!canScan} onclick={handleScan}>
 						{scoresStore.isScoring

@@ -2,7 +2,8 @@ import type { ContactInfo } from './types';
 import { normalizeContactText, normalizeTextFragment } from './text-normalizer';
 
 const EMAIL_REGEX = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,24}\b/i;
-const PHONE_REGEX = /(?:\+\s?\d{1,3}[\s.-]*)?(?:\(?\d{2,3}\)?[\s.-]*)?\d{4,5}[\s.-]*\d{4}\b/;
+const PHONE_REGEX =
+	/(?:\+\s?\d{1,3}[\s.-]*)?(?:\(?\d{2,3}\)?[\s.-]*)?(?:\d{4,5}[\s.-]*\d{4}|\d{3}[\s.-]*\d{4})\b/;
 const LINKEDIN_REGEX = /(?:https?:\/\/)?(?:www\.)?linkedin\.com\/(?:in\/)?[\w-]+\/?/i;
 const GITHUB_REGEX = /(?:https?:\/\/)?(?:www\.)?github\.com\/[\w-]+\/?/i;
 const WEBSITE_REGEX = /(?:https?:\/\/|www\.)[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/[^\s|]*)?/i;

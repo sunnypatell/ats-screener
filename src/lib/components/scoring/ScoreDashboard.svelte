@@ -18,6 +18,7 @@
 	}
 
 	const suggestions = $derived.by(() => {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local dedup accumulator, never read reactively
 		const seen = new Set<string>();
 		const values: Suggestion[] = [];
 		for (const result of scoresStore.results) {
@@ -61,16 +62,27 @@
 				{#each scoresStore.results as result}
 					<div>
 						<span>{result.system}</span>
-						<i><b style:width={`${result.overallScore}%`} style:background={getScoreColor(result.overallScore)}></b></i>
+						<i
+							><b
+								style:width={`${result.overallScore}%`}
+								style:background={getScoreColor(result.overallScore)}
+							></b></i
+						>
 					</div>
 				{/each}
 			</div>
 			<div class="passing">
 				<strong>{passing}/{total}</strong>
 				<span>{localeStore.locale === 'pt-BR' ? 'Sistemas aprovados' : 'Systems passed'}</span>
-				<small>{scoresStore.mode === 'targeted'
-					? localeStore.locale === 'pt-BR' ? 'Análise por vaga' : 'Targeted scoring'
-					: localeStore.locale === 'pt-BR' ? 'Prontidão geral' : 'General readiness'}</small>
+				<small
+					>{scoresStore.mode === 'targeted'
+						? localeStore.locale === 'pt-BR'
+							? 'Análise por vaga'
+							: 'Targeted scoring'
+						: localeStore.locale === 'pt-BR'
+							? 'Prontidão geral'
+							: 'General readiness'}</small
+				>
 			</div>
 		</section>
 
@@ -82,8 +94,12 @@
 			</p>
 			<button type="button" onclick={exportResults} disabled={isExporting}>
 				{isExporting
-					? localeStore.locale === 'pt-BR' ? 'Gerando...' : 'Generating...'
-					: localeStore.locale === 'pt-BR' ? 'Exportar PDF' : 'Export PDF'}
+					? localeStore.locale === 'pt-BR'
+						? 'Gerando...'
+						: 'Generating...'
+					: localeStore.locale === 'pt-BR'
+						? 'Exportar PDF'
+						: 'Export PDF'}
 			</button>
 		</div>
 
@@ -96,26 +112,39 @@
 		<div class="analysis-grid">
 			<section class="suggestions-panel">
 				<header>
-					<h2>{localeStore.locale === 'pt-BR' ? 'Prioridades de melhoria' : 'Improvement priorities'}</h2>
-					<p>{localeStore.locale === 'pt-BR'
-						? 'Recomendações geradas por regras e evidências do currículo.'
-						: 'Recommendations generated from rules and resume evidence.'}</p>
+					<h2>
+						{localeStore.locale === 'pt-BR' ? 'Prioridades de melhoria' : 'Improvement priorities'}
+					</h2>
+					<p>
+						{localeStore.locale === 'pt-BR'
+							? 'Recomendações geradas por regras e evidências do currículo.'
+							: 'Recommendations generated from rules and resume evidence.'}
+					</p>
 				</header>
 
 				{#if suggestions.length === 0}
-					<p class="empty">{localeStore.locale === 'pt-BR' ? 'Nenhuma recomendação crítica.' : 'No critical recommendations.'}</p>
+					<p class="empty">
+						{localeStore.locale === 'pt-BR'
+							? 'Nenhuma recomendação crítica.'
+							: 'No critical recommendations.'}
+					</p>
 				{:else}
 					<ol>
 						{#each suggestions as suggestion, index}
 							{@const structured = isStructured(suggestion)}
 							<li>
-								<button type="button" onclick={() => (expanded = expanded === index ? null : index)}>
+								<button
+									type="button"
+									onclick={() => (expanded = expanded === index ? null : index)}
+								>
 									<span class="number">{index + 1}</span>
 									<span>{structured ? suggestion.summary : suggestion}</span>
 									<span aria-hidden="true">{expanded === index ? '−' : '+'}</span>
 								</button>
 								{#if expanded === index && structured && suggestion.details.length > 0}
-									<ul>{#each suggestion.details as detail}<li>{detail}</li>{/each}</ul>
+									<ul>
+										{#each suggestion.details as detail}<li>{detail}</li>{/each}
+									</ul>
 								{/if}
 							</li>
 						{/each}
@@ -128,9 +157,11 @@
 
 		<section class="disclaimer">
 			<strong>Gupy-like</strong>
-			<p>{localeStore.locale === 'pt-BR'
-				? 'Simulação transparente baseada apenas em orientações públicas da Gupy. Não reproduz nem afirma conhecer o algoritmo proprietário.'
-				: 'Transparent simulation based only on Gupy public guidance. It does not reproduce or claim knowledge of the proprietary algorithm.'}</p>
+			<p>
+				{localeStore.locale === 'pt-BR'
+					? 'Simulação transparente baseada apenas em orientações públicas da Gupy. Não reproduz nem afirma conhecer o algoritmo proprietário.'
+					: 'Transparent simulation based only on Gupy public guidance. It does not reproduce or claim knowledge of the proprietary algorithm.'}
+			</p>
 		</section>
 	</div>
 {/if}

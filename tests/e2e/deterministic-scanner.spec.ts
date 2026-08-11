@@ -31,6 +31,8 @@ test('parses and scores a Portuguese resume without an LLM', async ({ page }) =>
 	await expect(page.getByText('Resume Parsed Successfully')).toBeVisible();
 	await expect(page.getByText('TypeScript', { exact: true }).first()).toBeVisible();
 	await page.getByRole('button', { name: /Scan Resume|Re-Scan/ }).click();
-	await expect(page.getByText('Gupy-like', { exact: true }).first()).toBeVisible({ timeout: 30_000 });
+	await expect(page.getByText('Gupy-like', { exact: true }).first()).toBeVisible({
+		timeout: 30_000
+	});
 	await expect(page.getByText(/Systems Passed/)).toBeVisible();
 });

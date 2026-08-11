@@ -169,12 +169,7 @@ function extractSkills(
 	}
 	for (const skill of candidates) {
 		const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-		if (
-			new RegExp(
-				`(^|[^\\p{L}\\p{N}])${escaped}(?=$|[^\\p{L}\\p{N}])`,
-				'iu'
-			).test(corpus)
-		) {
+		if (new RegExp(`(^|[^\\p{L}\\p{N}])${escaped}(?=$|[^\\p{L}\\p{N}])`, 'iu').test(corpus)) {
 			result.add(canonicalSkill(skill));
 		}
 	}
@@ -199,6 +194,7 @@ function canonicalSkill(skill: string): string {
 		postgresql: 'PostgreSQL',
 		mysql: 'MySQL',
 		mongodb: 'MongoDB',
+		redis: 'Redis',
 		github: 'GitHub',
 		docker: 'Docker',
 		kubernetes: 'Kubernetes',
@@ -248,10 +244,7 @@ function categorizeSkills(
 		}
 		for (const skill of skills) {
 			if (!containsSkill(line, fold(skill))) continue;
-			if (
-				mode === 'preferred' ||
-				/\b(?:preferred|desejavel|diferencial|bonus)\b/.test(line)
-			) {
+			if (mode === 'preferred' || /\b(?:preferred|desejavel|diferencial|bonus)\b/.test(line)) {
 				preferred.add(skill);
 			} else {
 				required.add(skill);
@@ -276,18 +269,13 @@ function containsSkill(text: string, skill: string): boolean {
 	};
 	return (aliases[skill] ?? [skill]).some((alias) => {
 		const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-		return new RegExp(
-			`(^|[^\\p{L}\\p{N}])${escaped}(?=$|[^\\p{L}\\p{N}])`,
-			'iu'
-		).test(text);
+		return new RegExp(`(^|[^\\p{L}\\p{N}])${escaped}(?=$|[^\\p{L}\\p{N}])`, 'iu').test(text);
 	});
 }
 
 function detectMinimumExperienceYears(text: string): number | null {
 	const matches = [
-		...text.matchAll(
-			/\b(\d{1,2})(?:\s*(?:-|a|to)\s*\d{1,2})?\s*\+?\s*(?:anos?|years?|yrs?)\b/giu
-		)
+		...text.matchAll(/\b(\d{1,2})(?:\s*(?:-|a|to)\s*\d{1,2})?\s*\+?\s*(?:anos?|years?|yrs?)\b/giu)
 	]
 		.map((match) => Number(match[1]))
 		.filter((value) => Number.isFinite(value) && value <= 30);
@@ -313,6 +301,7 @@ function detectExperienceLevel(
 		return 'lead';
 	}
 	if (/\b(?:senior|sr\.?)\b/.test(text) || (minimumYears ?? 0) >= 5) return 'senior';
+	if (/\b(?:pleno|mid|intermediario)\b/.test(text)) return 'mid';
 	if (
 		/\b(?:junior|jr\.?|entry|iniciante)\b/.test(text) ||
 		(minimumYears !== null && minimumYears <= 2)
@@ -330,11 +319,7 @@ function detectEducationRequirement(text: string): string {
 	if (/\b(?:master'?s?|mba|m\.?s\.?|m\.?a\.?|mestrado|pos-graduacao)\b/.test(text)) {
 		return 'master';
 	}
-	if (
-		/\b(?:bachelor'?s?|b\.?s\.?|b\.?a\.?|bacharelado|graduacao|ensino superior)\b/.test(
-			text
-		)
-	) {
+	if (/\b(?:bachelor'?s?|b\.?s\.?|b\.?a\.?|bacharelado|graduacao|ensino superior)\b/.test(text)) {
 		return 'bachelor';
 	}
 	if (/\b(?:associate'?s?|tecnologo|tecnologia)\b/.test(text)) return 'associate';
@@ -353,7 +338,9 @@ function detectRoleType(text: string): string {
 	if (/\b(?:sales|account executive|business development|vendas|comercial|promotor)\b/.test(text)) {
 		return 'sales';
 	}
-	if (/\b(?:market|brand|content|seo|social media|marketing|conteudo|midias sociais)\b/.test(text)) {
+	if (
+		/\b(?:market|brand|content|seo|social media|marketing|conteudo|midias sociais)\b/.test(text)
+	) {
 		return 'marketing';
 	}
 	if (
@@ -363,7 +350,9 @@ function detectRoleType(text: string): string {
 	) {
 		return 'finance';
 	}
-	if (/\b(?:nurse|physician|clinical|patient|healthcare|enfermeiro|medico|clinico|saude)\b/.test(text)) {
+	if (
+		/\b(?:nurse|physician|clinical|patient|healthcare|enfermeiro|medico|clinico|saude)\b/.test(text)
+	) {
 		return 'healthcare';
 	}
 	if (/\b(?:legal|attorney|counsel|compliance|juridico|advogado|advogada)\b/.test(text)) {

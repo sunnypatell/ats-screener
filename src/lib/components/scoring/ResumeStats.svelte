@@ -37,12 +37,26 @@
 		</header>
 
 		<div class="stats">
-			<div><strong>{resume.metadata.wordCount}</strong><span>{localeStore.t('overview.words')}</span></div>
-			<div><strong>{resume.metadata.pageCount}</strong><span>{localeStore.t('overview.pages')}</span></div>
-			<div><strong>{resume.sections.filter((section) => section.type !== 'unknown').length}</strong><span>{localeStore.t('overview.sections')}</span></div>
-			<div><strong>{resume.skills.length}</strong><span>{localeStore.t('overview.skills')}</span></div>
-			<div><strong>{resume.experience.length}</strong><span>{localeStore.t('overview.positions')}</span></div>
-			<div><strong>{resume.education.length}</strong><span>{localeStore.t('overview.education')}</span></div>
+			<div>
+				<strong>{resume.metadata.wordCount}</strong><span>{localeStore.t('overview.words')}</span>
+			</div>
+			<div>
+				<strong>{resume.metadata.pageCount}</strong><span>{localeStore.t('overview.pages')}</span>
+			</div>
+			<div>
+				<strong>{resume.sections.filter((section) => section.type !== 'unknown').length}</strong
+				><span>{localeStore.t('overview.sections')}</span>
+			</div>
+			<div>
+				<strong>{resume.skills.length}</strong><span>{localeStore.t('overview.skills')}</span>
+			</div>
+			<div>
+				<strong>{resume.experience.length}</strong><span>{localeStore.t('overview.positions')}</span
+				>
+			</div>
+			<div>
+				<strong>{resume.education.length}</strong><span>{localeStore.t('overview.education')}</span>
+			</div>
 		</div>
 
 		<div class="detail">
@@ -64,7 +78,9 @@
 					{#if resume.skills.length > 30}
 						<button type="button" onclick={() => (showAllSkills = !showAllSkills)}>
 							{showAllSkills
-								? localeStore.locale === 'pt-BR' ? 'mostrar menos' : 'show less'
+								? localeStore.locale === 'pt-BR'
+									? 'mostrar menos'
+									: 'show less'
 								: `+${resume.skills.length - 30}`}
 						</button>
 					{/if}
@@ -86,15 +102,20 @@
 			<div class="detail flags">
 				<h4>{localeStore.t('overview.method')}</h4>
 				<p class:warning={resume.metadata.hasMultipleColumns}>
-					{resume.metadata.hasMultipleColumns ? '⚠' : '✓'} {localeStore.t('overview.layout')}:
-					{resume.metadata.hasMultipleColumns ? localeStore.t('overview.yes') : localeStore.t('overview.no')}
+					{resume.metadata.hasMultipleColumns ? '⚠' : '✓'}
+					{localeStore.t('overview.layout')}:
+					{resume.metadata.hasMultipleColumns
+						? localeStore.t('overview.yes')
+						: localeStore.t('overview.no')}
 				</p>
 				<p class:warning={resume.metadata.hasTables}>
-					{resume.metadata.hasTables ? '⚠' : '✓'} {localeStore.t('overview.tables')}:
+					{resume.metadata.hasTables ? '⚠' : '✓'}
+					{localeStore.t('overview.tables')}:
 					{resume.metadata.hasTables ? localeStore.t('overview.yes') : localeStore.t('overview.no')}
 				</p>
 				<p class:warning={resume.metadata.hasImages}>
-					{resume.metadata.hasImages ? '⚠' : '✓'} {localeStore.t('overview.images')}:
+					{resume.metadata.hasImages ? '⚠' : '✓'}
+					{localeStore.t('overview.images')}:
 					{resume.metadata.hasImages ? localeStore.t('overview.yes') : localeStore.t('overview.no')}
 				</p>
 			</div>

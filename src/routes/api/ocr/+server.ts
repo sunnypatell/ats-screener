@@ -79,17 +79,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		for (const image of images) {
 			const { stdout } = await execFileAsync(
 				'tesseract',
-				[
-					join(directory, image),
-					'stdout',
-					'-l',
-					'por+eng',
-					'--oem',
-					'1',
-					'--psm',
-					'3',
-					'quiet'
-				],
+				[join(directory, image), 'stdout', '-l', 'por+eng', '--oem', '1', '--psm', '3', 'quiet'],
 				{ timeout: 45_000, maxBuffer: 8 * 1024 * 1024 }
 			);
 			pages.push(stdout.trim());

@@ -1,9 +1,5 @@
 import { extractContact } from './contact-extractor';
-import {
-	extractCertifications,
-	extractProjects,
-	extractSkills
-} from './content-extractors';
+import { extractCertifications, extractProjects, extractSkills } from './content-extractors';
 import { extractEducationEntries } from './education-extractor';
 import { extractExperienceEntries } from './experience-extractor';
 import { detectSections } from './section-detector';
@@ -59,9 +55,7 @@ export async function parseResume(file: File): Promise<ParseResult> {
 					baseQuality = textQualityScore(text, lines);
 					hasMultipleColumns = false;
 					hasTables = false;
-					warnings.push(
-						'text layer was low quality; self-hosted OCR (por+eng) was used'
-					);
+					warnings.push('text layer was low quality; self-hosted OCR (por+eng) was used');
 				} else {
 					warnings.push('text layer quality is low and OCR was unavailable');
 				}
@@ -101,9 +95,7 @@ export async function parseResume(file: File): Promise<ParseResult> {
 			warnings.push('detected repeated aligned columns that resemble a table');
 		}
 		if (resume.metadata.extractionQuality < 65) {
-			warnings.push(
-				'some extracted fields have low confidence; review the structured result'
-			);
+			warnings.push('some extracted fields have low confidence; review the structured result');
 		}
 		return { success: true, resume, errors: [], warnings };
 	} catch (cause) {
@@ -145,8 +137,7 @@ function getFileType(file: File): 'pdf' | 'docx' | null {
 	const name = file.name.toLowerCase();
 	if (file.type === 'application/pdf' || name.endsWith('.pdf')) return 'pdf';
 	if (
-		file.type ===
-			'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+		file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
 		name.endsWith('.docx')
 	) {
 		return 'docx';
@@ -178,11 +169,7 @@ export function parseResumeText(rawText: string): ParseResult {
 	return { success: true, resume, errors: [], warnings: [] };
 }
 
-function buildResume(
-	text: string,
-	lines: string[],
-	metadata: BaseMetadata
-): ParsedResume {
+function buildResume(text: string, lines: string[], metadata: BaseMetadata): ParsedResume {
 	const contact = extractContact(lines);
 	const sections = detectSections(lines);
 	const experience = extractExperienceEntries(sections);
@@ -190,8 +177,7 @@ function buildResume(
 	const projects = extractProjects(sections);
 	const certifications = extractCertifications(sections);
 	const skills = extractSkills(sections);
-	const summary =
-		sections.find((section) => section.type === 'summary')?.content.trim() || null;
+	const summary = sections.find((section) => section.type === 'summary')?.content.trim() || null;
 	const knownSections = sections.filter((section) => section.type !== 'unknown').length;
 	const contactFields = Object.values(contact).filter(Boolean).length;
 	const structureScore = Math.min(
@@ -202,9 +188,7 @@ function buildResume(
 			Math.min(15, skills.length) +
 			Math.min(10, contactFields * 2)
 	);
-	const extractionQuality = Math.round(
-		metadata.baseQuality * 0.55 + structureScore * 0.45
-	);
+	const extractionQuality = Math.round(metadata.baseQuality * 0.55 + structureScore * 0.45);
 
 	return {
 		rawText: text,

@@ -35,7 +35,8 @@ const MESSAGES: Record<AppLocale, Dictionary> = {
 			'PDFs com texto são processados no navegador. OCR é enviado somente ao seu próprio servidor.',
 		'jd.show': 'Adicionar descrição da vaga para análise direcionada',
 		'jd.hide': 'Ocultar descrição da vaga',
-		'jd.placeholder': 'Cole a descrição da vaga para comparar requisitos, competências e experiência...',
+		'jd.placeholder':
+			'Cole a descrição da vaga para comparar requisitos, competências e experiência...',
 		'jd.active': 'Modo direcionado ativo: a pontuação será comparada com esta vaga.',
 		'jd.detected': 'Detectado na vaga',
 		'jd.inResume': 'no currículo',
@@ -120,11 +121,12 @@ class LocaleStore {
 	init() {
 		if (!browser || this.initialized) return;
 		const saved = localStorage.getItem('ats_locale');
-		this.locale = saved === 'en' || saved === 'pt-BR'
-			? saved
-			: navigator.language.toLowerCase().startsWith('pt')
-				? 'pt-BR'
-				: 'en';
+		this.locale =
+			saved === 'en' || saved === 'pt-BR'
+				? saved
+				: navigator.language.toLowerCase().startsWith('pt')
+					? 'pt-BR'
+					: 'en';
 		document.documentElement.lang = this.locale;
 		this.initialized = true;
 	}

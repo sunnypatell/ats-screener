@@ -27,7 +27,12 @@ export default defineConfig({
 		globals: true,
 		// vitest 4 stopped resetting vi.fn() mocks in restoreAllMocks, so call history leaks between tests
 		clearMocks: true,
-		setupFiles: ['tests/setup.ts']
+		setupFiles: ['tests/setup.ts'],
+		// node >=26 defines a throwing global localStorage getter (experimental webstorage),
+		// which makes vitest skip copying jsdom's localStorage into the test globals and
+		// breaks every localStorage-backed test. disabling the global lets jsdom provide
+		// it, exactly like node 22/24 on CI.
+		execArgv: ['--no-experimental-webstorage']
 	},
 	worker: {
 		format: 'es'

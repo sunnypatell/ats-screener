@@ -2,11 +2,7 @@ import { env as publicEnv } from '$env/dynamic/public';
 import { scoreResume } from '$engine/scorer/engine';
 import type { ScoringInput } from '$engine/scorer/types';
 import { resumeStore } from '$stores/resume.svelte';
-import {
-	analyzWithLLM,
-	scoreLLM as scoreWithRemoteLLM,
-	type ScoreLLMResult
-} from './client';
+import { analyzWithLLM, scoreLLM as scoreWithRemoteLLM, type ScoreLLMResult } from './client';
 
 export async function scoreLLM(
 	resumeText: string,

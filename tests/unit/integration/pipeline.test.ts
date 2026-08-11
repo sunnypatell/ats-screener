@@ -162,7 +162,7 @@ describe('job description parser', () => {
 		);
 		expect(parsed.preferredSkills).toEqual(expect.arrayContaining(['Docker', 'Kubernetes']));
 		expect(parsed.minimumExperienceYears).toBe(4);
-		expect(parsed.experienceLevel).toBe('mid');
+		expect(parsed.experienceLevel).toBe('senior');
 		expect(parsed.educationRequirement).toBe('bachelor');
 		expect(parsed.roleType).toBe('engineering');
 		expect(parsed.language).toBe('pt-BR');

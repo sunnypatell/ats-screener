@@ -72,9 +72,11 @@ describe('Gupy-like deterministic alignment', () => {
 	});
 
 	it('does not double-count overlapping employment dates', () => {
-		const months = totalNonOverlappingMonths(input('CANDIDATO TESTE', 'teste@example.com').experienceEntries!);
+		const months = totalNonOverlappingMonths(
+			input('CANDIDATO TESTE', 'teste@example.com').experienceEntries!
+		);
 		const now = new Date();
-		const expected = now.getUTCFullYear() * 12 + now.getUTCMonth() - (2022 * 12) + 1;
+		const expected = now.getUTCFullYear() * 12 + now.getUTCMonth() - 2022 * 12 + 1;
 		expect(months).toBe(expected);
 	});
 

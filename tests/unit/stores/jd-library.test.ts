@@ -186,12 +186,29 @@ describe('localStorage persistence', () => {
 // -----------------------------------------------------------------------
 describe('localStorage failure', () => {
 	it('does not crash and still holds entries in memory when localStorage throws', async () => {
-		vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-			throw new DOMException('QuotaExceededError');
-		});
-		vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-			throw new DOMException('SecurityError');
-		});
+		// mock the global directly: on node >=26 the global localStorage is not a
+		// Storage instance, so Storage.prototype spies silently no-op there
+		const failingStorage = {
+			getItem: () => {
+				throw new DOMException('SecurityError');
+			},
+			setItem: () => {
+				throw new DOMException('QuotaExceededError');
+			},
+			removeItem: () => {
+				throw new DOMException('SecurityError');
+			},
+			clear: () => {
+				throw new DOMException('SecurityError');
+			},
+			key: () => null,
+			get length() {
+				return 0;
+			}
+		};
+		const spy = vi
+			.spyOn(globalThis, 'localStorage', 'get')
+			.mockReturnValue(failingStorage as Storage);
 
 		const store = await makeStore();
 		// should not throw
@@ -199,15 +216,31 @@ describe('localStorage failure', () => {
 		// entry still in memory
 		expect(store.list).toHaveLength(1);
 		expect(store.list[0].label).toBe('Fallback');
+		spy.mockRestore();
 	});
 
 	it('emits at most one logger.warn per session on storage failure', async () => {
-		vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-			throw new DOMException('SecurityError');
-		});
-		vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-			throw new DOMException('QuotaExceededError');
-		});
+		const failingStorage = {
+			getItem: () => {
+				throw new DOMException('SecurityError');
+			},
+			setItem: () => {
+				throw new DOMException('QuotaExceededError');
+			},
+			removeItem: () => {
+				throw new DOMException('SecurityError');
+			},
+			clear: () => {
+				throw new DOMException('SecurityError');
+			},
+			key: () => null,
+			get length() {
+				return 0;
+			}
+		};
+		const spy = vi
+			.spyOn(globalThis, 'localStorage', 'get')
+			.mockReturnValue(failingStorage as Storage);
 
 		const { logger } = await import('../../../src/lib/log');
 		const store = await makeStore();
@@ -218,5 +251,6 @@ describe('localStorage failure', () => {
 		// warn should have been called exactly once regardless of how many
 		// operations failed
 		expect((logger.warn as ReturnType<typeof vi.fn>).mock.calls.length).toBe(1);
+		spy.mockRestore();
 	});
 });

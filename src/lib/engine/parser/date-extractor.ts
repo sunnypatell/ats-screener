@@ -28,7 +28,10 @@ const DATE_RANGE_PATTERNS = [
 		'giu'
 	),
 	new RegExp(`\\d{1,2}\\/\\d{4}\\s*${SEPARATOR}\\s*(?:\\d{1,2}\\/\\d{4}|${CURRENT_TOKEN})`, 'giu'),
-	new RegExp(`\\b(?:19|20)\\d{2}\\s*${SEPARATOR}\\s*(?:(?:19|20)\\d{2}|${CURRENT_TOKEN})\\b`, 'giu'),
+	new RegExp(
+		`\\b(?:19|20)\\d{2}\\s*${SEPARATOR}\\s*(?:(?:19|20)\\d{2}|${CURRENT_TOKEN})\\b`,
+		'giu'
+	),
 	/(?:spring|summer|fall|autumn|winter)\s*\d{4}\s*(?:-|–|—|~|to)\s*(?:(?:spring|summer|fall|autumn|winter)\s*\d{4}|present|current|now)/giu,
 	new RegExp(`(?:${MONTH_TOKEN})\\.?\\s*\\/?\\s*\\d{4}`, 'giu'),
 	/\b(?:19|20)\d{2}\b/gu
@@ -67,11 +70,7 @@ function parseDateRange(raw: string): DateRange | null {
 }
 
 function normalizeDate(value: string): string | null {
-	const cleaned = value
-		.normalize('NFKD')
-		.replace(/\p{M}/gu, '')
-		.toLowerCase()
-		.trim();
+	const cleaned = value.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().trim();
 	if (CURRENT_INDICATORS.test(cleaned)) return null;
 	const slash = cleaned.match(/\b(\d{1,2})\/(\d{4})\b/);
 	if (slash) {
@@ -79,14 +78,24 @@ function normalizeDate(value: string): string | null {
 		if (month >= 1 && month <= 12) return `${slash[2]}-${String(month).padStart(2, '0')}`;
 	}
 	for (const entry of MONTHS) {
-		if (entry.aliases.some((alias) => new RegExp(`\\b${alias.normalize('NFKD').replace(/\p{M}/gu, '')}\\b`, 'i').test(cleaned))) {
+		if (
+			entry.aliases.some((alias) =>
+				new RegExp(`\\b${alias.normalize('NFKD').replace(/\p{M}/gu, '')}\\b`, 'i').test(cleaned)
+			)
+		) {
 			const year = cleaned.match(/\b(?:19|20)\d{2}\b/);
 			if (year) return `${year[0]}-${entry.month}`;
 		}
 	}
 	const season = cleaned.match(/\b(spring|summer|fall|autumn|winter)\s*((?:19|20)\d{2})\b/i);
 	if (season) {
-		const seasonMonths: Record<string, string> = { spring: '03', summer: '06', fall: '09', autumn: '09', winter: '12' };
+		const seasonMonths: Record<string, string> = {
+			spring: '03',
+			summer: '06',
+			fall: '09',
+			autumn: '09',
+			winter: '12'
+		};
 		return `${season[2]}-${seasonMonths[season[1].toLowerCase()]}`;
 	}
 	const year = cleaned.match(/^((?:19|20)\d{2})$/);
@@ -99,6 +108,7 @@ export function extractFirstDateRange(text: string): DateRange | null {
 
 export function stripDateRanges(text: string): string {
 	let result = text;
-	for (const pattern of DATE_RANGE_PATTERNS.slice(0, 4)) result = result.replace(new RegExp(pattern.source, pattern.flags), ' ');
+	for (const pattern of DATE_RANGE_PATTERNS.slice(0, 4))
+		result = result.replace(new RegExp(pattern.source, pattern.flags), ' ');
 	return result.replace(/\s+/g, ' ').trim();
 }

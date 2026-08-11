@@ -3,7 +3,8 @@ import { normalizeLines } from './text-normalizer';
 import type { ExperienceEntry, ResumeSection } from './types';
 
 const BULLET = /^[\s•\-*·▪►➤○●]+/;
-const ROLE_WORDS = /\b(?:developer|engineer|analyst|assistant|manager|director|coordinator|specialist|consultant|intern|apprentice|representative|designer|architect|administrator|desenvolvedor|engenheiro|analista|auxiliar|assistente|gerente|diretor|coordenador|especialista|consultor|estagiario|estagiário|aprendiz|promotor|operador|tecnico|técnico|servicos gerais|serviços gerais)\b/i;
+const ROLE_WORDS =
+	/\b(?:developer|engineer|analyst|assistant|manager|director|coordinator|specialist|consultant|intern|apprentice|representative|designer|architect|administrator|desenvolvedor|engenheiro|analista|auxiliar|assistente|gerente|diretor|coordenador|especialista|consultor|estagiario|estagiário|aprendiz|promotor|operador|tecnico|técnico|servicos gerais|serviços gerais)\b/i;
 
 export function extractExperienceEntries(sections: ResumeSection[]): ExperienceEntry[] {
 	const entries: ExperienceEntry[] = [];
@@ -13,9 +14,8 @@ export function extractExperienceEntries(sections: ResumeSection[]): ExperienceE
 			if (parsed && (parsed.title || parsed.company)) entries.push(parsed);
 		}
 	}
-	return deduplicate(
-		entries,
-		(entry) => `${entry.company}|${entry.title}|${entry.dates.start}`.toLowerCase()
+	return deduplicate(entries, (entry) =>
+		`${entry.company}|${entry.title}|${entry.dates.start}`.toLowerCase()
 	);
 }
 
@@ -49,9 +49,7 @@ function splitExperienceEntries(content: string): string[] {
 			continue;
 		}
 
-		const nextHasDate = Boolean(
-			lines[index + 1] && extractDateRanges(lines[index + 1]).length
-		);
+		const nextHasDate = Boolean(lines[index + 1] && extractDateRanges(lines[index + 1]).length);
 		const header = !isBullet && looksLikeJobHeader(clean) && nextHasDate;
 		if (header && current.length) flush();
 		if (
@@ -130,18 +128,14 @@ function parseExperienceBlock(block: string): ExperienceEntry | null {
 		title,
 		company,
 		dates,
-		bullets: deduplicate(
-			bullets.map((bullet) => bullet.trim()).filter(Boolean),
-			(item) => item.toLowerCase()
+		bullets: deduplicate(bullets.map((bullet) => bullet.trim()).filter(Boolean), (item) =>
+			item.toLowerCase()
 		),
 		rawText: block
 	};
 }
 
-function parseJobHeader(
-	line1: string,
-	line2: string
-): { title: string; company: string } {
+function parseJobHeader(line1: string, line2: string): { title: string; company: string } {
 	const first = stripDateRanges(line1).replace(BULLET, '').trim();
 	const second = stripDateRanges(line2).replace(BULLET, '').trim();
 	const relation = first.match(/^(.+?)\s+(?:at|na|no)\s+(.+)$/i);
@@ -164,9 +158,7 @@ function parseJobHeader(
 		}
 		return { title: first, company: second };
 	}
-	return ROLE_WORDS.test(first)
-		? { title: first, company: '' }
-		: { title: '', company: first };
+	return ROLE_WORDS.test(first) ? { title: first, company: '' } : { title: '', company: first };
 }
 
 function deduplicate<T>(values: T[], key: (value: T) => string): T[] {

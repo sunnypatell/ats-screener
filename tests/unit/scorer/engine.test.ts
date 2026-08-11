@@ -64,9 +64,9 @@ function makePoorInput(): ScoringInput {
 }
 
 describe('scoreResume', () => {
-	it('returns results for all 6 ATS profiles', () => {
+	it('returns results for all 7 ATS profiles', () => {
 		const results = scoreResume(makeGoodInput());
-		expect(results).toHaveLength(6);
+		expect(results).toHaveLength(7);
 
 		const names = results.map((r) => r.system);
 		expect(names).toContain('Workday');
@@ -75,6 +75,7 @@ describe('scoreResume', () => {
 		expect(names).toContain('Greenhouse');
 		expect(names).toContain('Lever');
 		expect(names).toContain('SuccessFactors');
+		expect(names).toContain('Gupy-like');
 	});
 
 	it('produces scores between 0 and 100', () => {

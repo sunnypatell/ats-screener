@@ -29,17 +29,13 @@ export function scoreGupyAlignment(
 	const educationEntries = input.educationEntries ?? [];
 	const durationMonths = totalNonOverlappingMonths(entries);
 	const requiredMonths =
-		parsedJob.minimumExperienceYears === null
-			? null
-			: parsedJob.minimumExperienceYears * 12;
+		parsedJob.minimumExperienceYears === null ? null : parsedJob.minimumExperienceYears * 12;
 	const durationScore =
 		requiredMonths === null
 			? entries.length > 0
 				? 75
 				: 0
-			: Math.round(
-					Math.min(100, (durationMonths / Math.max(1, requiredMonths)) * 100)
-				);
+			: Math.round(Math.min(100, (durationMonths / Math.max(1, requiredMonths)) * 100));
 	const roleScore = scoreRoleAlignment(entries, parsedJob.roleType);
 	const experienceScore = Math.round(
 		baseExperienceScore * 0.45 + durationScore * 0.35 + roleScore * 0.2
@@ -110,9 +106,7 @@ function matchStructuredSkills(
 	const resume = new Set(resumeSkills.map(canonical));
 	const required = requiredSkills.map((skill) => ({ raw: skill, canonical: canonical(skill) }));
 	const preferred = preferredSkills.map((skill) => ({ raw: skill, canonical: canonical(skill) }));
-	const matched = required
-		.filter((skill) => resume.has(skill.canonical))
-		.map((skill) => skill.raw);
+	const matched = required.filter((skill) => resume.has(skill.canonical)).map((skill) => skill.raw);
 	const missing = required
 		.filter((skill) => !resume.has(skill.canonical))
 		.map((skill) => skill.raw);
@@ -124,9 +118,7 @@ function matchStructuredSkills(
 		return { score: 0, matched: [], missing: [], preferredMatched: [] };
 	}
 	const requiredScore = required.length ? matched.length / required.length : 1;
-	const preferredScore = preferred.length
-		? preferredMatched.length / preferred.length
-		: 1;
+	const preferredScore = preferred.length ? preferredMatched.length / preferred.length : 1;
 	const requiredWeight = required.length ? 0.8 : 0;
 	const preferredWeight = preferred.length ? 0.2 : 0;
 	const totalWeight = requiredWeight + preferredWeight;
@@ -157,12 +149,8 @@ export function totalNonOverlappingMonths(entries: ScoringExperienceEntry[]): nu
 	const intervals = entries
 		.map((entry) => {
 			const start = parseMonth(entry.start);
-			const end = entry.isCurrent
-				? currentMonth
-				: (parseMonth(entry.end, true) ?? start);
-			return start === null || end === null || end < start
-				? null
-				: ([start, end] as const);
+			const end = entry.isCurrent ? currentMonth : (parseMonth(entry.end, true) ?? start);
+			return start === null || end === null || end < start ? null : ([start, end] as const);
 		})
 		.filter((interval): interval is readonly [number, number] => interval !== null)
 		.sort((a, b) => a[0] - b[0]);
@@ -183,9 +171,7 @@ export function totalNonOverlappingMonths(entries: ScoringExperienceEntry[]): nu
 
 function scoreRoleAlignment(entries: ScoringExperienceEntry[], roleType: string): number {
 	if (roleType === 'other') return entries.length ? 75 : 0;
-	const corpus = fold(
-		entries.map((entry) => `${entry.title} ${entry.text}`).join(' ')
-	);
+	const corpus = fold(entries.map((entry) => `${entry.title} ${entry.text}`).join(' '));
 	const patterns: Record<string, RegExp> = {
 		engineering:
 			/\b(?:developer|engineer|software|programmer|desenvolvedor|engenheiro|programador|api|web|backend|frontend)\b/,

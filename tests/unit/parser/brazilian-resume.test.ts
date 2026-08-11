@@ -84,10 +84,14 @@ function assertCoreExtraction(text: string, locale: 'pt-BR' | 'en') {
 	expect(resume.metadata.language).toBe(locale);
 	expect(resume.contact.email).toBe('gabedsam01@gmail.com');
 	expect(resume.contact.phone?.replace(/\D/g, '')).toContain('11939370117');
-	expect(resume.sections.map((section) => section.type)).toEqual(expect.arrayContaining(['contact', 'summary', 'skills', 'experience', 'education', 'projects']));
+	expect(resume.sections.map((section) => section.type)).toEqual(
+		expect.arrayContaining(['contact', 'summary', 'skills', 'experience', 'education', 'projects'])
+	);
 	expect(resume.experience.length).toBeGreaterThanOrEqual(5);
 	expect(resume.education.length).toBe(2);
-	expect(resume.skills).toEqual(expect.arrayContaining(['TypeScript', 'Python', 'Go', 'React', 'PostgreSQL', 'Docker']));
+	expect(resume.skills).toEqual(
+		expect.arrayContaining(['TypeScript', 'Python', 'Go', 'React', 'PostgreSQL', 'Docker'])
+	);
 	expect(resume.skills.some((skill) => skill.length > 45)).toBe(false);
 	return resume;
 }
@@ -95,12 +99,20 @@ function assertCoreExtraction(text: string, locale: 'pt-BR' | 'en') {
 describe('Brazilian deterministic resume parser', () => {
 	it('parses the Portuguese reference resume', () => {
 		const resume = assertCoreExtraction(PORTUGUESE_RESUME, 'pt-BR');
-		expect(resume.experience.some((entry) => entry.company.includes('MVP Builders') && /Desenvolvedor/i.test(entry.title))).toBe(true);
+		expect(
+			resume.experience.some(
+				(entry) => entry.company.includes('MVP Builders') && /Desenvolvedor/i.test(entry.title)
+			)
+		).toBe(true);
 	});
 
 	it('parses the English reference resume', () => {
 		const resume = assertCoreExtraction(ENGLISH_RESUME, 'en');
-		expect(resume.experience.some((entry) => entry.company.includes('MVP Builders') && /Developer/i.test(entry.title))).toBe(true);
+		expect(
+			resume.experience.some(
+				(entry) => entry.company.includes('MVP Builders') && /Developer/i.test(entry.title)
+			)
+		).toBe(true);
 	});
 
 	it('adds a Gupy-like profile and does not inflate keywords without a job', () => {
@@ -124,6 +136,8 @@ describe('Brazilian deterministic resume parser', () => {
 		expect(first).toHaveLength(7);
 		expect(first.find((score) => score.system === 'Gupy-like')).toBeDefined();
 		expect(first.every((score) => score.breakdown.keywordMatch.score === 0)).toBe(true);
-		expect(first.map((score) => score.overallScore)).toEqual(second.map((score) => score.overallScore));
+		expect(first.map((score) => score.overallScore)).toEqual(
+			second.map((score) => score.overallScore)
+		);
 	});
 });

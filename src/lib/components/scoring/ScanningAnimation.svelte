@@ -2,7 +2,15 @@
 	import { onMount } from 'svelte';
 	import { localeStore } from '$stores/locale.svelte';
 
-	const platforms = ['Gupy-like', 'Workday', 'Taleo', 'SuccessFactors', 'iCIMS', 'Greenhouse', 'Lever'];
+	const platforms = [
+		'Gupy-like',
+		'Workday',
+		'Taleo',
+		'SuccessFactors',
+		'iCIMS',
+		'Greenhouse',
+		'Lever'
+	];
 	let active = $state(0);
 
 	onMount(() => {
@@ -15,10 +23,16 @@
 
 <div class="scanning" role="status">
 	<div class="spinner" aria-hidden="true"></div>
-	<h3>{localeStore.locale === 'pt-BR' ? 'Calculando pontuações determinísticas' : 'Computing deterministic scores'}</h3>
-	<p>{localeStore.locale === 'pt-BR'
-		? 'Aplicando regras, requisitos da vaga e perfis ATS locais.'
-		: 'Applying local rules, job requirements and ATS profiles.'}</p>
+	<h3>
+		{localeStore.locale === 'pt-BR'
+			? 'Calculando pontuações determinísticas'
+			: 'Computing deterministic scores'}
+	</h3>
+	<p>
+		{localeStore.locale === 'pt-BR'
+			? 'Aplicando regras, requisitos da vaga e perfis ATS locais.'
+			: 'Applying local rules, job requirements and ATS profiles.'}
+	</p>
 	<div class="platforms">
 		{#each platforms as platform, index}
 			<span class:active={index === active} class:done={index < active}>{platform}</span>

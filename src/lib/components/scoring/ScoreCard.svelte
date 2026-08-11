@@ -17,7 +17,9 @@
 		{
 			label: localeStore.locale === 'pt-BR' ? 'Palavras-chave' : 'Keywords',
 			score: result.breakdown.keywordMatch.score,
-			hide: result.breakdown.keywordMatch.matched.length === 0 && result.breakdown.keywordMatch.missing.length === 0
+			hide:
+				result.breakdown.keywordMatch.matched.length === 0 &&
+				result.breakdown.keywordMatch.missing.length === 0
 		},
 		{
 			label: localeStore.locale === 'pt-BR' ? 'Seções' : 'Sections',
@@ -50,7 +52,14 @@
 		</div>
 		<div class="ring">
 			<svg viewBox="0 0 100 100" width="72" height="72" aria-hidden="true">
-				<circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="6" />
+				<circle
+					cx="50"
+					cy="50"
+					r="42"
+					fill="none"
+					stroke="rgba(255,255,255,.06)"
+					stroke-width="6"
+				/>
 				<circle
 					cx="50"
 					cy="50"
@@ -66,7 +75,9 @@
 			</svg>
 			<strong style:color={scoreColor}>{result.overallScore}</strong>
 			{#if delta !== null && delta !== 0}
-				<small class:positive={delta > 0} class:negative={delta < 0}>{delta > 0 ? '+' : ''}{delta}</small>
+				<small class:positive={delta > 0} class:negative={delta < 0}
+					>{delta > 0 ? '+' : ''}{delta}</small
+				>
 			{/if}
 		</div>
 	</header>
@@ -74,8 +85,12 @@
 	<div class="status">
 		<span class:pass={result.passesFilter} class:fail={!result.passesFilter}>
 			{result.passesFilter
-				? localeStore.locale === 'pt-BR' ? '✓ Provável aprovação' : '✓ Likely to pass'
-				: localeStore.locale === 'pt-BR' ? '× Pode ser filtrado' : '× May be filtered'}
+				? localeStore.locale === 'pt-BR'
+					? '✓ Provável aprovação'
+					: '✓ Likely to pass'
+				: localeStore.locale === 'pt-BR'
+					? '× Pode ser filtrado'
+					: '× May be filtered'}
 		</span>
 		<b style:color={scoreColor}>{verdict(result.overallScore)}</b>
 	</div>
@@ -92,8 +107,14 @@
 
 	{#if result.breakdown.keywordMatch.matched.length > 0 || result.breakdown.keywordMatch.missing.length > 0}
 		<footer>
-			<span class="matched">{result.breakdown.keywordMatch.matched.length} {localeStore.locale === 'pt-BR' ? 'encontradas' : 'matched'}</span>
-			<span class="missing">{result.breakdown.keywordMatch.missing.length} {localeStore.locale === 'pt-BR' ? 'ausentes' : 'missing'}</span>
+			<span class="matched"
+				>{result.breakdown.keywordMatch.matched.length}
+				{localeStore.locale === 'pt-BR' ? 'encontradas' : 'matched'}</span
+			>
+			<span class="missing"
+				>{result.breakdown.keywordMatch.missing.length}
+				{localeStore.locale === 'pt-BR' ? 'ausentes' : 'missing'}</span
+			>
 		</footer>
 	{/if}
 </article>
@@ -104,7 +125,9 @@
 		border: 1px solid var(--glass-border);
 		border-radius: var(--radius-xl);
 		background: var(--glass-bg);
-		transition: transform 0.2s ease, border-color 0.2s ease;
+		transition:
+			transform 0.2s ease,
+			border-color 0.2s ease;
 	}
 
 	.card:hover {

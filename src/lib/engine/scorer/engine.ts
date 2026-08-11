@@ -55,10 +55,7 @@ export function scoreAgainstProfile(input: ScoringInput, profile: ATSProfile): S
 			: 0;
 	const overallScore = Math.max(
 		0,
-		Math.min(
-			100,
-			Math.round(weightedScore + quirkAdjustment.totalAdjustment - confidencePenalty)
-		)
+		Math.min(100, Math.round(weightedScore + quirkAdjustment.totalAdjustment - confidencePenalty))
 	);
 	return {
 		system: profile.name,
@@ -66,20 +63,12 @@ export function scoreAgainstProfile(input: ScoringInput, profile: ATSProfile): S
 		overallScore,
 		passesFilter: overallScore >= profile.passingScore,
 		breakdown,
-		suggestions: generateSuggestions(
-			breakdown,
-			profile,
-			quirkAdjustment.messages,
-			normalizedInput
-		)
+		suggestions: generateSuggestions(breakdown, profile, quirkAdjustment.messages, normalizedInput)
 	};
 }
 
 function detectLocale(text: string): 'pt-BR' | 'en' {
-	const normalized = text
-		.normalize('NFKD')
-		.replace(/\p{M}/gu, '')
-		.toLowerCase();
+	const normalized = text.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase();
 	const pt = (
 		normalized.match(
 			/\b(?:experiencia|formacao|habilidades|competencias|desenvolvimento|atuacao|presente|conclusao)\b/g
@@ -136,11 +125,9 @@ function computeBreakdown(input: ScoringInput, profile: ATSProfile): ScoreBreakd
 
 	const keywordCorpus =
 		profile.name === 'Gupy-like'
-			? [
-					input.resumeSkills.join(' '),
-					input.experienceBullets.join(' '),
-					input.educationText
-				].join('\n')
+			? [input.resumeSkills.join(' '), input.experienceBullets.join(' '), input.educationText].join(
+					'\n'
+				)
 			: input.resumeText;
 	const keywords = matchKeywords(
 		keywordCorpus,
@@ -184,9 +171,7 @@ function computeWeightedScore(
 	const quantificationScore =
 		breakdown.experience.totalBullets > 0
 			? Math.round(
-					(breakdown.experience.quantifiedBullets /
-						breakdown.experience.totalBullets) *
-						100
+					(breakdown.experience.quantifiedBullets / breakdown.experience.totalBullets) * 100
 				)
 			: 0;
 	const components = [
@@ -202,15 +187,10 @@ function computeWeightedScore(
 			weight: weights.keywordMatch
 		});
 	}
-	const activeWeight = components.reduce(
-		(sum, component) => sum + component.weight,
-		0
-	);
+	const activeWeight = components.reduce((sum, component) => sum + component.weight, 0);
 	return activeWeight > 0
-		? components.reduce(
-				(sum, component) => sum + component.score * component.weight,
-				0
-			) / activeWeight
+		? components.reduce((sum, component) => sum + component.score * component.weight, 0) /
+				activeWeight
 		: 0;
 }
 
@@ -245,9 +225,7 @@ function generateSuggestions(
 		);
 	}
 	if (breakdown.formatting.score < 70) {
-		if (
-			breakdown.formatting.issues.some((issue) => issue.includes('multi-column'))
-		) {
+		if (breakdown.formatting.issues.some((issue) => issue.includes('multi-column'))) {
 			suggestions.push(
 				pt ? 'use um layout de coluna única' : 'switch to a single-column resume layout'
 			);
@@ -294,12 +272,8 @@ function generateSuggestions(
 		);
 	}
 	if (breakdown.experience.totalBullets > 0) {
-		const quantRatio =
-			breakdown.experience.quantifiedBullets /
-			breakdown.experience.totalBullets;
-		const actionRatio =
-			breakdown.experience.actionVerbCount /
-			breakdown.experience.totalBullets;
+		const quantRatio = breakdown.experience.quantifiedBullets / breakdown.experience.totalBullets;
+		const actionRatio = breakdown.experience.actionVerbCount / breakdown.experience.totalBullets;
 		if (quantRatio < 0.3) {
 			suggestions.push(
 				pt
@@ -309,9 +283,7 @@ function generateSuggestions(
 		}
 		if (actionRatio < 0.5) {
 			suggestions.push(
-				pt
-					? 'inicie mais tópicos com verbos de ação'
-					: 'start more bullets with action verbs'
+				pt ? 'inicie mais tópicos com verbos de ação' : 'start more bullets with action verbs'
 			);
 		}
 	} else {

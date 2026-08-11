@@ -3,7 +3,8 @@ import { normalizeLines } from './text-normalizer';
 import type { EducationEntry, ResumeSection } from './types';
 
 const BULLET = /^[\s•\-*·▪►➤○●]+/;
-const DEGREE_PATTERN = /\b(?:ph\.?d\.?|doctorate|doctor|doutorado|master'?s?|mestrado|mba|bachelor'?s?|bacharelado|licenciatura|associate'?s?|tecnologia|tecnologo|tecnólogo|technical degree|ensino tecnico|ensino técnico|curso tecnico|curso técnico|diploma|certificate|certificado|especializacao|especialização|pos-graduacao|pós-graduação)\b/i;
+const DEGREE_PATTERN =
+	/\b(?:ph\.?d\.?|doctorate|doctor|doutorado|master'?s?|mestrado|mba|bachelor'?s?|bacharelado|licenciatura|associate'?s?|tecnologia|tecnologo|tecnólogo|technical degree|ensino tecnico|ensino técnico|curso tecnico|curso técnico|diploma|certificate|certificado|especializacao|especialização|pos-graduacao|pós-graduação)\b/i;
 
 export function extractEducationEntries(sections: ResumeSection[]): EducationEntry[] {
 	const entries: EducationEntry[] = [];
@@ -54,8 +55,7 @@ function splitEntries(content: string): string[] {
 	if (current.length) entries.push(current.join('\n'));
 	return entries.filter(
 		(entry) =>
-			DEGREE_PATTERN.test(entry) ||
-			/universidade|university|faculdade|college|senai/i.test(entry)
+			DEGREE_PATTERN.test(entry) || /universidade|university|faculdade|college|senai/i.test(entry)
 	);
 }
 
@@ -70,9 +70,13 @@ function inferInstitution(lines: string[], degree: string): string {
 			continue;
 		}
 		if (
-			/\b(?:faculdade|universidade|university|college|senai|senac|instituto|institute)\b/i.test(clean)
+			/\b(?:faculdade|universidade|university|college|senai|senac|instituto|institute)\b/i.test(
+				clean
+			)
 		) {
-			return stripDateRanges(clean).split(/\||—|–/)[0].trim();
+			return stripDateRanges(clean)
+				.split(/\||—|–/)[0]
+				.trim();
 		}
 	}
 	return '';
@@ -87,9 +91,7 @@ function inferField(text: string, degree: string): string {
 }
 
 function extractGPA(text: string): string | null {
-	const match = text.match(
-		/(?:gpa|media|média)\s*:?[ ]*(\d+[.,]?\d*)\s*(?:\/\s*(\d+[.,]?\d*))?/i
-	);
+	const match = text.match(/(?:gpa|media|média)\s*:?[ ]*(\d+[.,]?\d*)\s*(?:\/\s*(\d+[.,]?\d*))?/i);
 	return match ? (match[2] ? `${match[1]}/${match[2]}` : match[1]) : null;
 }
 

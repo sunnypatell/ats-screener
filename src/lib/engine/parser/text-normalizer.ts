@@ -11,11 +11,11 @@ const LABELS = [
 ];
 
 const LIGATURES: Record<string, string> = {
-	'ﬁ': 'fi',
-	'ﬂ': 'fl',
-	'ﬀ': 'ff',
-	'ﬃ': 'ffi',
-	'ﬄ': 'ffl'
+	ﬁ: 'fi',
+	ﬂ: 'fl',
+	ﬀ: 'ff',
+	ﬃ: 'ffi',
+	ﬄ: 'ffl'
 };
 
 export function normalizeTextFragment(value: string): string {
@@ -64,8 +64,16 @@ export function normalizeContactText(lines: string[]): string {
 
 export function detectLanguage(text: string): 'pt-BR' | 'en' {
 	const normalized = text.toLocaleLowerCase('pt-BR');
-	const pt = (normalized.match(/\b(?:experiência|formação|habilidades|competências|desenvolvimento|atuação|curso|presente|conclusão|dados|projetos)\b/g) || []).length;
-	const en = (normalized.match(/\b(?:experience|education|skills|development|present|summary|projects|degree|responsibilities|professional)\b/g) || []).length;
+	const pt = (
+		normalized.match(
+			/\b(?:experiência|formação|habilidades|competências|desenvolvimento|atuação|curso|presente|conclusão|dados|projetos)\b/g
+		) || []
+	).length;
+	const en = (
+		normalized.match(
+			/\b(?:experience|education|skills|development|present|summary|projects|degree|responsibilities|professional)\b/g
+		) || []
+	).length;
 	return pt > en ? 'pt-BR' : 'en';
 }
 
@@ -74,6 +82,8 @@ export function textQualityScore(text: string, lines: string[]): number {
 	const chars = text.length;
 	const words = text.split(/\s+/).filter(Boolean).length;
 	const replacement = (text.match(/�/g) || []).length;
+	// intentional: counting control characters that indicate a broken extraction
+	// eslint-disable-next-line no-control-regex
 	const controls = (text.match(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g) || []).length;
 	const alphaNumeric = (text.match(/[\p{L}\p{N}]/gu) || []).length;
 	const readableRatio = alphaNumeric / Math.max(1, chars);

@@ -104,11 +104,26 @@ export function detectSections(lines: string[]): ResumeSection[] {
 		headers.push({ index, header: lines[index].trim(), type: classifySection(lines[index]) });
 	}
 	if (headers.length === 0) {
-		return [{ type: 'unknown', header: '', content: lines.join('\n'), startLine: 0, endLine: Math.max(0, lines.length - 1) }];
+		return [
+			{
+				type: 'unknown',
+				header: '',
+				content: lines.join('\n'),
+				startLine: 0,
+				endLine: Math.max(0, lines.length - 1)
+			}
+		];
 	}
 	if (headers[0].index > 0) {
 		const content = lines.slice(0, headers[0].index).join('\n').trim();
-		if (content) sections.push({ type: 'contact', header: '', content, startLine: 0, endLine: headers[0].index - 1 });
+		if (content)
+			sections.push({
+				type: 'contact',
+				header: '',
+				content,
+				startLine: 0,
+				endLine: headers[0].index - 1
+			});
 	}
 	for (let i = 0; i < headers.length; i++) {
 		const current = headers[i];
@@ -116,13 +131,18 @@ export function detectSections(lines: string[]): ResumeSection[] {
 		sections.push({
 			type: current.type,
 			header: current.header,
-			content: lines.slice(current.index + 1, end).join('\n').trim(),
+			content: lines
+				.slice(current.index + 1, end)
+				.join('\n')
+				.trim(),
 			startLine: current.index,
 			endLine: end - 1
 		});
 	}
 	const merged: ResumeSection[] = [];
-	for (const section of sections.filter((section) => section.content || section.type === 'contact')) {
+	for (const section of sections.filter(
+		(section) => section.content || section.type === 'contact'
+	)) {
 		const previous = merged[merged.length - 1];
 		if (previous && previous.type === section.type && section.type !== 'unknown') {
 			previous.content = [previous.content, section.content].filter(Boolean).join('\n');

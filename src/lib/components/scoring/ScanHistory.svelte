@@ -47,7 +47,12 @@
 
 {#if hasHistory}
 	<section class="history">
-		<button class="toggle" type="button" onclick={() => (expanded = !expanded)} aria-expanded={expanded}>
+		<button
+			class="toggle"
+			type="button"
+			onclick={() => (expanded = !expanded)}
+			aria-expanded={expanded}
+		>
 			<span>◷ {localeStore.locale === 'pt-BR' ? 'Histórico de análises' : 'Scan history'}</span>
 			<small>{history.length}</small>
 			<b aria-hidden="true">{expanded ? '⌃' : '⌄'}</b>
@@ -67,11 +72,18 @@
 							{/if}
 						</div>
 						<div class="details">
-							<strong>{entry.fileName || (localeStore.locale === 'pt-BR' ? 'Texto colado' : 'Pasted text')}</strong>
+							<strong
+								>{entry.fileName ||
+									(localeStore.locale === 'pt-BR' ? 'Texto colado' : 'Pasted text')}</strong
+							>
 							<span>
 								{entry.mode === 'targeted'
-									? localeStore.locale === 'pt-BR' ? 'vaga direcionada' : 'targeted'
-									: localeStore.locale === 'pt-BR' ? 'geral' : 'general'}
+									? localeStore.locale === 'pt-BR'
+										? 'vaga direcionada'
+										: 'targeted'
+									: localeStore.locale === 'pt-BR'
+										? 'geral'
+										: 'general'}
 								· {entry.passingCount}/{entry.results.length}
 							</span>
 						</div>
