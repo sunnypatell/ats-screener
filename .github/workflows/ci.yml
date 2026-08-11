@@ -20,8 +20,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 22 is the engines floor, 24 is what vercel actually builds on, 26 is current
-        node-version: [22, 24, 26]
+        # 22 is the engines floor, 24 is what vercel actually builds on
+        node-version: [22, 24]
 
     env:
       PUBLIC_FIREBASE_API_KEY: ci-placeholder
