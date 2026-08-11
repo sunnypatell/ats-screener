@@ -8,10 +8,10 @@ static/docs
 .git
 .gitignore
 .github
+.dockerignore
 docker-compose.yml
 .env
 .env.*
-*.md
 .DS_Store
 coverage
 playwright-report

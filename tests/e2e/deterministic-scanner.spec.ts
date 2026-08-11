@@ -25,7 +25,7 @@ Tecnologia em Análise e Desenvolvimento de Sistemas — Faculdade São Francisc
 
 test('parses and scores a Portuguese resume without an LLM', async ({ page }) => {
 	await page.goto('/scanner');
-	await page.getByText('Or paste resume text instead').click();
+	await page.getByText('Or paste resume text').click();
 	await page.getByRole('textbox', { name: 'Paste resume text' }).fill(RESUME);
 	await page.getByRole('button', { name: 'Use this text' }).click();
 	await expect(page.getByText('Resume Parsed Successfully')).toBeVisible();
@@ -34,5 +34,5 @@ test('parses and scores a Portuguese resume without an LLM', async ({ page }) =>
 	await expect(page.getByText('Gupy-like', { exact: true }).first()).toBeVisible({
 		timeout: 30_000
 	});
-	await expect(page.getByText(/Systems Passed/)).toBeVisible();
+	await expect(page.getByText(/Systems passed/i)).toBeVisible();
 });
