@@ -5,6 +5,7 @@ on:
     branches: [main, dev, 'feat/**']
   pull_request:
     branches: [main, dev]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
