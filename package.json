@@ -37,7 +37,7 @@
 		"firebase": "^12.17.1",
 		"jspdf": "^4.2.1",
 		"mammoth": "^1.12.1",
-		"motion": "^12.43.0",
+		"motion": "^13.1.0",
 		"motion-sv": "^0.1.13",
 		"pdfjs-dist": "^6.2.108"
 	},
