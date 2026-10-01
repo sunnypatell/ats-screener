@@ -31,15 +31,15 @@
 	},
 	"dependencies": {
 		"@number-flow/svelte": "^0.4.2",
-		"@vercel/og": "^1.0.1",
-		"bits-ui": "^2.18.1",
-		"compromise": "^14.16.0",
-		"firebase": "^12.17.1",
+		"@vercel/og": "^1.0.3",
+		"bits-ui": "^2.19.3",
+		"compromise": "^14.17.0",
+		"firebase": "^12.19.0",
 		"jspdf": "^4.2.1",
-		"mammoth": "^1.12.1",
+		"mammoth": "^1.12.3",
 		"motion": "^12.43.0",
 		"motion-sv": "^0.1.13",
-		"pdfjs-dist": "^6.2.108"
+		"pdfjs-dist": "^6.3.289"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
@@ -74,6 +74,6 @@
 		}
 	},
 	"optionalDependencies": {
-		"ldapts": "^9.0.0"
+		"ldapts": "^9.2.0"
 	}
 }
