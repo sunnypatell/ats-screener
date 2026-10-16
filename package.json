@@ -31,7 +31,7 @@
 	},
 	"dependencies": {
 		"@number-flow/svelte": "^0.4.2",
-		"@vercel/og": "^1.0.1",
+		"@vercel/og": "^1.0.2",
 		"bits-ui": "^2.19.5",
 		"compromise": "^14.18.0",
 		"firebase": "^12.19.0",

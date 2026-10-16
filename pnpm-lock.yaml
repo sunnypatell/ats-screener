@@ -15,8 +15,8 @@ importers:
         specifier: ^0.4.2
         version: 0.4.2(svelte@5.57.2(@typescript-eslint/types@8.71.1))
       '@vercel/og':
-        specifier: ^1.0.1
-        version: 1.0.1(@types/node@24.19.1)
+        specifier: ^1.0.2
+        version: 1.0.2(@types/node@24.19.1)
       bits-ui:
         specifier: ^2.19.5
         version: 2.19.5(@internationalized/date@3.11.0)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.2(@typescript-eslint/types@8.71.1))(vite@8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.6.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.1))(typescript@6.0.3)(vite@8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.6.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.1))
@@ -1255,8 +1255,8 @@ packages:
     engines: {node: '>=20'}
     hasBin: true
 
-  '@vercel/og@1.0.1':
-    resolution: {integrity: sha512-uLTgu6ZIYuPuDnPpwkYhJsOjogqIhMnjjLREFpRAXjsMpCIQ2RmNX8Iz/5shDXfva1A2V0kC5j+KFVUSc4TVew==}
+  '@vercel/og@1.0.2':
+    resolution: {integrity: sha512-xL22Oy3fZ1TjR2eYJ3A9dKFmaHSAnaHfQ3lREFOquAQIBydkjHqIZkndKQGphxXertZMcGBdIkJbAo/ty9uGdw==}
     engines: {node: '>=22'}
 
   '@vitest/mocker@5.0.3':
@@ -1646,8 +1646,8 @@ packages:
       picomatch:
         optional: true
 
-  fflate@0.7.5:
-    resolution: {integrity: sha512-QieYf//cis6ywHNi5qW1+PXPQ4bC+XVJAtS4AXIML8P76GroEiOxm/oQtn1f02UkJY1+KsXMJcC+R2v/Eg4G3g==}
+  fflate@0.7.3:
+    resolution: {integrity: sha512-0Zz1jOzJWERhyhsimS54VTqOteCNwRtIlh8isdL0AXLo0g7xNTfTL7oWrkmCnPhZGocKIkWHBistBrrpoNH3aw==}
 
   fflate@0.8.3:
     resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
@@ -1702,6 +1702,9 @@ packages:
   grad-school@0.0.9:
     resolution: {integrity: sha512-/aoG9CJz/1gB7x5XKp9i7ggA4k+MqZD7Neph3crfrOLWERkeJFXDXzNefvPW0j97iGTNYqTL+rpBEcz83MTmZw==}
     engines: {node: '>=12'}
+
+  harfbuzzjs@0.10.0:
+    resolution: {integrity: sha512-SN8LVwCOzvTq3OPNd0+EAghgXugItz56wst567D1vs7LnnKGWprhi3EG58aVOBwhN8HEbQxL4I9NDWkcXUutRw==}
 
   hashery@1.5.1:
     resolution: {integrity: sha512-iZyKG96/JwPz1N55vj2Ie2vXbhu440zfUfJvSwEqEbeLluk7NnapfGqa7LH0mOsnDxTF85Mx8/dyR6HfqcbmbQ==}
@@ -2222,8 +2225,8 @@ packages:
   safe-buffer@5.2.1:
     resolution: {integrity: sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ==}
 
-  satori@0.29.0:
-    resolution: {integrity: sha512-fPAfrwNaIQ7EsJLhY382STEqpczN6ZEH9NsKXDQgRcxUXNNPB73iAjSshzFwTaaScT68pxV0pmG6TBzDQ4sEGw==}
+  satori@0.33.3:
+    resolution: {integrity: sha512-9dOJkLzIsBqEfaJZxn/u7dBtUcm6+rcNQ6qEWo600Ar50Cudq9mTzyW6fCiasbdV1N+dKuUAWGo+KzGOdS7+qg==}
     engines: {node: '>=16'}
 
   saxes@6.0.0:
@@ -3456,7 +3459,7 @@ snapshots:
 
   '@shuding/opentype.js@1.4.0-beta.0':
     dependencies:
-      fflate: 0.7.5
+      fflate: 0.7.3
       string.prototype.codepointat: 0.2.1
 
   '@standard-schema/spec@1.1.0': {}
@@ -3677,10 +3680,10 @@ snapshots:
       - rollup
       - supports-color
 
-  '@vercel/og@1.0.1(@types/node@24.19.1)':
+  '@vercel/og@1.0.2(@types/node@24.19.1)':
     dependencies:
       '@resvg/resvg-wasm': 2.4.1
-      satori: 0.29.0
+      satori: 0.33.3
     optionalDependencies:
       sharp: 0.35.5(@types/node@24.19.1)
     transitivePeerDependencies:
@@ -4083,7 +4086,7 @@ snapshots:
     optionalDependencies:
       picomatch: 4.0.7
 
-  fflate@0.7.5: {}
+  fflate@0.7.3: {}
 
   fflate@0.8.3: {}
 
@@ -4161,6 +4164,8 @@ snapshots:
   graceful-fs@4.2.11: {}
 
   grad-school@0.0.9: {}
+
+  harfbuzzjs@0.10.0: {}
 
   hashery@1.5.1:
     dependencies:
@@ -4647,7 +4652,7 @@ snapshots:
 
   safe-buffer@5.2.1: {}
 
-  satori@0.29.0:
+  satori@0.33.3:
     dependencies:
       '@shuding/opentype.js': 1.4.0-beta.0
       css-background-parser: 0.1.0
@@ -4656,6 +4661,8 @@ snapshots:
       css-to-react-native: 3.2.0
       emoji-regex-xs: 2.0.1
       escape-html: 1.0.3
+      fflate: 0.7.3
+      harfbuzzjs: 0.10.0
       linebreak: 1.1.0
       parse-css-color: 0.2.1
       postcss-value-parser: 4.2.0
