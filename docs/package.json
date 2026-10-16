@@ -14,10 +14,10 @@
 	},
 	"dependencies": {
 		"@astrojs/starlight": "^0.41.7",
-		"astro": "^7.2.2",
+		"astro": "^7.2.10",
 		"rehype-katex": "^7.0.1",
 		"remark-math": "^6.0.0",
-		"sharp": "^0.35.3"
+		"sharp": "^0.35.5"
 	},
 	"pnpm": {
 		"overrides": {
