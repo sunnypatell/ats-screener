@@ -45,6 +45,10 @@ updates:
       - dependency-name: '@types/node'
         update-types:
           - version-update:semver-major
+      # 1.0.3 bundles harfbuzzjs with a require("fs") that throws under esm, killing the ssr build
+      - dependency-name: '@vercel/og'
+        versions:
+          - '1.0.3'
 
   # --------------------------------------------------------------- docs
   - package-ecosystem: npm
