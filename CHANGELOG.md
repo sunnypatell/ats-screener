@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+**breaking for self-hosters on node 26.** the engines range is now `^22.13.0 || ^24.0.0`. it said `>=24.0.0`, but `@sveltejs/adapter-vercel` 6.3 refuses to build on 26 (`Unsupported Node.js version: v26.11.1. Please use Node 20, 22, or 24`), so 26 never actually worked, and vercel would have moved this project's builds to 26 on its own once it ships it, failing every deploy from then on. node 26 now stops at install with a clear engine error instead.
+
+### Changed
+
+- **firebase is no longer traced into the serverless functions.** firebase only runs in the browser, but its dynamic `import('firebase/...')` calls survive in the ssr build, so vercel's file tracer shipped firebase's node sdk, `@grpc/grpc-js` and protobuf inside every function: 5.3 MB of a 7.3 MB bundle. a build-only vite plugin now resolves `firebase/*` to an empty module on the ssr side. functions drop to 1.4 MB, and the `@grpc/grpc-js` advisory no longer reaches any deployed artifact. every route still server-renders, and in a headless browser the landing page still reads the live user count from firestore and the login page still initializes firebase auth.
+- **ignored dependency build scripts are now acknowledged** (`ignoredBuiltDependencies`: `@firebase/util`, `core-js`, and `esbuild` in docs) instead of being flagged as forgotten. behaviour is unchanged, those scripts never ran. a fresh install no longer warns; vercel's restored `node_modules` cache keeps the old record and repeats the warning until an install re-links.
+
+### Removed
+
+- **the dead playwright setup.** `playwright.config.ts` pointed at a `tests/e2e/` that has not existed since the e2e job was dropped in 608632e, so `@playwright/test` and `pnpm test:e2e` did nothing. the readme, contributing guide and about page claimed e2e coverage that wasn't there, and the readme called the api "edge functions" where it runs on node functions on fluid compute; all corrected.
+- **the cerebras provider and `CEREBRAS_API_KEY`.** the model it targeted no longer exists. a cerebras leg can come back once one is verified against the real api with a real key.
+
 ### Security
 
 - **resume contact details no longer reach the ai providers.** scoring runs on gemini's unpaid tier, whose terms let google use inputs to improve its products, allow human review, and ask callers not to send personal information to it. the raw resume text went there as-is, contact block and references included. the server now replaces names, emails, phone numbers (north american and `+` international) and linkedin, github and website links with typed placeholders before the prompt is built, and the prompt tells the model each placeholder stands for a valid value. verified by capturing the exact request bodies the route sent upstream for a resume with full contact details (none of them present), and across five real scans the model never echoed a placeholder or reported contact info as missing. dates, metrics, versions (`C++17`) and location are untouched.
@@ -26,10 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **provider timeouts now cover the response body, not just the headers.** the abort timer was cleared as soon as headers arrived, so a stalled body read could outlive the leg's budget. each call now uses one `AbortSignal.timeout` for the whole request.
 - **error and web-vitals reporting sampled 100% of clients, not the documented 5%.** `parseSampleRate` returns 1 for an unset variable, so `parseSampleRate(x) || 0.05` stayed at 1, and an explicit `0` (falsy) silently became 5%. the default is now a parameter, so unset means 5% and `0` means off.
 - **ldap sessions looped back to `/login` when `SESSION_SECRET` had trailing whitespace.** login signed with the trimmed secret, the hook verified with the raw one, so every session failed verification right after a successful login. common with docker secret files. the hook now trims the same way.
-
-### Removed
-
-- **the cerebras provider and `CEREBRAS_API_KEY`.** the model it targeted no longer exists. a cerebras leg can come back once one is verified against the real api with a real key.
 
 ## [0.5.1] - 2026-08-02
 

@@ -36,7 +36,6 @@ pnpm dev
 | `pnpm format:check` | Verify formatting without writing                                                    |
 | `pnpm test`         | Run unit tests                                                                       |
 | `pnpm test:watch`   | Run unit tests in watch mode                                                         |
-| `pnpm test:e2e`     | Run end-to-end tests with Playwright                                                 |
 | `pnpm validate`     | Full quality gate: check + lint + format:check + test + build                        |
 | `pnpm gate`         | Alias for `pnpm validate`. Run this before opening a PR; CI runs the same five steps |
 
@@ -92,10 +91,8 @@ type(scope): description
 
 ## Testing
 
-- **Unit tests**: `tests/unit/` - engine modules (parser, scorer, NLP, job-parser)
+- **Unit tests**: `tests/unit/` - engine modules (parser, scorer, NLP), API routes, stores, security
 - **Integration tests**: `tests/unit/integration/` - full pipeline tests
-- **Component tests**: `tests/component/` - Svelte component tests
-- **E2E tests**: `tests/e2e/` - full user flows with Playwright
 
 Write tests for any new engine logic. Run `pnpm test` before pushing.
 

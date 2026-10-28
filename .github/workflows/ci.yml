@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 22 is the engines floor, 24 is what vercel actually builds on
+        # the engines range: 22 is the floor, 24 is what vercel builds on. adapter-vercel 6.3 refuses 26
         node-version: [22, 24]
 
     env:

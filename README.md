@@ -84,8 +84,8 @@ Each profile is based on research into the platform's documented parsing and mat
 | **LLM**          | Gemini 3.5 Flash Lite, then GPT-OSS 120B via Groq, then Gemini 3.1 Flash Lite | Free tiers only. Gemini quotas are per model, and Groq adds a second vendor, so no single limit or outage stops scoring. |
 | **Auth**         | Firebase Authentication                                                       | Google + email/password sign-in. Free Spark plan.                                                                        |
 | **Storage**      | Cloud Firestore                                                               | Scan history per user. Free Spark plan.                                                                                  |
-| **Hosting**      | Vercel                                                                        | Free hobby tier. Edge functions for API.                                                                                 |
-| **Testing**      | Vitest + Playwright + @testing-library/svelte                                 | Unit, integration, and E2E coverage.                                                                                     |
+| **Hosting**      | Vercel                                                                        | Free hobby tier. Node functions on Fluid Compute for the API.                                                            |
+| **Testing**      | Vitest + @testing-library/svelte                                              | Unit and integration coverage of the engine, API and stores.                                                             |
 
 **Total infrastructure cost: $0.** Everything runs on free tiers.
 
