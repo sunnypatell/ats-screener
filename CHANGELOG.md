@@ -39,6 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **error and web-vitals reporting sampled 100% of clients, not the documented 5%.** `parseSampleRate` returns 1 for an unset variable, so `parseSampleRate(x) || 0.05` stayed at 1, and an explicit `0` (falsy) silently became 5%. the default is now a parameter, so unset means 5% and `0` means off.
 - **ldap sessions looped back to `/login` when `SESSION_SECRET` had trailing whitespace.** login signed with the trimmed secret, the hook verified with the raw one, so every session failed verification right after a successful login. common with docker secret files. the hook now trims the same way.
 
+- **`/favicon.ico` 404'd about 14 times a day.** only an svg favicon existed, and rss readers, crawlers and older clients ask for `/favicon.ico` regardless of the `<link rel="icon">`. each miss invoked the function to render a 404 page and logged at error level. there is now a real 16/32/48 px ico generated from `favicon.svg`, served straight from the cdn.
+
 ## [0.5.1] - 2026-08-02
 
 ### Fixed
