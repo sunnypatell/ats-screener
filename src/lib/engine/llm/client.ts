@@ -1,4 +1,5 @@
 import type { ScoreResult, Suggestion, StructuredSuggestion } from '$engine/scorer/types';
+import { canonicalSystem } from '$engine/scorer/system-name';
 import type { LLMAnalysis, LLMRequestPayload, LLMResponse } from './types';
 import { generateFallbackAnalysis } from './fallback';
 import { logger } from '$lib/log';
@@ -103,7 +104,7 @@ function normalizeScoreResult(raw: Record<string, unknown>): ScoreResult {
 	const education = (breakdown.education ?? {}) as Record<string, unknown>;
 
 	return {
-		system: String(raw.system ?? 'Unknown'),
+		system: canonicalSystem(String(raw.system ?? 'Unknown')),
 		vendor: String(raw.vendor ?? 'Unknown'),
 		overallScore: clamp(Number(raw.overallScore) || 0, 0, 100),
 		passesFilter: Boolean(raw.passesFilter),

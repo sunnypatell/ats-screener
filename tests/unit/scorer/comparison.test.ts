@@ -80,4 +80,15 @@ describe('computeScanComparison', () => {
 		const cmp = computeScanComparison(current, previous);
 		expect(cmp?.platforms.map((p) => p.system)).toEqual(['Workday', 'Lever']);
 	});
+
+	// models vary the label, and history saved before canonicalization keeps the long form
+	it('matches a platform across scans when the llm varied its name', () => {
+		const previous = [r('SAP SuccessFactors', 60, false), r('Oracle Taleo', 50, false)];
+		const current = [r('SuccessFactors', 70, true), r('Taleo', 55, false)];
+		const cmp = computeScanComparison(current, previous);
+		expect(cmp?.platforms.map((p) => [p.system, p.delta])).toEqual([
+			['SuccessFactors', 10],
+			['Taleo', 5]
+		]);
+	});
 });

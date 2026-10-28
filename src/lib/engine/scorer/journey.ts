@@ -1,4 +1,5 @@
 import type { ScoreResult } from './types';
+import { canonicalSystem } from './system-name';
 
 // derived insights across all of a user's scans. pure function so it's easy to
 // unit-test - no live store, no side effects, no async.
@@ -33,13 +34,15 @@ export function computeJourneyStats(entries: JourneyInputEntry[]): JourneyStats 
 	// per-platform delta: latest minus first, only for platforms present in BOTH
 	let bestPlatformDelta: { system: string; delta: number } | null = null;
 	if (sorted.length >= 2) {
-		const firstBySystem = new Map(first.results.map((r) => [r.system, r.overallScore]));
+		const firstBySystem = new Map(
+			first.results.map((r) => [canonicalSystem(r.system), r.overallScore])
+		);
 		for (const r of latest.results) {
-			const prev = firstBySystem.get(r.system);
+			const prev = firstBySystem.get(canonicalSystem(r.system));
 			if (prev === undefined) continue;
 			const delta = r.overallScore - prev;
 			if (!bestPlatformDelta || delta > bestPlatformDelta.delta) {
-				bestPlatformDelta = { system: r.system, delta };
+				bestPlatformDelta = { system: canonicalSystem(r.system), delta };
 			}
 		}
 	}

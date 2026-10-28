@@ -1,4 +1,5 @@
 import type { ScoreResult } from './types';
+import { canonicalSystem } from './system-name';
 
 // pure comparison between two ATS scan result sets
 // used by the dashboard to show "you went from X to Y" deltas
@@ -45,7 +46,10 @@ export function computeScanComparison(
 	const currentPassing = passingCount(current);
 	const previousPassing = passingCount(previous);
 
-	const previousBySystem = new Map(previous.map((r) => [r.system, r.overallScore]));
+	// history saved before names were canonicalized can still hold the long form
+	const previousBySystem = new Map(
+		previous.map((r) => [canonicalSystem(r.system), r.overallScore])
+	);
 
 	const platforms: PlatformDelta[] = [];
 	let improved = 0;
@@ -53,11 +57,11 @@ export function computeScanComparison(
 	let unchanged = 0;
 
 	for (const curr of current) {
-		const prevScore = previousBySystem.get(curr.system);
+		const prevScore = previousBySystem.get(canonicalSystem(curr.system));
 		if (prevScore === undefined) continue;
 		const delta = curr.overallScore - prevScore;
 		platforms.push({
-			system: curr.system,
+			system: canonicalSystem(curr.system),
 			previous: prevScore,
 			current: curr.overallScore,
 			delta

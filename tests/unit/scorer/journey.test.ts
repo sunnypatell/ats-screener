@@ -72,4 +72,12 @@ describe('computeJourneyStats', () => {
 		expect(stats?.firstScore).toBe(60);
 		expect(stats?.latestScore).toBe(80);
 	});
+
+	it('computes the platform delta when the llm varied its name between scans', () => {
+		const stats = computeJourneyStats([
+			{ id: '2', timestamp: '2025-02-01', averageScore: 80, results: [r('SuccessFactors', 80)] },
+			{ id: '1', timestamp: '2025-01-01', averageScore: 60, results: [r('SAP SuccessFactors', 60)] }
+		]);
+		expect(stats?.bestPlatformDelta).toEqual({ system: 'SuccessFactors', delta: 20 });
+	});
 });
