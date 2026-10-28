@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **the cerebras provider and `CEREBRAS_API_KEY`.** the model it targeted no longer exists. a cerebras leg can come back once one is verified against the real api with a real key.
 
+### Security
+
+- **the firestore rules in production were not the ones in the repo, and they let any signed-in user rewrite the landing page counter.** the live ruleset (released by hand on 2026-02-23) had a `stats` block missing from `firestore.rules`, with `allow update: if request.auth != null`. since anyone can register with email and password, anyone could set the public user count to any value or attach arbitrary fields to it. `scan_logs` and `users/{uid}/scans` also accepted any field, any size and, for logs, a forged `uid` or `email`. the rules now validate every write the client makes (field allowlists, types, string and list bounds, `uid` and `email` bound to the auth token, `createdAt` bound to server time), the counter only moves by exactly one, and scans can no longer be overwritten. 32 emulator cases cover every real client write plus the abuse paths; against the old live rules 14 of them got through. verified live afterwards with a throwaway account, which was then deleted.
+- **`firebase deploy` from the repo targeted a database that does not exist.** `firebase.json` had no `database`, so it deployed to `(default)`, while the app uses the named database `default`. it now targets `default`, and the self-hosting docs give the deploy command and the catch: `--only firestore:rules` matches nothing with a per-database config yet still prints "Deploy complete".
+
 ## [0.5.1] - 2026-08-02
 
 ### Fixed

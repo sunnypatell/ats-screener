@@ -27,6 +27,14 @@ This is the simplest way to self-host. Trade-off: history lives in one browser a
 
 Set the six `PUBLIC_FIREBASE_*` variables (from Firebase Console, see [Configuration](/docs/self-hosting/configuration)) to get Google and email/password sign-in plus cross-device history in Firestore. This mirrors the hosted instance. Detection is a single signal: a non-empty `PUBLIC_FIREBASE_PROJECT_ID`.
 
+The app connects to a Firestore database named `default` (not the console's `(default)`), so create it under that name. Then deploy the bundled security rules, which validate every write the app makes and reject everything else:
+
+```bash
+firebase deploy --only firestore:default --project <your-project-id>
+```
+
+Target the database explicitly. `--only firestore:rules` matches nothing with the per-database `firebase.json` and still reports "Deploy complete".
+
 ## Active Directory (LDAP)
 
 For self-hosters on a corporate network: users sign in with their existing AD account, the scanner sits behind that login, and access can be restricted to a group. This is server-side and only activates when `LDAP_URL` is set. See the dedicated [Active Directory guide](/docs/self-hosting/active-directory) for setup.
