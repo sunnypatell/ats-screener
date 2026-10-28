@@ -100,7 +100,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 	if (mode === 'ldap') {
 		const token = event.cookies.get(SESSION_COOKIE);
 		if (token) {
-			const payload = await verifySession(token, env.SESSION_SECRET ?? '');
+			// trimmed exactly like resolveLdapConfig, which login signs with
+			const payload = await verifySession(token, env.SESSION_SECRET?.trim() ?? '');
 			if (payload) {
 				event.locals.user = {
 					sub: payload.sub,

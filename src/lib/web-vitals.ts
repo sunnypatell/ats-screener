@@ -15,7 +15,7 @@ import { env as publicEnv } from '$env/dynamic/public';
 import { parseSampleRate, shouldSample } from './sampling';
 
 const ENDPOINT = '/api/vitals';
-const SAMPLE_RATE = parseSampleRate(publicEnv.PUBLIC_VITALS_SAMPLE_RATE) || 0.05;
+const SAMPLE_RATE = parseSampleRate(publicEnv.PUBLIC_VITALS_SAMPLE_RATE, 0.05);
 
 // LayoutShift entries carry value + hadRecentInput; the standard typings
 // (PerformanceEntry) do not include either, so we narrow with a local type.

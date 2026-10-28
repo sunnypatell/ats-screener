@@ -80,4 +80,13 @@ describe('parseSampleRate', () => {
 		expect(parseSampleRate('1')).toBe(1);
 		expect(parseSampleRate('0')).toBe(0);
 	});
+
+	// error-reporter and web-vitals default to 5%. `parseSampleRate(x) || 0.05` reported
+	// from every client when unset (1 is truthy) and could never be switched off (0 is not)
+	it('falls back to the caller default when unset, but keeps an explicit 0', () => {
+		expect(parseSampleRate(undefined, 0.05)).toBe(0.05);
+		expect(parseSampleRate('', 0.05)).toBe(0.05);
+		expect(parseSampleRate('abc', 0.05)).toBe(0.05);
+		expect(parseSampleRate('0', 0.05)).toBe(0);
+	});
 });

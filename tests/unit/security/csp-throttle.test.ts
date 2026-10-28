@@ -7,6 +7,13 @@ import {
 } from '../../../src/routes/api/csp-report/throttle';
 
 describe('reportKey', () => {
+	// the key lives in the dedupe map for the whole window, so it must not grow with the body
+	it('bounds the key no matter how large the report fields are', () => {
+		const huge = 'x'.repeat(1_000_000);
+		const key = reportKey({ 'csp-report': { 'violated-directive': huge, 'blocked-uri': huge } });
+		expect(key.length).toBeLessThanOrEqual(301);
+	});
+
 	it('derives a stable key from the legacy csp-report wrapper', () => {
 		const body = {
 			'csp-report': {

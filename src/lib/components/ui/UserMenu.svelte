@@ -1,10 +1,16 @@
 <script lang="ts">
 	import { authStore } from '$stores/auth.svelte';
+	import { scoresStore } from '$stores/scores.svelte';
+	import { resumeStore } from '$stores/resume.svelte';
 	import { goto } from '$app/navigation';
 
 	let open = $state(false);
 
 	function handleSignOut() {
+		// on a shared machine the next person to sign in would otherwise see this user's resume
+		scoresStore.reset();
+		scoresStore.scanHistory = [];
+		resumeStore.reset();
 		authStore.signOut();
 		open = false;
 		goto('/');

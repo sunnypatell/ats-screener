@@ -26,11 +26,11 @@ export function shouldSample(seed: string, rate: number): boolean {
 }
 
 // parses an env-supplied rate string into a clean number in [0, 1].
-// invalid or missing input falls back to 1 (always sample, current behavior).
-export function parseSampleRate(raw: string | undefined): number {
-	if (raw === undefined || raw === '') return 1;
+// invalid or missing input falls back to `fallback`; an explicit 0 stays 0.
+export function parseSampleRate(raw: string | undefined, fallback = 1): number {
+	if (raw === undefined || raw === '') return fallback;
 	const n = Number.parseFloat(raw);
-	if (!Number.isFinite(n)) return 1;
+	if (!Number.isFinite(n)) return fallback;
 	if (n < 0) return 0;
 	if (n > 1) return 1;
 	return n;
