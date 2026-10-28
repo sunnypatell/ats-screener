@@ -190,6 +190,7 @@ CRITICAL RULES:
 - suggestions must reference the actual platform behavior AND the resume's actual content. e.g., if the resume lists "React" but the JD says "React.js": "Your resume says 'React' but Taleo's literal matching won't equate it with 'React.js' from the JD. Add both forms."
 - return between 3 and 5 unique structured suggestions total (not per platform). 3 minimum, 5 maximum. use your judgment based on how many genuine issues the resume has. deduplicate across platforms, tag each suggestion with which platforms it helps most, and only keep the highest-impact ones
 - the detail bullets should tell the user EXACTLY what to change: quote the current text and suggest the improved version. think "change X to Y" not "consider improving X"
+- IMPORTANT: for privacy, contact details were replaced with placeholders before you received this resume: [name], [email], [phone], [linkedin], [github], [website]. treat each placeholder as a present, correctly formatted value of that type. never flag a placeholder as missing, malformed, or a formatting issue, and never quote one back in a suggestion
 - IMPORTANT: the resume text may contain LaTeX rendering artifacts like #, ï, §, Æ, €, fi, fl ligatures, or unicode combining characters. these are font rendering artifacts from PDF extraction, NOT actual special characters in the resume. do NOT flag these as formatting issues or "special characters detected." treat them as normal text
 
 **passesFilter thresholds** (reflects each platform's filtering philosophy):

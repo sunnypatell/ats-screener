@@ -169,7 +169,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution gu
 
 ## Security
 
-See [SECURITY.md](SECURITY.md) for vulnerability reporting. Resume files are parsed client-side and never uploaded. Extracted text is sent to Google Gemini for AI analysis.
+See [SECURITY.md](SECURITY.md) for vulnerability reporting. Resume files are parsed client-side and never uploaded. Extracted text is sent to free-tier LLMs (Gemini, then Groq) for analysis, with names, emails, phone numbers and links replaced by placeholders on the server first.
 
 ## License
 
