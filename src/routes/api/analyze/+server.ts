@@ -6,6 +6,7 @@ import { logger } from '$lib/log';
 import { hashPrompt, getCached, setCached } from './cache';
 import { checkRateLimit } from './rate-limiter';
 import { buildProviders, PROVIDER_ENV_KEYS } from './providers';
+import { redactContactDetails } from './redact';
 import { resolveAuthMode } from '$lib/server/auth/config';
 
 // tries each provider in sequence until one succeeds and returns valid JSON
@@ -197,7 +198,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	switch (body.mode) {
 		case 'full-score':
 			if (!body.resumeText) throw error(400, 'resumeText is required');
-			prompt = buildFullScoringPrompt(body.resumeText, body.jobDescription);
+			prompt = buildFullScoringPrompt(redactContactDetails(body.resumeText), body.jobDescription);
 			break;
 		case 'analyze-jd':
 			if (!body.jobDescription) throw error(400, 'jobDescription is required');

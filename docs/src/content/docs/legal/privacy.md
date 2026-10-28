@@ -1,11 +1,11 @@
 ---
 title: Privacy and Data Handling
 description: How ATS Screener collects, uses, retains, and protects your data. A non-commercial student portfolio project run from Ontario, Canada, open to users worldwide.
-lastUpdated: 2026-04-25
+lastUpdated: 2026-10-28
 ---
 
 :::note
-Plain language. No legalese. The author is not a lawyer. Last updated 2026-04-25.
+Plain language. No legalese. The author is not a lawyer. Last updated 2026-10-28.
 :::
 
 ## What this is (and what it is not)
@@ -64,14 +64,24 @@ Whether or not a given law strictly applies, we operate as if a baseline of good
 - The scan timestamp and mode (general or targeted).
 - A short snippet of the job description, up to 200 characters.
 
+**Scan log**, one short entry per scan, used by the author to spot abuse and see how the app is used:
+
+- Your account ID, email address and display name.
+- The file name you uploaded.
+- The scan mode and the resulting scores.
+- The time of the scan.
+
+The scan log holds no resume text and no job description text. It is not visible to other users.
+
 PDF and DOCX parsing happens entirely inside your browser. The binary file itself is never sent over the network.
 
 ## How we process scoring requests
 
-When you run a scan, the extracted resume text (and, in targeted mode, the full job description text) is sent over TLS to one of our AI scoring providers via our serverless function. Two things to be honest about:
+When you run a scan, the extracted resume text (and, in targeted mode, the full job description text) is sent over TLS to one of our AI scoring providers via our serverless function. Three things to be honest about:
 
 1. **The text passes through our serverless function** on the way to the AI provider. We do not write it to durable storage. A short-lived in-memory cache (per region, max 200 entries, 24-hour TTL, never written to disk) deduplicates identical repeat requests so the provider is not called twice for the same prompt. That cache disappears whenever the serverless instance recycles, which is usually within minutes.
-2. **The AI providers receive your resume text.** Their privacy practices apply to data they receive. We choose providers whose terms permit transient processing without long-term retention, but they are independent third parties.
+2. **The AI providers receive your resume text, minus your contact details.** Before the text leaves our server, your name, email addresses, phone numbers and profile or website links are replaced with placeholders such as `[email]`. This also applies to anyone listed in a references section. The rest of the resume (work history, education, skills) is sent as written, because that is what gets scored.
+3. **The providers are free tiers, and that has a cost you should know about.** Scans go to Google's Gemini API first, then to Groq, then to a second Gemini model if the first two fail. Under Google's terms for its free tier, Google may use what it receives to improve its products and machine learning, and human reviewers may read it. Groq does not retain inference data by default. Keeping the app free depends on these tiers, which is why contact details are stripped first. If that trade-off doesn't work for you, [self-host the app with a local model](/docs/self-hosting/configuration/#running-locally-with-ollama) and nothing leaves your machine.
 
 The full prompt and the raw provider response are not retained on our servers as durable data.
 
@@ -92,6 +102,7 @@ Account info and scan history are stored in a managed cloud database operated by
 - Scan history is capped at your 5 most recent scans. Older scans are deleted automatically on the next save.
 - You can clear all of your scan history at any time from the History page in the app.
 - Account information persists until you ask us to delete your account.
+- Scan log entries are kept until you ask us to delete your account, at which point they are deleted with it.
 - Operational logs (request counts, error codes, response timings) are retained briefly by hosting infrastructure for diagnostics and rotate out automatically.
 
 ## Your practical rights, regardless of jurisdiction

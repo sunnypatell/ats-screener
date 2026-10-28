@@ -67,5 +67,5 @@ If you find this tool useful and want to help keep it running, consider [buying 
 :::
 
 :::note
-Your resume file never leaves your browser. Only the extracted text is sent to the AI for scoring. See the [privacy section](/docs/getting-started/how-it-works/#privacy) for details.
+Your resume file never leaves your browser. Only the extracted text is sent to the AI for scoring, with your contact details replaced by placeholders first. See the [privacy section](/docs/getting-started/how-it-works/#privacy) for details.
 :::

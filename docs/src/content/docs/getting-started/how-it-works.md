@@ -49,16 +49,16 @@ The AI returns structured JSON with per-platform scores, breakdowns, keyword ana
 
 ## Privacy
 
-Your privacy is protected at every step:
+What happens to your data at each step:
 
 1. **Files stay local.** PDF/DOCX parsing happens entirely in your browser's Web Worker. The original file is never uploaded.
-2. **Only text is transmitted.** The extracted text (not the original file) is sent to Google Gemini for AI analysis.
+2. **Only text is transmitted, without your contact details.** The extracted text (not the original file) is sent for AI analysis, with your name, email, phone number and links replaced by placeholders first. Scoring runs on free tiers (Google Gemini, then Groq), and Google's free tier may use what it receives to improve its products. See the [privacy notice](/docs/legal/privacy/) for the full picture.
 3. **Scan history is stored in Firebase.** Your scores and scan metadata are saved to your account in Firestore so you can track progress over time. Only you can access your own data.
 4. **Free account required.** Sign in with Google or email/password to use the scanner. This enables scan history and prevents abuse.
 5. **Open source.** You can verify all of the above by reading the [source code](https://github.com/sunnypatell/ats-screener).
 
 :::note[Zero Cost to You]
-The live instance is hosted by [Sunny Patel](https://sunnypatel.net) using free-tier API keys. All infrastructure (Vercel, Firebase Spark, Gemini) runs on free tiers.
+The live instance is hosted by [Sunny Patel](https://sunnypatel.net) using free-tier API keys. All infrastructure (Vercel, Firebase Spark, Gemini, Groq) runs on free tiers.
 :::
 
 :::note
