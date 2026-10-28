@@ -1,19 +1,14 @@
-// LLM provider abstraction for /api/analyze.
+// LLM provider abstraction for /api/analyze, in its own module so chain composition is
+// unit-testable without mounting the route.
 //
-// cloud chain is Gemini 3.5 Flash Lite (Google) -> Llama 3.3 70B (Groq): one model
-// per vendor, because a second model on the same key shares that key's quota and adds
-// no real redundancy. crossing vendors is what keeps one provider's limits from
-// cascading. both models were measured against the real full-scoring prompt rather
-// than picked from published limits - see buildProviders.
+// cloud chain: gemini-3.5-flash-lite -> groq gpt-oss-120b -> gemini-3.1-flash-lite.
+// gemini free-tier quotas are per project per model, so the second google leg draws on a
+// separate pool. groq sits in the middle because it is cross-vendor and, when its 8k tpm
+// can't admit the request, it 429s or 413s in under 100ms instead of burning the last leg's budget.
 // self-hosters can prepend Ollama by setting OLLAMA_BASE_URL (and optionally
 // OLLAMA_MODEL, plus OLLAMA_API_KEY for proxied / auth-gated daemons); the
 // request handler treats Ollama as a configured provider so a fork running
 // purely on local models doesn't need any cloud API key.
-//
-// timeoutMs lives on the provider itself (not a parallel array) so a dynamic
-// chain composed from env can carry per-provider deadlines without
-// index-juggling. extracted into its own module so the chain composition can
-// be unit-tested without mounting the whole route handler.
 
 export interface LLMProvider {
 	name: string;
@@ -34,15 +29,18 @@ const googleExtractText = (data: unknown) => {
 	return d.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
 };
 
-// measured against the real full-scoring prompt (both slices at their caps):
-// ~5,950 tokens in, 2,950-3,419 out over repeated runs at 311-338 tok/s. output size
-// tracks the fixed 6-platform schema, not the user's resume length - a minimal resume
-// produced within 5% of a maxed-out one - so both directions are already bounded.
+const openAIExtractText = (data: unknown) => {
+	if (!data || typeof data !== 'object') return '';
+	const d = data as { choices?: { message?: { content?: string } }[] };
+	return d.choices?.[0]?.message?.content ?? '';
+};
+
+// measured against the real full-scoring prompt (both slices at their caps): ~6,070 tokens
+// in, 2,350-3,700 out. output size tracks the fixed 6-platform schema, not resume length.
 //
 // INVARIANT: maxOutputTokens / slowest-observed-throughput must stay under timeoutMs,
 // or a response that legitimately runs to its full budget gets aborted mid-flight and
-// burns the fallback too. 6144 / 311 tok/s = 19.8s against a 30s timeout.
-// 6144 is ~1.8x the largest output ever observed, so truncation risk stays remote.
+// burns the fallback too. 6144 / 311 tok/s = 19.8s against a 25s timeout.
 const GOOGLE_MAX_OUTPUT_TOKENS = 6144;
 
 export function buildGoogleProvider(
@@ -53,10 +51,8 @@ export function buildGoogleProvider(
 	return {
 		name,
 		configKey: 'GEMINI_API_KEY',
-		// flash-lite answers the full prompt in 9-11s measured. 30s covers the worst
-		// case where the model runs to the full token budget (19.8s) with margin,
-		// while keeping the whole chain inside the route's maxDuration
-		timeoutMs: opts?.timeoutMs ?? 30_000,
+		// flash-lite answers the full prompt in 7-11s measured; 25s covers a full-budget response
+		timeoutMs: opts?.timeoutMs ?? 25_000,
 		buildRequest: (prompt, apiKey) => ({
 			url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
 			init: {
@@ -80,26 +76,20 @@ export function buildGoogleProvider(
 	};
 }
 
-// Groq reserves (input + max_tokens) against its per-minute ceiling BEFORE running
-// the model, so an oversized max_tokens alone can exceed the whole TPM budget and
-// every request 413s regardless of input size. free-tier llama TPM is 12,000 and the
-// real prompt measures ~5,950 in / ~2,020 out at ~290 tok/s.
-//
-// 3072 serves two masters: it keeps 5,950 + 3,072 = 9,022 under the 12k TPM ceiling
-// (leaving room for a second request in the same minute), and 3072 / 290 tok/s = 10.6s
-// stays under the 15s timeout so a full-budget response is never cut off.
-const GROQ_MAX_TOKENS = 3072;
+// gpt-oss reasons before it answers and those tokens count against max_tokens: at 3072 the
+// answer was cut off after 2 of 6 platforms, at 4096 with low effort it finished at ~2,800.
+// 4096 / 400 tok/s = 10.2s against the 12s timeout.
+const GROQ_MAX_TOKENS = 4096;
 
 export function buildGroqProvider(
 	name: string,
 	model: string,
-	opts?: { maxTokens?: number }
+	opts?: { maxTokens?: number; reasoningEffort?: 'low' | 'medium' | 'high' }
 ): LLMProvider {
 	return {
 		name,
 		configKey: 'GROQ_API_KEY',
-		// Groq is <1s typical but gets headroom for cold path
-		timeoutMs: 15_000,
+		timeoutMs: 12_000,
 		buildRequest: (prompt, apiKey) => ({
 			url: 'https://api.groq.com/openai/v1/chat/completions',
 			init: {
@@ -114,58 +104,13 @@ export function buildGroqProvider(
 					temperature: 0.3,
 					top_p: 0.85,
 					max_tokens: opts?.maxTokens ?? GROQ_MAX_TOKENS,
+					// only reasoning models accept this, so it is opt-in per leg
+					...(opts?.reasoningEffort && { reasoning_effort: opts.reasoningEffort }),
 					response_format: { type: 'json_object' }
 				})
 			}
 		}),
-		extractText: (data: unknown) => {
-			if (!data || typeof data !== 'object') return '';
-			const d = data as { choices?: { message?: { content?: string } }[] };
-			return d.choices?.[0]?.message?.content ?? '';
-		}
-	};
-}
-
-// Cerebras is the replacement cross-vendor leg for Groq, which loses its only model
-// that fits this prompt on 2026-08-16. same OpenAI-shaped contract, and it serves the
-// same llama-3.3-70b this prompt was already tuned against, so output size carries over.
-// inert until CEREBRAS_API_KEY is set, exactly like the Ollama leg.
-const CEREBRAS_MAX_TOKENS = 3072;
-
-export function buildCerebrasProvider(
-	name: string,
-	model: string,
-	opts?: { maxTokens?: number }
-): LLMProvider {
-	return {
-		name,
-		configKey: 'CEREBRAS_API_KEY',
-		// 30 + 15 + 12 = 57s, inside the route's maxDuration of 60. cerebras is the
-		// fastest leg in the chain, so 12s is already generous for a 3072 token budget
-		timeoutMs: 12_000,
-		buildRequest: (prompt, apiKey) => ({
-			url: 'https://api.cerebras.ai/v1/chat/completions',
-			init: {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${apiKey}`
-				},
-				body: JSON.stringify({
-					model,
-					messages: [{ role: 'user', content: prompt }],
-					temperature: 0.3,
-					top_p: 0.85,
-					max_tokens: opts?.maxTokens ?? CEREBRAS_MAX_TOKENS,
-					response_format: { type: 'json_object' }
-				})
-			}
-		}),
-		extractText: (data: unknown) => {
-			if (!data || typeof data !== 'object') return '';
-			const d = data as { choices?: { message?: { content?: string } }[] };
-			return d.choices?.[0]?.message?.content ?? '';
-		}
+		extractText: openAIExtractText
 	};
 }
 
@@ -224,58 +169,43 @@ export function buildOllamaProvider(
 	};
 }
 
-// composes the provider chain from whatever's configured in env. ordering is
-// intentional: when Ollama is configured we put it first so a self-hoster who
-// also has cloud keys still defaults to local. callers without any of the
-// three configured will see an empty array and the route returns 503.
 // every env var buildProviders reads. the route copies exactly these out of $env, so a
 // name missing here silently disables a whole leg no matter how the var is configured
 export const PROVIDER_ENV_KEYS = [
 	'GEMINI_API_KEY',
 	'GROQ_API_KEY',
-	'CEREBRAS_API_KEY',
 	'OLLAMA_BASE_URL',
 	'OLLAMA_MODEL',
 	'OLLAMA_API_KEY'
 ] as const;
 
+// Ollama goes first when configured, so a self-hoster who also has cloud keys stays local
 export function buildProviders(env: Record<string, string>): LLMProvider[] {
 	const providers: LLMProvider[] = [];
 	if (env.OLLAMA_BASE_URL) {
 		const model = env.OLLAMA_MODEL || 'llama3.2';
-		// OLLAMA_API_KEY is optional. when set we attach Authorization: Bearer
-		// {key} so the request gets through a reverse-proxy or hosted endpoint
-		// that gates the daemon (OpenWebUI, LiteLLM, Caddy bearer auth, etc.).
-		// vanilla localhost ollama leaves this unset and behaves as before.
 		const apiKey = env.OLLAMA_API_KEY || undefined;
 		providers.push(buildOllamaProvider(`ollama-${model}`, model, { apiKey }));
 	}
 	if (env.GEMINI_API_KEY) {
-		// exactly one Google model. a second Gemini leg on the same key does NOT buy a
-		// second quota pool - when the key is exhausted it is exhausted for every model
-		// on it - so stacking them just burns latency before the real fallback.
-		// 500 RPD / 250K TPM / 15 RPM against ~130 scans/day of observed demand.
-		// the full Flash tiers are unusable no matter how good they are: 20 RPD.
-		// Gemma 4 31B looks tempting on paper (14,400 RPD) but measured ~110s per call,
-		// returned markdown-fenced output instead of JSON, and its free tier trains on
-		// submitted data - disqualifying for resume text. deliberately excluded.
+		// gemma 4 31B is excluded: ~110s per call and markdown-fenced output instead of json
 		providers.push(buildGoogleProvider('gemini-3.5-flash-lite', 'gemini-3.5-flash-lite'));
 	}
 	if (env.GROQ_API_KEY) {
-		// cross-vendor last resort so a total Google outage still scores.
-		// EXPIRES 2026-08-16: llama-3.3-70b-versatile shuts down then. measured against
-		// the real capped prompt (6,000 char resume + 4,000 char JD), nothing left on the
-		// Groq free tier can replace it: input alone is 5,981 tokens on llama and 6,115 on
-		// qwen, the surviving models cap at 8,000 TPM and Groq reserves input + max_tokens
-		// up front, and the response needs 1,944. qwen 413s at Requested 8015 / Limit 8000
-		// even with max_tokens down at 1,900, and both gpt-oss sizes 400 on json_object
-		// with this prompt. Cerebras below is the replacement leg.
-		providers.push(buildGroqProvider('groq-llama-3.3-70b', 'llama-3.3-70b-versatile'));
+		// the only groq free-tier model that fits: qwen3.8-27b caps output at 1k tokens/min,
+		// gpt-oss-20b fails json_object validation on this prompt
+		providers.push(
+			buildGroqProvider('groq-gpt-oss-120b', 'openai/gpt-oss-120b', { reasoningEffort: 'low' })
+		);
 	}
-	if (env.CEREBRAS_API_KEY) {
-		// same llama-3.3-70b the prompt is already tuned against, on a free tier whose
-		// per-minute ceiling is not the binding constraint Groq's became.
-		providers.push(buildCerebrasProvider('cerebras-llama-3.3-70b', 'llama-3.3-70b'));
+	if (env.GEMINI_API_KEY) {
+		// 2,350 out measured at 317 tok/s; 5120 keeps a full budget inside the shorter timeout
+		providers.push(
+			buildGoogleProvider('gemini-3.1-flash-lite', 'gemini-3.1-flash-lite', {
+				timeoutMs: 20_000,
+				maxOutputTokens: 5120
+			})
+		);
 	}
 	return providers;
 }

@@ -21,11 +21,11 @@ async function callLLM(
 		try {
 			const { url, init } = provider.buildRequest(prompt, secret);
 
-			const controller = new AbortController();
-			const timeout = setTimeout(() => controller.abort(), provider.timeoutMs);
-
-			const response = await fetch(url, { ...init, signal: controller.signal });
-			clearTimeout(timeout);
+			// one signal for headers and body, so a stalled body read can't outlive the budget
+			const response = await fetch(url, {
+				...init,
+				signal: AbortSignal.timeout(provider.timeoutMs)
+			});
 
 			if (!response.ok) {
 				const errBody = await response.text().catch(() => '');
@@ -54,7 +54,7 @@ async function callLLM(
 
 			return { parsed: parsed as Record<string, unknown>, provider: provider.name };
 		} catch (err) {
-			const isTimeout = err instanceof DOMException && err.name === 'AbortError';
+			const isTimeout = err instanceof DOMException && err.name === 'TimeoutError';
 			logger.warn(isTimeout ? 'llm.provider_timeout' : 'llm.provider_failed', {
 				provider: provider.name,
 				...(isTimeout
@@ -100,7 +100,7 @@ function extractJSON(raw: string): unknown {
 	return null;
 }
 
-// must exceed the sum of every provider timeout in the chain (30 + 15 + 12 = 57s) or
+// must exceed the sum of every provider timeout in the chain (25 + 12 + 20 = 57s) or
 // the last leg gets killed by the platform before it can answer, which silently turns
 // a 3-provider chain into a shorter one
 export const config = {
@@ -122,25 +122,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return json({ error: 'authentication required' }, { status: 401 });
 	}
 
-	// collect provider config from SvelteKit $env. OLLAMA_BASE_URL is the
-	// presence signal for the local-Ollama path; OLLAMA_MODEL is read inside
-	// buildProviders() and defaults to llama3.2 when unset; OLLAMA_API_KEY is
-	// optional and, when set, attaches Authorization: Bearer {key} for forks
-	// running Ollama behind a reverse-proxy or hosted Ollama-compatible API.
 	// driven off PROVIDER_ENV_KEYS so adding a provider cannot leave its key behind here
 	const keys: Record<string, string> = Object.fromEntries(
 		PROVIDER_ENV_KEYS.map((k) => [k, env[k] ?? ''])
 	);
 
-	// at least one provider must be configured. cloud-hosted instances set
-	// GEMINI/GROQ/CEREBRAS; self-hosted forks can opt into Ollama-only by setting
-	// OLLAMA_BASE_URL with no cloud keys.
-	const hasAnyProvider =
-		keys.GEMINI_API_KEY.length > 0 ||
-		keys.GROQ_API_KEY.length > 0 ||
-		keys.CEREBRAS_API_KEY.length > 0 ||
-		keys.OLLAMA_BASE_URL.length > 0;
-	if (!hasAnyProvider) {
+	if (buildProviders(keys).length === 0) {
 		return json({ error: 'no LLM providers configured', fallback: true }, { status: 503 });
 	}
 
@@ -173,6 +160,15 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		body = await request.json();
 	} catch {
 		throw error(400, 'invalid JSON body');
+	}
+	// the length checks below assume strings, so a number or object here would 500 on .trim()
+	if (
+		!body ||
+		typeof body !== 'object' ||
+		(body.resumeText !== undefined && typeof body.resumeText !== 'string') ||
+		(body.jobDescription !== undefined && typeof body.jobDescription !== 'string')
+	) {
+		throw error(400, 'resumeText and jobDescription must be strings');
 	}
 
 	// validate resume text isn't empty/whitespace and enforce length cap
