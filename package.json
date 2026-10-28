@@ -5,7 +5,7 @@
 	"license": "MIT",
 	"type": "module",
 	"engines": {
-		"node": "^22.13.0 || >=24.0.0",
+		"node": "^22.13.0 || ^24.0.0",
 		"pnpm": ">=10.0.0"
 	},
 	"packageManager": "pnpm@10.32.1",
@@ -25,7 +25,6 @@
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage",
-		"test:e2e": "playwright test",
 		"validate": "pnpm check && pnpm lint && pnpm format:check && pnpm test && pnpm build",
 		"gate": "pnpm validate"
 	},
@@ -41,7 +40,6 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
-		"@playwright/test": "^1.64.0",
 		"@sveltejs/adapter-vercel": "^6.3.4",
 		"@sveltejs/kit": "^2.70.3",
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",
@@ -69,7 +67,11 @@
 		],
 		"overrides": {
 			"rollup@<4.59.0": "^4.59.0"
-		}
+		},
+		"ignoredBuiltDependencies": [
+			"@firebase/util",
+			"core-js"
+		]
 	},
 	"optionalDependencies": {
 		"ldapts": "^9.2.0"

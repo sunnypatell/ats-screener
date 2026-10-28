@@ -262,7 +262,7 @@
 						<li>Vercel (hosting)</li>
 						<li>Firebase Auth + Firestore</li>
 						<li>GitHub Actions (CI/CD)</li>
-						<li>Vitest + Playwright (testing)</li>
+						<li>Vitest (testing)</li>
 					</ul>
 				</div>
 			</div>

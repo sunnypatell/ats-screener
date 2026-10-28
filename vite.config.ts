@@ -1,4 +1,5 @@
 import { sveltekit } from '@sveltejs/kit/vite';
+import type { Plugin } from 'vite';
 // vitest 4 dropped `test` from vite's UserConfig type, so defineConfig comes from vitest
 import { defineConfig } from 'vitest/config';
 import { readFileSync } from 'node:fs';
@@ -11,8 +12,25 @@ import { fileURLToPath } from 'node:url';
 const pkgUrl = new URL('./package.json', import.meta.url);
 const pkg = JSON.parse(readFileSync(fileURLToPath(pkgUrl), 'utf-8')) as { version: string };
 
+// firebase only ever runs in the browser, but its dynamic imports survive in the ssr build and
+// vercel's file tracer then ships firebase's node sdk (and grpc-js) inside every function
+function firebaseClientOnly(): Plugin {
+	const stub = '\0firebase-ssr-stub';
+	return {
+		name: 'firebase-client-only',
+		apply: 'build',
+		enforce: 'pre',
+		resolveId(id, _importer, opts) {
+			if (opts?.ssr && (id === 'firebase' || id.startsWith('firebase/'))) return stub;
+		},
+		load(id) {
+			if (id === stub) return 'export {};';
+		}
+	};
+}
+
 export default defineConfig({
-	plugins: [sveltekit()],
+	plugins: [firebaseClientOnly(), sveltekit()],
 	define: {
 		__APP_VERSION__: JSON.stringify(pkg.version)
 	},
