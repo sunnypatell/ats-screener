@@ -1,14 +1,62 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // users can only read/write their own scan history
-    match /users/{userId}/scans/{scanId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    function signedIn() {
+      return request.auth != null;
     }
 
-    // any authenticated user can create a scan log entry (write-only, no reads from client)
+    function optionalString(data, key, max) {
+      return !(key in data) || data[key] == null || (data[key] is string && data[key].size() <= max);
+    }
+
+    function score(v) {
+      return v is number && v >= 0 && v <= 100;
+    }
+
+    // mirrors the entry scores.svelte.ts builds; results stays loosely typed because it is
+    // the llm's nested output, so the list length is the bound instead
+    function validScan(d) {
+      return d.keys().hasAll(['timestamp', 'mode', 'averageScore', 'passingCount', 'results'])
+        && d.keys().hasOnly(['timestamp', 'mode', 'averageScore', 'passingCount', 'results',
+          'fileName', 'jobDescriptionSnippet'])
+        && d.timestamp is string && d.timestamp.size() <= 40
+        && d.mode in ['general', 'targeted']
+        && score(d.averageScore)
+        && d.passingCount is int && d.passingCount >= 0 && d.passingCount <= 10
+        && d.results is list && d.results.size() <= 10
+        && optionalString(d, 'fileName', 256)
+        && optionalString(d, 'jobDescriptionSnippet', 256);
+    }
+
+    function validScanLog(d) {
+      return d.keys().hasOnly(['uid', 'email', 'displayName', 'fileName', 'mode', 'averageScore',
+          'passingCount', 'createdAt'])
+        && d.uid == request.auth.uid
+        && d.email == request.auth.token.get('email', null)
+        && optionalString(d, 'displayName', 128)
+        && optionalString(d, 'fileName', 256)
+        && d.mode in ['general', 'targeted']
+        && score(d.averageScore)
+        && d.passingCount is int && d.passingCount >= 0 && d.passingCount <= 10
+        && d.createdAt == request.time;
+    }
+
+    match /users/{userId}/scans/{scanId} {
+      allow read, delete: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn() && request.auth.uid == userId && validScan(request.resource.data);
+    }
+
+    // admin analytics, write-only from the client
     match /scan_logs/{logId} {
-      allow create: if request.auth != null;
+      allow create: if signedIn() && validScanLog(request.resource.data);
+    }
+
+    // landing page user counter: anyone reads it, a signed-in user can only bump it by one
+    match /stats/public {
+      allow read: if true;
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['userCount'])
+        && request.resource.data.userCount == resource.data.userCount + 1;
     }
   }
 }
