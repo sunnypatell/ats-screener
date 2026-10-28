@@ -40,7 +40,7 @@ cp .env.example .env
 3. Add to `.env`: `GROQ_API_KEY=your_key_here`
 
 :::tip
-You need the **Google AI API key** to run the app (Gemini 3.5 Flash Lite, 500 RPD). Adding a **Groq API key** is strongly recommended as a completely independent fallback (Llama 3.3 70B, 1,000 RPD) so users never see failures when Google's quota is spent or its API is down.
+You need the **Google AI API key** to run the app. It enables two Gemini legs (3.5 Flash Lite, then 3.1 Flash Lite), which draw on separate per-model quotas. Adding a **Groq API key** is strongly recommended as a cross-vendor fallback (GPT-OSS 120B) so a Google-wide outage still scores.
 :::
 
 ## Run Locally

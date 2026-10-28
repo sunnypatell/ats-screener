@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **production scoring had no working fallback since 2026-08-16.** groq retired `llama-3.3-70b-versatile` that day and every fallback call has 404'd since (`The model llama-3.3-70b-versatile does not exist`). the cerebras leg added in 0.5.1 to replace it never ran: no `CEREBRAS_API_KEY` was ever set, and cerebras had already deprecated `llama-3.3-70b` on 2026-02-16, so it would have 404'd too. in the one day of production logs retained, 3 of 50 scans (6%) hit a gemini `503 high demand`, timeout or unparseable reply and fell straight to a 503. the chain is now `gemini-3.5-flash-lite` → groq `openai/gpt-oss-120b` → `gemini-3.1-flash-lite`, each leg verified end to end through the real route handler with the earlier legs forced to fail. gpt-oss needs `reasoning_effort: low` and `max_tokens` 4096, since its reasoning tokens count against the budget and at 3072 the json was cut off after two platforms. groq's free tier admits it about three times in four (it sometimes estimates the request over its 8k tpm and refuses in under 100ms), so groq sits in the middle as the cross-vendor leg and gemini 3.1 is the dependable last one. timeouts are 25 + 12 + 20 = 57s, inside the unchanged 60s `maxDuration` and 65s client timeout.
+- **the "one model per vendor" rule rested on a wrong premise.** gemini free-tier quotas are counted per project per model (google's own 429s carry the quota id `GenerateRequestsPerDayPerProjectPerModel-FreeTier`), so a second flash lite model is a second daily pool, not a duplicate of the first.
+- **`/api/analyze` returned 500 instead of 400 on malformed bodies.** a json `null` body or a non-string `resumeText` / `jobDescription` threw on `.trim()` / `.length`. they now get a 400 before any provider is called.
+- **score deltas between scans dropped a platform whenever the model renamed it.** the llm sometimes answers `SAP SuccessFactors` or `Oracle Taleo` instead of the requested label, and the scan comparison and journey stats key on that name, so the platform silently vanished from "you went from X to Y". names are now canonicalized when the response is normalized, and on both sides of the comparison so history saved before this still lines up.
+- **provider timeouts now cover the response body, not just the headers.** the abort timer was cleared as soon as headers arrived, so a stalled body read could outlive the leg's budget. each call now uses one `AbortSignal.timeout` for the whole request.
+
+### Removed
+
+- **the cerebras provider and `CEREBRAS_API_KEY`.** the model it targeted no longer exists. a cerebras leg can come back once one is verified against the real api with a real key.
+
 ## [0.5.1] - 2026-08-02
 
 ### Fixed

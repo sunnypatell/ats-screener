@@ -249,7 +249,8 @@
 					<h4>AI</h4>
 					<ul>
 						<li>Gemini 3.5 Flash Lite via Google (primary)</li>
-						<li>Llama 3.3 70B via Groq (fallback)</li>
+						<li>GPT-OSS 120B via Groq (cross-vendor fallback)</li>
+						<li>Gemini 3.1 Flash Lite via Google (last resort)</li>
 						<li>Rule-based fallback engine</li>
 						<li>TF-IDF keyword matching</li>
 						<li>Skills taxonomy (500+ terms)</li>
