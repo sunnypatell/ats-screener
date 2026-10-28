@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **firebase is no longer traced into the serverless functions.** firebase only runs in the browser, but its dynamic `import('firebase/...')` calls survive in the ssr build, so vercel's file tracer shipped firebase's node sdk, `@grpc/grpc-js` and protobuf inside every function: 5.3 MB of a 7.3 MB bundle. a build-only vite plugin now resolves `firebase/*` to an empty module on the ssr side. functions drop to 1.4 MB, and the `@grpc/grpc-js` advisory no longer reaches any deployed artifact. every route still server-renders, and in a headless browser the landing page still reads the live user count from firestore and the login page still initializes firebase auth.
-- **ignored dependency build scripts are now acknowledged** (`ignoredBuiltDependencies`: `@firebase/util`, `core-js`, and `esbuild` in docs) instead of printing a warning on every vercel build. behaviour is unchanged, those scripts never ran.
+- **ignored dependency build scripts are now acknowledged** (`ignoredBuiltDependencies`: `@firebase/util`, `core-js`, and `esbuild` in docs) instead of being flagged as forgotten. behaviour is unchanged, those scripts never ran. a fresh install no longer warns; vercel's restored `node_modules` cache keeps the old record and repeats the warning until an install re-links.
 
 ### Removed
 
