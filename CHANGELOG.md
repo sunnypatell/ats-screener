@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.0] - 2026-10-28
+
+audit release. a pass over the commit history, the vercel project and the live services found that production had been scoring on a single provider since mid-august, that resume text was going to google's free tier with the contact block intact while the privacy notice promised otherwise, and that the deployed firestore rules were not the ones in the repo. all three are fixed and verified against the real services, along with a set of smaller gaps. everything still runs on free tiers.
+
+**also breaking for self-hosters: `CEREBRAS_API_KEY` is gone.** the cerebras leg pointed at a model cerebras retired before the leg was added, so it never ran. set `GROQ_API_KEY` for a cross-vendor fallback instead.
 
 **breaking for self-hosters on node 26.** the engines range is now `^22.13.0 || ^24.0.0`. it said `>=24.0.0`, but `@sveltejs/adapter-vercel` 6.3 refuses to build on 26 (`Unsupported Node.js version: v26.11.1. Please use Node 20, 22, or 24`), so 26 never actually worked, and vercel would have moved this project's builds to 26 on its own once it ships it, failing every deploy from then on. node 26 now stops at install with a clear engine error instead.
 
