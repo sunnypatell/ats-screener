@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **groq no longer stores scoring requests.** since 2025-10-15 groq keeps inference inputs and outputs for up to 30 days unless zero data retention is on, and the 0.6.0 privacy notice wrongly said it retained nothing by default. inference zdr is now enabled on the hosted app's groq account (batch and fine-tuning untouched), groq still answers the scoring leg, and the notice says what is actually true.
+
 ## [0.6.0] - 2026-10-28
 
 audit release. a pass over the commit history, the vercel project and the live services found that production had been scoring on a single provider since mid-august, that resume text was going to google's free tier with the contact block intact while the privacy notice promised otherwise, and that the deployed firestore rules were not the ones in the repo. all three are fixed and verified against the real services, along with a set of smaller gaps. everything still runs on free tiers.
