@@ -21,7 +21,7 @@ const ENDPOINT = '/api/log-error';
 
 // default 0.05 (5%). dial up to 1.0 in dev to verify the path; dial down
 // to 0.01 if even the sampled trickle gets noisy in production logs.
-const SAMPLE_RATE = parseSampleRate(publicEnv.PUBLIC_ERROR_SAMPLE_RATE) || 0.05;
+const SAMPLE_RATE = parseSampleRate(publicEnv.PUBLIC_ERROR_SAMPLE_RATE, 0.05);
 
 let installed = false;
 

@@ -99,9 +99,10 @@ export function isExtensionNoise(body: unknown): boolean {
 // legacy {csp-report: {...}} shape and the modern reporting api list shape.
 export function reportKey(body: unknown): string {
 	const r = extractReport(body);
+	// clipped so an attacker-sized blocked-uri can't sit in the dedupe map for the whole window
 	const directive = String(r?.['violated-directive'] ?? r?.['effective-directive'] ?? 'unknown');
 	const blocked = String(r?.['blocked-uri'] ?? r?.['source-file'] ?? 'unknown');
-	return `${directive}|${blocked}`;
+	return `${directive.slice(0, 100)}|${blocked.slice(0, 200)}`;
 }
 
 function extractReport(body: unknown): Record<string, unknown> | null {

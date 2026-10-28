@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { json, error } from '@sveltejs/kit';
 import { env as privateEnv } from '$env/dynamic/private';
 import { getRateLimitStats } from '../../analyze/rate-limiter';
@@ -23,10 +24,9 @@ export const GET: RequestHandler = ({ request }) => {
 	}
 
 	const provided = request.headers.get('x-admin-token') ?? '';
-	// constant-time-ish comparison: short strings, no timing-attack stake here,
-	// but use a length-checked equality anyway so a wrong-length probe does
-	// not even touch the secret bytes.
-	if (provided.length !== expected.length || provided !== expected) {
+	// hashing first gives equal-length buffers, so neither the bytes nor the length leak
+	const digest = (s: string) => createHash('sha256').update(s).digest();
+	if (!timingSafeEqual(digest(provided), digest(expected))) {
 		throw error(401, 'unauthorized');
 	}
 
