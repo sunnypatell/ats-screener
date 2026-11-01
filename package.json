@@ -33,7 +33,7 @@
 		"@vercel/og": "^1.0.1",
 		"bits-ui": "^2.19.5",
 		"compromise": "^14.18.0",
-		"firebase": "^12.19.0",
+		"firebase": "^13.0.0",
 		"jspdf": "^4.2.1",
 		"mammoth": "^1.13.0",
 		"pdfjs-dist": "^6.4.299"
