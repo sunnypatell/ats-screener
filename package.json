@@ -31,8 +31,8 @@
 	"dependencies": {
 		"@number-flow/svelte": "^0.4.2",
 		"@vercel/og": "^1.0.1",
-		"bits-ui": "^2.19.5",
-		"compromise": "^14.18.0",
+		"bits-ui": "^2.20.2",
+		"compromise": "^14.19.0",
 		"firebase": "^12.19.0",
 		"jspdf": "^4.2.1",
 		"mammoth": "^1.13.0",
