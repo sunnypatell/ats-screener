@@ -32,7 +32,7 @@
 	let parsed = $state<ParsedJD | null>(null);
 
 	// dynamically import the parser only when there's enough JD to preview - avoids
-	// pulling compromise/skills-taxonomy into the layout chunk for users who never
+	// pulling the skills taxonomy into the layout chunk for users who never
 	// open the JD section
 	$effect(() => {
 		const v = debouncedJD;

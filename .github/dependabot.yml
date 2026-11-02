@@ -50,6 +50,18 @@ updates:
         versions:
           - '1.0.2'
           - '1.0.3'
+      # held behind a deliberate node floor bump: kit 3 wants >=22.17 and moves config into the vite plugin
+      - dependency-name: '@sveltejs/kit'
+        versions:
+          - '>=3'
+      # 7.x peers kit ^3
+      - dependency-name: '@sveltejs/adapter-vercel'
+        versions:
+          - '>=7'
+      # 13.x @firebase/* packages want node >=24.12, which drops the advertised node 22
+      - dependency-name: firebase
+        versions:
+          - '>=13'
 
   # --------------------------------------------------------------- docs
   - package-ecosystem: npm
@@ -72,6 +84,15 @@ updates:
       astro:
         patterns:
           - '*'
+    ignore:
+      # 7.4 wants node >=22.23.4, past the advertised ^22.13 floor
+      - dependency-name: astro
+        versions:
+          - '>=7.4'
+      # 7.3.4 pulls @astrojs/prism 4.1, same >=22.23.4 floor, and ci's latest-22 leg can't see it
+      - dependency-name: '@astrojs/markdown-remark'
+        versions:
+          - '>=7.3.4'
 
   # ------------------------------------------------------------- actions
   - package-ecosystem: github-actions
