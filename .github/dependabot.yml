@@ -89,10 +89,10 @@ updates:
       - dependency-name: astro
         versions:
           - '>=7.4'
-      # 7.3.4 pulls @astrojs/prism 4.1, same >=22.23.4 floor, and ci's latest-22 leg can't see it
+      # 7.3.3+ pull @astrojs/prism 4.1 (node >=22.22), and ci's latest-22 leg can't see it
       - dependency-name: '@astrojs/markdown-remark'
         versions:
-          - '>=7.3.4'
+          - '>=7.3.3'
 
   # ------------------------------------------------------------- actions
   - package-ecosystem: github-actions
